@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git --yes)",
+      "Bash(cd /c)",
+      "Bash(npx create-next-app@latest crm-project --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git --yes)",
+      "WebFetch(domain:github.com)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
