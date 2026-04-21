@@ -41,6 +41,11 @@ export function GmailConnectBanner() {
 
     setSync({ phase: 'syncing', synced: 0, total: 500, gmailEmail: email });
 
+    // Import Google Contacts in background
+    const contactsEs = new EventSource(`/api/gmail/contacts?user_id=${user.id}`);
+    contactsEs.onmessage = () => {};
+    contactsEs.onerror = () => contactsEs.close();
+
     const es = new EventSource(`/api/gmail/sync?user_id=${user.id}`);
 
     es.onmessage = (e) => {
