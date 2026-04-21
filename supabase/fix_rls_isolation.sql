@@ -66,3 +66,42 @@ DROP POLICY IF EXISTS "import_history_all" ON public.import_history;
 
 CREATE POLICY "import_history_select" ON public.import_history FOR SELECT TO authenticated USING (created_by::text = auth.uid()::text);
 CREATE POLICY "import_history_insert" ON public.import_history FOR INSERT TO authenticated WITH CHECK (created_by::text = auth.uid()::text);
+
+-- ── GOOGLE TOKENS ─────────────────────────────────────────────
+-- RLS is enabled but had NO user policies, so browser client could
+-- never read rows — this caused checkConnection() to always return
+-- nothing and the connected state to never show in the UI.
+DROP POLICY IF EXISTS "google_tokens_select" ON public.google_tokens;
+DROP POLICY IF EXISTS "google_tokens_update" ON public.google_tokens;
+DROP POLICY IF EXISTS "google_tokens_delete" ON public.google_tokens;
+
+-- Users can READ their own token row (needed by checkConnection())
+CREATE POLICY "google_tokens_select" ON public.google_tokens
+  FOR SELECT TO authenticated
+  USING (user_id::text = auth.uid()::text);
+
+-- Users can UPDATE their own row (disconnect sets has_calendar=false)
+CREATE POLICY "google_tokens_update" ON public.google_tokens
+  FOR UPDATE TO authenticated
+  USING (user_id::text = auth.uid()::text);
+
+-- Users can DELETE their own row (full disconnect cleanup)
+CREATE POLICY "google_tokens_delete" ON public.google_tokens
+  FOR DELETE TO authenticated
+  USING (user_id::text = auth.uid()::text);
+
+-- INSERT stays service-role only (OAuth callback uses admin client)
+
+-- ── USER SETTINGS ─────────────────────────────────────────────
+-- Ensure per-user isolation (already correct but re-stated clearly)
+DROP POLICY IF EXISTS "user_settings_all" ON public.user_settings;
+DROP POLICY IF EXISTS "users_own_settings" ON public.user_settings;
+
+CREATE POLICY "user_settings_select" ON public.user_settings
+  FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "user_settings_insert" ON public.user_settings
+  FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+CREATE POLICY "user_settings_update" ON public.user_settings
+  FOR UPDATE TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "user_settings_delete" ON public.user_settings
+  FOR DELETE TO authenticated USING (user_id = auth.uid());
