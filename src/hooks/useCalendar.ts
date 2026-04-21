@@ -49,7 +49,7 @@ export function useCalendar() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     // Store current path so we can return after OAuth
-    localStorage.setItem('calendar_oauth_return', '/settings?tab=calendar');
+    localStorage.setItem('calendar_oauth_return', '/meetings');
     window.location.href = `/api/calendar/auth?user_id=${user.id}`;
   };
 

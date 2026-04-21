@@ -1,30 +1,54 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 function CalendarCallbackInner() {
   const params = useSearchParams();
   const router = useRouter();
+  const [status, setStatus] = useState<'connecting' | 'done' | 'error'>('connecting');
 
   useEffect(() => {
     const email = params.get('email');
     const error = params.get('error');
 
-    if (!error && email) {
-      // Store success flag so the settings page can re-check connection
-      localStorage.setItem('calendar_just_connected', '1');
+    if (error) {
+      setStatus('error');
+      setTimeout(() => router.replace('/settings?tab=calendar'), 2500);
+      return;
     }
 
-    // Redirect back to where the user came from (default: settings/calendar)
-    const returnPath = localStorage.getItem('calendar_oauth_return') || '/settings';
+    if (email) {
+      localStorage.setItem('calendar_just_connected', '1');
+      setStatus('done');
+    }
+
+    const returnPath = localStorage.getItem('calendar_oauth_return') || '/meetings';
     localStorage.removeItem('calendar_oauth_return');
-    router.replace(returnPath);
+    setTimeout(() => router.replace(returnPath), 1200);
   }, [params, router]);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-      <p style={{ color: '#516f90', fontFamily: 'sans-serif' }}>Connecting calendar...</p>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', gap: 12 }}>
+      {status === 'error' ? (
+        <>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', backgroundColor: '#FFF3F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#FF7A59', fontSize: 22 }}>✕</span>
+          </div>
+          <p style={{ color: '#FF7A59', fontWeight: 600, fontSize: 14 }}>Connection failed</p>
+          <p style={{ color: '#7C98B6', fontSize: 12 }}>Redirecting back to settings…</p>
+        </>
+      ) : status === 'done' ? (
+        <>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', backgroundColor: '#E5F8F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#00BDA5', fontSize: 22 }}>✓</span>
+          </div>
+          <p style={{ color: '#00BDA5', fontWeight: 600, fontSize: 14 }}>Calendar connected!</p>
+          <p style={{ color: '#7C98B6', fontSize: 12 }}>Taking you to your meetings…</p>
+        </>
+      ) : (
+        <p style={{ color: '#516f90', fontSize: 14 }}>Connecting calendar…</p>
+      )}
     </div>
   );
 }
