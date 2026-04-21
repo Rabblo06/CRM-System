@@ -70,6 +70,8 @@ export function useActivities(contactId?: string, companyId?: string) {
             contact_id: r.contact_id,
             company_id: r.company_id,
             created_at: r.created_at,
+            due_date: r.due_date,
+            location: r.location,
           }))
         );
       } catch {
@@ -111,6 +113,8 @@ export function useActivities(contactId?: string, companyId?: string) {
           description: activity.description || null,
           contact_id: activity.contact_id || null,
           company_id: activity.company_id || null,
+          due_date: activity.due_date || null,
+          location: activity.location || null,
         };
         // user_id: only include if it matches a row in public.users — omit to avoid FK errors
         if (user?.id) payload.user_id = user.id;
@@ -141,6 +145,8 @@ export function useActivities(contactId?: string, companyId?: string) {
                   contact_id: data.contact_id,
                   company_id: data.company_id,
                   created_at: data.created_at,
+                  due_date: data.due_date,
+                  location: data.location,
                 }
               : a
           )

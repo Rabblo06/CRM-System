@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Search, ChevronDown, X, SlidersHorizontal, ArrowUpDown,
   Download, Columns, Settings, MoreHorizontal, Plus, Trash2, Loader2,
+  CalendarDays, List, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { useActivities } from '@/hooks/useActivities';
 import { supabase } from '@/lib/supabase';
@@ -241,6 +242,196 @@ function SortHeader({
   );
 }
 
+/* ─── Calendar helpers ───────────────────────────────────── */
+const SLOT_H = 48;       // px per 30-min slot
+const FIRST_HOUR = 6;
+const LAST_HOUR = 23;
+
+function buildSlots(): string[] {
+  const slots: string[] = [];
+  for (let h = FIRST_HOUR; h <= LAST_HOUR; h++) {
+    slots.push(`${h.toString().padStart(2, '0')}:00`);
+    if (h < LAST_HOUR) slots.push(`${h.toString().padStart(2, '0')}:30`);
+  }
+  return slots;
+}
+const TIME_SLOTS = buildSlots();
+
+function addDays(d: Date, n: number) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function toDateStr(d: Date) { return d.toISOString().split('T')[0]; }
+function getMonday(d: Date) { const day = d.getDay(); return addDays(d, day === 0 ? -6 : 1 - day); }
+function fmtLabel(slot: string) {
+  const [h, m] = slot.split(':').map(Number);
+  if (m !== 0) return '';
+  const p = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12} ${p}`;
+}
+function fmtDayName(d: Date) { return d.toLocaleDateString('en-US', { weekday: 'short' }); }
+function fmtShort(d: Date) { return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+
+/* ─── CalendarView ─────────────────────────────────────── */
+function CalendarView({ meetings }: { meetings: Activity[] }) {
+  const today = useMemo(() => new Date(), []);
+  const [weekStart, setWeekStart] = useState(() => getMonday(today));
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (bodyRef.current) {
+      const idx = TIME_SLOTS.indexOf('08:00');
+      bodyRef.current.scrollTop = idx * SLOT_H;
+    }
+  }, []);
+
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
+  const weekLabel = useMemo(() => `${fmtShort(weekStart)} – ${fmtShort(addDays(weekStart, 6))}`, [weekStart]);
+
+  // Group meetings by day
+  const byDay = useMemo(() => {
+    const map: Record<string, Activity[]> = {};
+    for (const m of meetings) {
+      const details = parseMeeting(m);
+      const iso = details.start_time || m.due_date;
+      if (!iso) continue;
+      const day = iso.split('T')[0];
+      (map[day] ??= []).push(m);
+    }
+    return map;
+  }, [meetings]);
+
+  return (
+    <div className="flex flex-col flex-1 overflow-hidden">
+      {/* Cal nav */}
+      <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#DFE3EB] bg-white flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setWeekStart(getMonday(today))}
+            className="px-3 py-1 text-xs border border-[#DFE3EB] rounded-[3px] font-semibold text-[#425B76] hover:bg-[#F6F9FC] transition-colors"
+          >
+            Today
+          </button>
+          <button onClick={() => setWeekStart(d => addDays(d, -7))} className="p-1 rounded hover:bg-[#F0F3F7] text-[#516F90]">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button onClick={() => setWeekStart(d => addDays(d, 7))} className="p-1 rounded hover:bg-[#F0F3F7] text-[#516F90]">
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+        <span className="text-sm font-semibold text-[#2D3E50]">{weekLabel}</span>
+        <div />
+      </div>
+
+      {/* Day header */}
+      <div className="flex border-b border-[#DFE3EB] flex-shrink-0 bg-white">
+        <div style={{ width: 56, flexShrink: 0 }} />
+        {weekDays.map(day => {
+          const isToday = toDateStr(day) === toDateStr(today);
+          return (
+            <div key={day.toISOString()} className="flex-1 text-center py-2" style={{ borderLeft: '1px solid #DFE3EB' }}>
+              <span className="text-xs font-medium text-[#7C98B6]">{fmtDayName(day)}</span>
+              <div className="flex justify-center mt-0.5">
+                <span
+                  className="w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold"
+                  style={isToday ? { backgroundColor: '#FF7A59', color: '#fff' } : { color: '#2D3E50' }}
+                >
+                  {day.getDate()}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Time grid */}
+      <div className="flex-1 overflow-y-auto" ref={bodyRef}>
+        <div className="flex" style={{ minHeight: TIME_SLOTS.length * SLOT_H }}>
+          {/* Gutter */}
+          <div style={{ width: 56, flexShrink: 0 }}>
+            {TIME_SLOTS.map(slot => (
+              <div key={slot} style={{ height: SLOT_H, position: 'relative' }}>
+                {fmtLabel(slot) && (
+                  <span className="absolute right-2 text-[10px] text-[#99ACC2]" style={{ top: -7, whiteSpace: 'nowrap' }}>
+                    {fmtLabel(slot)}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Day columns */}
+          {weekDays.map(day => {
+            const dayStr = toDateStr(day);
+            const dayMeetings = byDay[dayStr] || [];
+
+            return (
+              <div key={day.toISOString()} className="flex-1 relative" style={{ borderLeft: '1px solid #DFE3EB' }}>
+                {/* Grid lines */}
+                {TIME_SLOTS.map((slot, i) => (
+                  <div
+                    key={slot}
+                    style={{
+                      height: SLOT_H,
+                      borderTop: slot.endsWith(':00') ? '1px solid #DFE3EB' : '1px solid #F0F3F7',
+                    }}
+                  />
+                ))}
+
+                {/* Meeting blocks */}
+                {dayMeetings.map(m => {
+                  const details = parseMeeting(m);
+                  const startISO = details.start_time || m.due_date;
+                  if (!startISO) return null;
+
+                  const startDate = new Date(startISO);
+                  const startH = startDate.getHours();
+                  const startM = startDate.getMinutes();
+                  const startSlotMinutes = (startH - FIRST_HOUR) * 60 + startM;
+                  const topPx = (startSlotMinutes / 30) * SLOT_H;
+
+                  const durationMin = details.duration_minutes || 30;
+                  const heightPx = Math.max(SLOT_H, (durationMin / 30) * SLOT_H);
+
+                  const color = details.outcome
+                    ? (OUTCOME_COLORS[details.outcome] || '#0091AE')
+                    : '#0091AE';
+
+                  return (
+                    <div
+                      key={m.id}
+                      title={`${m.title}\n${fmtDateTime(startISO)}`}
+                      style={{
+                        position: 'absolute',
+                        top: topPx,
+                        left: 2,
+                        right: 2,
+                        height: heightPx,
+                        backgroundColor: `${color}22`,
+                        borderLeft: `3px solid ${color}`,
+                        borderRadius: 3,
+                        padding: '2px 5px',
+                        overflow: 'hidden',
+                        zIndex: 2,
+                        cursor: 'default',
+                      }}
+                    >
+                      <p className="text-[10px] font-semibold truncate leading-tight" style={{ color }}>
+                        {m.title}
+                      </p>
+                      <p className="text-[9px] truncate" style={{ color: '#516F90' }}>
+                        {startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                        {durationMin ? ` · ${durationMin}min` : ''}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════════════════════════ */
@@ -248,6 +439,7 @@ const PAGE_SIZES = [10, 25, 50, 100];
 
 export default function MeetingsPage() {
   const { activities, addActivity } = useActivities();
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [showDrawer, setShowDrawer] = useState(false);
   const [search, setSearch] = useState('');
   const [sortCol, setSortCol] = useState('created_at');
@@ -403,9 +595,25 @@ export default function MeetingsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2]">
-            <MoreHorizontal className="w-4 h-4" />
-          </button>
+          {/* View toggle */}
+          <div className="flex items-center border border-[#DFE3EB] rounded-[3px] overflow-hidden">
+            <button
+              onClick={() => setViewMode('list')}
+              title="List view"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold transition-colors"
+              style={{ backgroundColor: viewMode === 'list' ? '#2D3E50' : '#fff', color: viewMode === 'list' ? '#fff' : '#425B76' }}
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              title="Calendar view"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold transition-colors"
+              style={{ backgroundColor: viewMode === 'calendar' ? '#2D3E50' : '#fff', color: viewMode === 'calendar' ? '#fff' : '#425B76', borderLeft: '1px solid #DFE3EB' }}
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+            </button>
+          </div>
           <button
             onClick={() => setShowDrawer(true)}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white rounded-[3px] transition-colors"
@@ -417,6 +625,12 @@ export default function MeetingsPage() {
           </button>
         </div>
       </div>
+
+      {/* ── Calendar view ── */}
+      {viewMode === 'calendar' && <CalendarView meetings={meetings} />}
+
+      {/* ── List-only content ── */}
+      {viewMode === 'list' && <>
 
       {/* ── Toolbar: search + view controls ── */}
       <div className="flex items-center gap-2 px-5 py-2.5 border-b border-[#DFE3EB] bg-white">
@@ -739,6 +953,8 @@ export default function MeetingsPage() {
           )}
         </div>
       </div>
+
+      </>}
 
       {/* Log Meeting Drawer */}
       <LogMeetingDrawer

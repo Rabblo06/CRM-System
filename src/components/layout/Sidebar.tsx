@@ -10,6 +10,7 @@ import {
   Ticket, Package, Filter, Inbox, Phone, MessageSquare,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useNotificationBadges } from '@/hooks/useNotificationBadges';
 
 /* ── All CRM items by category ─────────────────────────── */
 type NavItem = { id: string; name: string; href: string; icon: React.ElementType };
@@ -46,7 +47,7 @@ const DEFAULT_PINS = ['dashboard', 'contacts', 'companies', 'deals', 'tasks'];
 function itemById(id: string) { return ALL_ITEMS.find((i) => i.id === id)!; }
 
 /* ── Sidebar nav link ───────────────────────────────────── */
-function NavLink({ item, isActive, onClick }: { item: NavItem; isActive: boolean; onClick?: () => void }) {
+function NavLink({ item, isActive, badge = 0, onClick }: { item: NavItem; isActive: boolean; badge?: number; onClick?: () => void }) {
   return (
     <Link
       href={item.href}
@@ -58,6 +59,20 @@ function NavLink({ item, isActive, onClick }: { item: NavItem; isActive: boolean
     >
       <item.icon size={15} style={{ color: isActive ? '#fff' : '#7C98B6', flexShrink: 0 }} />
       <span className="flex-1 truncate">{item.name}</span>
+      {badge > 0 && (
+        <span
+          className="flex-shrink-0 flex items-center justify-center rounded-full text-white font-bold"
+          style={{
+            backgroundColor: isActive ? 'rgba(255,255,255,0.35)' : '#FF7A59',
+            fontSize: 9,
+            minWidth: 16,
+            height: 16,
+            padding: '0 4px',
+          }}
+        >
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </Link>
   );
 }
@@ -279,6 +294,21 @@ export function Sidebar() {
     window.location.href = '/login';
   };
 
+  const { badges, markInboxRead, markTasksRead, markMeetingsRead } = useNotificationBadges();
+
+  const badgeFor = (id: string) => {
+    if (id === 'inbox') return badges.inbox;
+    if (id === 'tasks') return badges.tasks;
+    if (id === 'meetings') return badges.meetings;
+    return 0;
+  };
+
+  const markReadFor = (id: string) => {
+    if (id === 'inbox') markInboxRead();
+    else if (id === 'tasks') markTasksRead();
+    else if (id === 'meetings') markMeetingsRead();
+  };
+
   const pinnedItems = pinnedIds.map(itemById).filter(Boolean) as NavItem[];
 
   return (
@@ -312,7 +342,8 @@ export function Sidebar() {
                 key={item.id}
                 item={item}
                 isActive={pathname === item.href || pathname.startsWith(item.href + '/')}
-                onClick={() => setMegaOpen(false)}
+                badge={badgeFor(item.id)}
+                onClick={() => { setMegaOpen(false); markReadFor(item.id); }}
               />
             ))}
           </div>
