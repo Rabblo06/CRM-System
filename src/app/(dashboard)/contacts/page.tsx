@@ -312,7 +312,7 @@ export default function ContactsPage() {
     // Active filters
     filters.forEach(f => {
       result = result.filter(c => {
-        const val = (c as Record<string, unknown>)[f.prop];
+        const val = (c as unknown as Record<string, unknown>)[f.prop];
         return typeof val === 'string' && val === f.value;
       });
     });
