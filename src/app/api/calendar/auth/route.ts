@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiErr, apiTooManyRequests, getClientIp } from '@/lib/api-error';
+import { apiErr, apiTooManyRequests, getClientIp, getServerUserId } from '@/lib/api-error';
 import { authLimiter } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
@@ -11,8 +11,8 @@ export async function GET(request: NextRequest) {
     return apiTooManyRequests(rl.retryAfter);
   }
 
-  const userId = request.nextUrl.searchParams.get('user_id');
-  if (!userId) return apiErr('Missing user_id', 400);
+  const userId = await getServerUserId(request);
+  if (!userId) return apiErr('Unauthorized', 401);
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   if (!clientId) {

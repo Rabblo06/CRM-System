@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getClientIp, apiTooManyRequests } from '@/lib/api-error';
+import { getClientIp, apiTooManyRequests, getServerUserId } from '@/lib/api-error';
 import { apiLimiter } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
   const rl = apiLimiter.check(ip);
   if (!rl.ok) return apiTooManyRequests(rl.retryAfter);
 
-  const userId = request.nextUrl.searchParams.get('user_id');
-  if (!userId) return new Response('Missing user_id', { status: 400 });
+  const userId = await getServerUserId(request);
+  if (!userId) return new Response('Unauthorized', { status: 401 });
 
   const encoder = new TextEncoder();
 

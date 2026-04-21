@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { apiOk, apiErr, apiTooManyRequests, getClientIp, withRoute } from '@/lib/api-error';
+import { apiOk, apiErr, apiTooManyRequests, getClientIp, getServerUserId, withRoute } from '@/lib/api-error';
 import { apiLimiter } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
@@ -56,12 +56,12 @@ export const GET = withRoute(async (request: NextRequest) => {
   const rl = apiLimiter.check(ip);
   if (!rl.ok) return apiTooManyRequests(rl.retryAfter);
 
+  const userId = await getServerUserId(request);
+  if (!userId) return apiErr('Unauthorized', 401);
+
   const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('user_id');
   const timeMin = searchParams.get('time_min');
   const timeMax = searchParams.get('time_max');
-
-  if (!userId) return apiErr('Missing user_id', 400);
 
   const accessToken = await getValidToken(userId);
   if (!accessToken) {
@@ -115,17 +115,19 @@ export const POST = withRoute(async (request: NextRequest) => {
   const rl = apiLimiter.check(ip);
   if (!rl.ok) return apiTooManyRequests(rl.retryAfter);
 
+  const userId = await getServerUserId(request);
+  if (!userId) return apiErr('Unauthorized', 401);
+
   const body = await request.json().catch(() => null);
   if (!body) return apiErr('Invalid request body', 400);
 
-  const { user_id, title, startDateTime, endDateTime, attendees, location, description, reminderMinutes } = body;
+  const { title, startDateTime, endDateTime, attendees, location, description, reminderMinutes } = body;
 
-  if (!user_id) return apiErr('Missing user_id', 400);
   if (!title || !startDateTime || !endDateTime) {
     return apiErr('title, startDateTime, and endDateTime are required', 400);
   }
 
-  const accessToken = await getValidToken(user_id);
+  const accessToken = await getValidToken(userId);
   if (!accessToken) {
     return apiErr('No valid calendar token. Please reconnect Google Calendar.', 401);
   }
@@ -161,7 +163,7 @@ export const POST = withRoute(async (request: NextRequest) => {
   }
 
   const created = await res.json();
-  logger.info('calendar/events POST: created', { eventId: created.id, userId: user_id });
+  logger.info('calendar/events POST: created', { eventId: created.id, userId });
   return apiOk({
     id: created.id,
     title: created.summary,

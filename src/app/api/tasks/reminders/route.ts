@@ -33,10 +33,11 @@ export async function GET(request: NextRequest) {
   const rl = cronLimiter.check(ip);
   if (!rl.ok) return apiTooManyRequests(rl.retryAfter);
 
-  // Secret guard for external cron callers
+  // All external requests must supply the CRON_SECRET
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get('secret');
-  if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || secret !== cronSecret) {
     const origin = request.headers.get('origin') || '';
     const host = request.headers.get('host') || '';
     const isInternal = !origin || origin.includes(host);

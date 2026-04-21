@@ -45,6 +45,7 @@ export function validateStartupEnv(): void {
     'NEXT_PUBLIC_SUPABASE_URL',
     'NEXT_PUBLIC_SUPABASE_ANON_KEY',
     'SUPABASE_SERVICE_ROLE_KEY',
+    'CRON_SECRET',
   ];
 
   const missing: string[] = [];
@@ -71,7 +72,6 @@ export function validateStartupEnv(): void {
     TWILIO_ACCOUNT_SID:    'Phone verification will not work',
     TWILIO_AUTH_TOKEN:     'Phone verification will not work',
     TWILIO_PHONE_NUMBER:   'Phone verification will not work',
-    CRON_SECRET:           'Cron endpoints are unprotected — consider setting this in production',
   };
 
   for (const [name, consequence] of Object.entries(optional)) {
