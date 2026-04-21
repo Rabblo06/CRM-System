@@ -39,7 +39,7 @@ const AUTH_ONLY = ['/login'];
  */
 const PUBLIC_ALWAYS = ['/reset-password', '/auth'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Demo mode: skip all auth checks
