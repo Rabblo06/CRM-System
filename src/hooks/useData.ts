@@ -182,9 +182,11 @@ export function useCompanies() {
   const fetchCompanies = useCallback(async () => {
     setLoading(true);
     try {
+      const userId = await getCurrentUserId();
       const { data, error } = await supabase
         .from('companies')
         .select('*')
+        .eq('created_by', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       setCompanies(data || []);
@@ -267,9 +269,11 @@ export function useDeals() {
   const fetchDeals = useCallback(async () => {
     setLoading(true);
     try {
+      const userId = await getCurrentUserId();
       const { data, error } = await supabase
         .from('deals')
         .select('*, company:companies(*)')
+        .eq('created_by', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       setDeals(data || []);
