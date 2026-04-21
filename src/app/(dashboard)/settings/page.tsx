@@ -140,7 +140,37 @@ function SettingsPageInner() {
     setCountryCode('+1');
   };
   const [showGmailModal, setShowGmailModal] = useState(false);
+  const [showDisconnectPopup, setShowDisconnectPopup] = useState(false);
+  const [disconnectCountdown, setDisconnectCountdown] = useState(10);
   const { isConnected: gmailConnected, gmailEmail, connectGmail, disconnectGmail } = useEmailSync();
+
+  const handleDisconnectGmail = async () => {
+    disconnectGmail();
+    // Delete contacts and companies from Supabase
+    const { createBrowserClient } = await import('@supabase/ssr');
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('contacts').delete().eq('created_by', user.id);
+      await supabase.from('companies').delete().eq('created_by', user.id);
+      await supabase.from('synced_emails').delete().eq('user_id', user.id);
+      await supabase.from('google_tokens').delete().eq('user_id', user.id);
+    }
+    setShowDisconnectPopup(true);
+    let count = 10;
+    setDisconnectCountdown(count);
+    const interval = setInterval(() => {
+      count--;
+      setDisconnectCountdown(count);
+      if (count <= 0) {
+        clearInterval(interval);
+        window.location.reload();
+      }
+    }, 1000);
+  };
 
   const handleSave = () => {
     setSaved(true);
@@ -275,7 +305,7 @@ function SettingsPageInner() {
                     </div>
                   </div>
                   {gmailConnected ? (
-                    <Button variant="outline" size="sm" onClick={disconnectGmail} className="text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
+                    <Button variant="outline" size="sm" onClick={handleDisconnectGmail} className="text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
                   ) : (
                     <Button variant="outline" size="sm" onClick={() => setShowGmailModal(true)}>Connect</Button>
                   )}
@@ -337,6 +367,28 @@ function SettingsPageInner() {
                 onConnected={(email, _name) => { connectGmail(email); setShowGmailModal(false); }}
                 onClose={() => setShowGmailModal(false)}
               />
+            )}
+
+            {showDisconnectPopup && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
+                  <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
+                    <Check className="w-7 h-7 text-green-500" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[#2D3E50] mb-2">Disconnected Successfully</h3>
+                  <p className="text-sm text-[#7C98B6] mb-6">
+                    Your Gmail has been disconnected and all synced contacts, companies and emails have been removed.
+                    Reloading in <span className="font-bold text-[#2D3E50]">{disconnectCountdown}s</span>…
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="w-full py-2.5 rounded-lg text-sm font-bold text-white"
+                    style={{ backgroundColor: '#2D3E50' }}
+                  >
+                    Go Back Now
+                  </button>
+                </div>
+              </div>
             )}
           </>
         )}
