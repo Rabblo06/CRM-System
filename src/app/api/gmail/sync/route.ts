@@ -184,10 +184,7 @@ export async function GET(request: NextRequest) {
                   } else {
                     const { data: created, error: compErr } = await supabase
                       .from('companies')
-                      .upsert(
-                        { name: companyInfo.name, domain: companyInfo.domain, created_by: userId },
-                        { onConflict: 'domain,created_by', ignoreDuplicates: false }
-                      )
+                      .insert({ name: companyInfo.name, domain: companyInfo.domain, created_by: userId })
                       .select('id')
                       .single();
                     if (compErr) logger.error('gmail/sync: company insert error', { err: compErr.message, domain: companyInfo.domain });
@@ -216,7 +213,7 @@ export async function GET(request: NextRequest) {
                   const parts = fromName.split(' ').filter(Boolean);
                   const { data: created, error: contactErr } = await supabase
                     .from('contacts')
-                    .insert({
+                    .upsert({
                       first_name: parts[0] || fromEmail.split('@')[0],
                       last_name: parts.slice(1).join(' ') || '',
                       email: fromEmail,
@@ -225,7 +222,7 @@ export async function GET(request: NextRequest) {
                       lead_status: 'new',
                       lifecycle_stage: 'lead',
                       is_active: true,
-                    })
+                    }, { onConflict: 'email', ignoreDuplicates: true })
                     .select('id')
                     .single();
                   if (contactErr) logger.error('gmail/sync: contact insert error', { err: contactErr.message, email: fromEmail });
