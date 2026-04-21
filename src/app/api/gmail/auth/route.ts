@@ -20,7 +20,9 @@ export async function GET(request: NextRequest) {
     return apiErr('Google OAuth is not configured on this server', 503);
   }
 
-  const origin = request.nextUrl.origin;
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.host;
+  const proto = request.headers.get('x-forwarded-proto') || request.nextUrl.protocol.replace(':', '');
+  const origin = `${proto}://${host}`;
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: `${origin}/api/gmail/callback`,

@@ -10,7 +10,10 @@ function adminClient() {
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.host;
+  const proto = request.headers.get('x-forwarded-proto') || 'https';
+  const origin = `${proto}://${host}`;
   const code  = searchParams.get('code');
   const state = searchParams.get('state'); // user_id (UUID)
   const oauthError = searchParams.get('error');
