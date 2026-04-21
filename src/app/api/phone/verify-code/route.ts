@@ -1,26 +1,43 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { pendingCodes } from '@/lib/phoneCodes';
+import { apiOk, apiErr, apiTooManyRequests, getClientIp, withRoute } from '@/lib/api-error';
+import { phoneLimiter } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
-export async function POST(req: NextRequest) {
-  const { phone, code } = await req.json();
-  if (!phone || !code) return NextResponse.json({ error: 'Phone and code are required' }, { status: 400 });
+export const POST = withRoute(async (req: NextRequest) => {
+  const ip = getClientIp(req);
+  // Reuse the phone limiter to prevent brute-force code guessing
+  const rl = phoneLimiter.check(`verify:${ip}`);
+  if (!rl.ok) {
+    logger.warn('Rate limit hit on phone/verify-code', { ip });
+    return apiTooManyRequests(rl.retryAfter);
+  }
+
+  const body = await req.json().catch(() => ({})) as { phone?: string; code?: string };
+  const { phone, code } = body;
+
+  if (!phone || !code) {
+    return apiErr('Phone and code are required', 400);
+  }
 
   const entry = pendingCodes.get(phone);
 
   if (!entry) {
-    return NextResponse.json({ error: 'No verification code found. Please request a new one.' }, { status: 400 });
+    return apiErr('No verification code found. Please request a new one.', 400);
   }
 
   if (Date.now() > entry.expiresAt) {
     pendingCodes.delete(phone);
-    return NextResponse.json({ error: 'Code expired. Please request a new one.' }, { status: 400 });
+    return apiErr('Code expired. Please request a new one.', 400);
   }
 
   if (entry.code !== String(code).trim()) {
-    return NextResponse.json({ error: 'Incorrect code. Please try again.' }, { status: 400 });
+    logger.warn('Incorrect verification code attempt', { phone: phone.slice(0, 6) + '****' });
+    return apiErr('Incorrect code. Please try again.', 400);
   }
 
-  // Code is valid — clean up
   pendingCodes.delete(phone);
-  return NextResponse.json({ success: true });
-}
+  phoneLimiter.reset(`verify:${ip}`); // reset on success
+  logger.info('Phone verification successful', { phone: phone.slice(0, 6) + '****' });
+  return apiOk({ success: true });
+});

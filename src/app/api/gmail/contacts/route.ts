@@ -1,16 +1,23 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getClientIp, apiTooManyRequests } from '@/lib/api-error';
+import { apiLimiter } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
 function adminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 }
 
 export async function GET(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rl = apiLimiter.check(ip);
+  if (!rl.ok) return apiTooManyRequests(rl.retryAfter);
+
   const userId = request.nextUrl.searchParams.get('user_id');
   if (!userId) return new Response('Missing user_id', { status: 400 });
 
@@ -32,14 +39,13 @@ export async function GET(request: NextRequest) {
           .single();
 
         if (!tokenRow) {
-          send({ type: 'error', message: 'No Gmail token found' });
+          send({ type: 'error', message: 'No Gmail connection found. Please connect Gmail first.' });
           controller.close();
           return;
         }
 
-        let accessToken = tokenRow.access_token;
+        const accessToken = tokenRow.access_token;
 
-        // Fetch Google Contacts via People API
         let pageToken: string | undefined;
         let imported = 0;
 
@@ -55,7 +61,8 @@ export async function GET(request: NextRequest) {
           const data = await res.json();
 
           if (data.error) {
-            send({ type: 'error', message: data.error.message });
+            logger.error('gmail/contacts: People API error', { msg: data.error.message });
+            send({ type: 'error', message: 'Failed to fetch Google Contacts. Please reconnect Gmail.' });
             break;
           }
 
@@ -78,7 +85,6 @@ export async function GET(request: NextRequest) {
               const phone = phones[0]?.value || null;
               const orgName = orgs[0]?.name || null;
 
-              // Find or create company
               let companyId: string | null = null;
               if (orgName) {
                 const { data: co } = await supabase
@@ -100,7 +106,6 @@ export async function GET(request: NextRequest) {
                 }
               }
 
-              // Upsert contact
               await supabase.from('contacts').upsert(
                 {
                   first_name: givenName,
@@ -114,13 +119,15 @@ export async function GET(request: NextRequest) {
                   is_active: true,
                   source: 'google_contacts',
                 },
-                { onConflict: 'email' }
+                { onConflict: 'email' },
               );
 
               imported++;
               if (imported % 10 === 0) send({ type: 'progress', imported });
-            } catch {
-              // Skip individual contact failures
+            } catch (personErr) {
+              logger.warn('gmail/contacts: skipping person due to error', {
+                err: personErr instanceof Error ? personErr.message : String(personErr),
+              });
             }
           }
 
@@ -128,10 +135,13 @@ export async function GET(request: NextRequest) {
           pageToken = data.nextPageToken;
         }
 
+        logger.info('gmail/contacts: sync complete', { userId, imported });
         send({ type: 'complete', imported });
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Contacts sync failed';
-        send({ type: 'error', message });
+        logger.error('gmail/contacts: fatal error', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+        send({ type: 'error', message: 'Contacts sync failed. Please try again.' });
       } finally {
         try { controller.close(); } catch {}
       }

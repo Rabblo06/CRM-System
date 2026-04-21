@@ -31,7 +31,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useCompanies, useContacts } from '@/hooks/useData';
+import { useCompanies, useContacts, useEmailTemplates, useTasks } from '@/hooks/useData';
+import type { EmailTemplate } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { useEmailSync } from '@/hooks/useEmailSync';
 import { getInitials, formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
@@ -39,6 +40,19 @@ import { mockDeals } from '@/lib/mockData';
 import { useActivities } from '@/hooks/useActivities';
 import { EmailActivityCard } from '@/components/emails/EmailActivityCard';
 import { ConnectEmailModal } from '@/components/emails/ConnectEmailModal';
+import CreateTaskModal from '@/components/tasks/CreateTaskModal';
+import ScheduleMeetingModal from '@/components/meetings/ScheduleMeetingModal';
+
+function addBusinessDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  let added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    const day = result.getDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return result;
+}
 
 type ActivityTab = 'note' | 'email' | 'call' | 'task' | 'meet';
 
@@ -68,6 +82,8 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
   const company = companies.find((c) => c.id === id);
 
   const { activities: companyActivities, addActivity } = useActivities(undefined, id);
+  const { templates: emailTemplates } = useEmailTemplates();
+  const { createTask: createTaskInDB } = useTasks();
   const [activityFilter, setActivityFilter] = useState<'all' | 'note' | 'email' | 'call' | 'task' | 'meeting'>('all');
 
   const [activeTab, setActiveTab] = useState<ActivityTab>('note');
@@ -89,6 +105,9 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showConnectEmailModal, setShowConnectEmailModal] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   // Call / Task / Meeting form state
   const [callNotes, setCallNotes] = useState('');
@@ -103,6 +122,22 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
     noteEditorRef.current?.focus();
     document.execCommand(cmd, false);
   }, []);
+
+  const applyTemplate = useCallback((template: EmailTemplate) => {
+    const vars: Record<string, string> = {
+      company_name: company?.name || '',
+      first_name: '',
+      last_name: '',
+      full_name: company?.name || '',
+    };
+    const fill = (text: string) =>
+      text.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? `{{${k}}}`);
+    setEmailSubject(fill(template.subject));
+    if (emailEditorRef.current) {
+      emailEditorRef.current.innerHTML = fill(template.body).replace(/\n/g, '<br>');
+    }
+    setShowTemplatePicker(false);
+  }, [company]);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['company_info', 'contacts', 'deals'])
   );
@@ -218,8 +253,12 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                   onClick={() => {
                     if (tab === 'note') { openNote(); return; }
                     if (tab === 'email') { openEmail(); return; }
+                    if (tab === 'task') { setShowTaskModal(true); return; }
+                    if (tab === 'meet') { setShowMeetingModal(true); return; }
+                    // Call: switch to Activities tab so the call form is visible
                     setActiveTab(tab);
                     setActiveButton(tab);
+                    setMainTab('activities');
                   }}
                   className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg text-xs transition-colors ${
                     activeButton === tab
@@ -411,6 +450,8 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                     onClick={() => {
                       if (id === 'note') { openNote(); return; }
                       if (id === 'email') { openEmail(); return; }
+                      if (id === 'task') { setShowTaskModal(true); return; }
+                      if (id === 'meet') { setShowMeetingModal(true); return; }
                       setActiveTab(id as ActivityTab);
                       setActiveButton(id);
                     }}
@@ -498,8 +539,29 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                       size="sm"
                       className="text-xs h-7"
                       disabled={!taskTitle.trim()}
-                      onClick={() => {
+                      onClick={async () => {
+                        // 1. Add to activity feed on the company page
                         addActivity({ type: 'task', title: taskTitle, company_id: id, due_date: taskDate || undefined, priority: taskPriority });
+
+                        // 2. Also write to the tasks table so it shows on the Tasks page
+                        try {
+                          const { data: { session } } = await supabase.auth.getSession();
+                          if (session?.access_token) {
+                            await fetch('/api/tasks', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                              body: JSON.stringify({
+                                title: taskTitle,
+                                due_date: taskDate ? new Date(taskDate).toISOString() : undefined,
+                                priority: taskPriority || 'medium',
+                                status: 'todo',
+                                task_type: 'To-do',
+                                company_id: id,
+                              }),
+                            });
+                          }
+                        } catch { /* non-fatal */ }
+
                         setTaskTitle(''); setTaskDate(''); setTaskPriority('medium');
                         setMainTab('activities');
                       }}
@@ -737,6 +799,69 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
         />
       )}
 
+      {/* Create task modal */}
+      {showTaskModal && (
+        <CreateTaskModal
+          contactName={company.name}
+          onClose={() => setShowTaskModal(false)}
+          onSave={async (task) => {
+            addActivity({
+              type: 'task',
+              title: task.title,
+              description: task.notes || '',
+              company_id: id,
+              due_date: task.dueDate || undefined,
+              priority: task.priority,
+            });
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.access_token) {
+                const reminderMap: Record<string, number> = { at_due: 0, '15min': 15, '1hour': 60, '1day': 1440 };
+                const reminder_minutes = task.reminder !== 'none' ? (reminderMap[task.reminder] ?? null) : null;
+                const due_date = task.dueDate ? new Date(`${task.dueDate}T${task.dueTime || '09:00'}`).toISOString() : undefined;
+                await fetch('/api/tasks', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                  body: JSON.stringify({
+                    title: task.title,
+                    description: task.notes || '',
+                    due_date,
+                    priority: task.priority === 'none' ? 'medium' : (task.priority || 'medium'),
+                    status: 'todo',
+                    task_type: task.taskType === 'call' ? 'Call' : task.taskType === 'email' ? 'Email' : 'To-do',
+                    company_id: id,
+                    reminder_minutes,
+                  }),
+                });
+              }
+            } catch { /* non-fatal */ }
+            setShowTaskModal(false);
+            setMainTab('activities');
+          }}
+        />
+      )}
+
+      {/* Schedule meeting modal */}
+      {showMeetingModal && (
+        <ScheduleMeetingModal
+          contextName={company.name}
+          contextType="company"
+          onClose={() => setShowMeetingModal(false)}
+          onSave={(meeting) => {
+            addActivity({
+              type: 'meeting',
+              title: meeting.title,
+              description: meeting.description || meeting.internalNote || undefined,
+              company_id: id,
+              due_date: meeting.startDate ? new Date(`${meeting.startDate}T${meeting.startTime}`).toISOString() : undefined,
+              location: meeting.location || undefined,
+            });
+            setShowMeetingModal(false);
+            setMainTab('activities');
+          }}
+        />
+      )}
+
       {/* ── Note floating modal ───────────────────────────── */}
       {showNoteModal && (
         <div
@@ -807,6 +932,16 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                 const text = noteEditorRef.current?.innerText?.trim() || noteText.trim();
                 if (!text) return;
                 addActivity({ type: 'note', title: text.slice(0, 80), description: html || text, company_id: id });
+                if (noteTodo && company) {
+                  createTaskInDB({
+                    title: `Follow up with ${company.name}`,
+                    due_date: addBusinessDays(new Date(), 3).toISOString(),
+                    priority: 'medium',
+                    status: 'todo',
+                    task_type: 'To-do',
+                    company_id: id,
+                  });
+                }
                 closeModals();
                 setNoteText('');
                 setNoteTodo(false);
@@ -952,7 +1087,48 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
             </div>
             {emailError && <span className="text-xs text-red-500">{emailError}</span>}
             <div className="flex items-center gap-2">
-              <button className="text-xs text-[#516F90] hover:text-[#2D3E50]">Use template</button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowTemplatePicker(v => !v)}
+                  className="text-xs text-[#516F90] hover:text-[#2D3E50] whitespace-nowrap"
+                >
+                  Use template
+                </button>
+                {showTemplatePicker && (
+                  <div className="absolute bottom-full right-0 mb-2 bg-white border border-[#DFE3EB] rounded-lg shadow-xl z-50 overflow-hidden" style={{ width: 260 }}>
+                    <div className="px-3 py-2 border-b border-[#DFE3EB] flex items-center justify-between">
+                      <p className="text-xs font-semibold text-[#2D3E50]">Email Templates</p>
+                      <button onClick={() => setShowTemplatePicker(false)} className="text-[#99ACC2] hover:text-[#516F90]">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="max-h-56 overflow-y-auto">
+                      {emailTemplates.length === 0 ? (
+                        <div className="px-3 py-4 text-center">
+                          <p className="text-xs text-[#7C98B6]">No templates yet.</p>
+                          <Link href="/emails" className="text-xs text-[#FF7A59] hover:underline">Create one in Email Templates</Link>
+                        </div>
+                      ) : (
+                        emailTemplates.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => applyTemplate(t)}
+                            className="w-full text-left px-3 py-2.5 hover:bg-[#F6F9FC] transition-colors border-b border-[#F0F3F7] last:border-0"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-xs font-medium text-[#2D3E50] truncate">{t.name}</p>
+                              {t.category && (
+                                <span className="text-[10px] text-[#7C98B6] bg-[#F0F3F7] px-1.5 py-0.5 rounded flex-shrink-0">{t.category}</span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-[#99ACC2] mt-0.5 truncate">{t.subject}</p>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
               <Button
                 size="sm"
                 disabled={!emailSubject.trim() || !emailTo.trim() || emailSending}

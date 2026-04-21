@@ -1,7 +1,8 @@
 'use client';
 
-import { use, useState, useEffect, useRef, useCallback } from 'react';
+import { use, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Mail,
@@ -31,7 +32,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { useContacts, useEmailTemplates } from '@/hooks/useData';
+import { useContacts, useEmailTemplates, useTasks } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
 import { useEmailSync } from '@/hooks/useEmailSync';
 import { getInitials, getLeadStatusColor, formatDate, formatRelativeTime } from '@/lib/utils';
@@ -44,7 +45,19 @@ import { ConnectEmailModal } from '@/components/emails/ConnectEmailModal';
 import LogCallModal from '@/components/calls/LogCallModal';
 import MakeCallModal from '@/components/calls/MakeCallModal';
 import CreateTaskModal from '@/components/tasks/CreateTaskModal';
+import ScheduleMeetingModal from '@/components/meetings/ScheduleMeetingModal';
 import type { Contact, EmailTemplate } from '@/types';
+
+function addBusinessDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  let added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    const day = result.getDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return result;
+}
 
 const ACTIVITY_ICONS: Record<string, React.ReactNode> = {
   call: <PhoneCall className="w-3.5 h-3.5 text-green-400" />,
@@ -72,6 +85,10 @@ type ActivityTab = 'note' | 'email' | 'call' | 'task' | 'meet';
 
 export default function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const taskIdFromUrl = searchParams.get('taskId');
+
   const { updateContact } = useContacts();
   const { isConnected: gmailConnected, gmailEmail, getEmailsForContact, deleteEmail } = useEmailSync();
   const { templates: emailTemplates } = useEmailTemplates();
@@ -124,6 +141,87 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
   const loading = contact === undefined;
 
   const { activities: contactActivities, addActivity } = useActivities(id);
+  const { tasks: allTasks, updateTask: updateTaskInDB, createTask: createTaskInDB } = useTasks();
+
+  // Task context — when navigated from Tasks page with ?taskId=
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+
+  const activeTaskQueue = useMemo(() => {
+    // All non-completed tasks sorted by due_date then created_at
+    return [...allTasks]
+      .filter(t => t.status !== 'completed')
+      .sort((a, b) => {
+        if (a.due_date && b.due_date) return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+        if (a.due_date) return -1;
+        if (b.due_date) return 1;
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
+  }, [allTasks]);
+
+  const currentTaskIndex = taskIdFromUrl
+    ? activeTaskQueue.findIndex(t => t.id === taskIdFromUrl)
+    : -1;
+  const currentTask = currentTaskIndex >= 0 ? activeTaskQueue[currentTaskIndex] : null;
+  const prevTask = currentTaskIndex > 0 ? activeTaskQueue[currentTaskIndex - 1] : null;
+  const nextTask = currentTaskIndex >= 0 && currentTaskIndex < activeTaskQueue.length - 1
+    ? activeTaskQueue[currentTaskIndex + 1]
+    : null;
+
+  const handleCompleteTask = async () => {
+    if (!currentTask) return;
+    await updateTaskInDB(currentTask.id, { status: 'completed', completed_at: new Date().toISOString() });
+    if (nextTask?.contact_id) {
+      router.push(`/contacts/${nextTask.contact_id}?taskId=${nextTask.id}`);
+    } else if (nextTask) {
+      router.push(`/tasks`);
+    } else {
+      router.push('/tasks');
+    }
+  };
+
+  const handleRescheduleTask = async () => {
+    if (!currentTask || !rescheduleDate) return;
+    await updateTaskInDB(currentTask.id, { due_date: new Date(rescheduleDate).toISOString() });
+    setShowReschedule(false);
+    setRescheduleDate('');
+  };
+
+  const navigateToTask = (task: typeof currentTask) => {
+    if (!task) return;
+    if (task.contact_id) {
+      router.push(`/contacts/${task.contact_id}?taskId=${task.id}`);
+    } else {
+      router.push('/tasks');
+    }
+  };
+
+  // Tasks from the tasks table for this contact, merged as 'task' activities
+  const contactTasks = allTasks.filter(t => t.contact_id === id);
+
+  // Merge activities + tasks-table tasks into one unified feed, deduplicated by title+date
+  const mergedActivities = (() => {
+    const activityTitles = new Set(
+      contactActivities.filter(a => a.type === 'task').map(a => `${a.title}|${a.due_date || ''}`)
+    );
+    const taskItems = contactTasks
+      .filter(t => !activityTitles.has(`${t.title}|${t.due_date || ''}`))
+      .map(t => ({
+        id: `task-db-${t.id}`,
+        type: 'task' as const,
+        title: t.title,
+        description: t.description || '',
+        contact_id: id,
+        due_date: t.due_date,
+        priority: t.priority,
+        created_at: t.created_at,
+        _taskRef: t, // keep full task for status toggle
+      }));
+    return [...contactActivities, ...taskItems].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  })();
+
   const [activityFilter, setActivityFilter] = useState<'all' | 'note' | 'email' | 'call' | 'task' | 'meeting'>('all');
 
   const [activeTab, setActiveTab] = useState<ActivityTab>('note');
@@ -147,6 +245,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
   const [showCallModal, setShowCallModal] = useState(false);
   const [showMakeCallModal, setShowMakeCallModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
   const [noteTodo, setNoteTodo] = useState(false);
 
   // Call / Task / Meeting form state
@@ -267,20 +366,104 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="flex flex-col h-full">
-      {/* Top bar */}
-      <div className="flex items-center gap-3 px-6 py-3 border-b border-[#DFE3EB]">
-        <Link
-          href="/contacts"
-          className="inline-flex items-center gap-1.5 text-[#516F90] hover:text-[#2D3E50] text-sm transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Contacts
-        </Link>
-        <span className="text-[#99ACC2]">/</span>
-        <span className="text-sm text-[#2D3E50] font-medium">
-          {contact.first_name} {contact.last_name}
-        </span>
-      </div>
+      {/* Top bar — task context OR normal breadcrumb */}
+      {taskIdFromUrl && currentTask ? (
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#DFE3EB] bg-white flex-shrink-0" style={{ minHeight: 48 }}>
+          {/* Left: back to Tasks */}
+          <div className="flex items-center gap-3">
+            <Link href="/tasks" className="inline-flex items-center gap-1 text-sm text-[#516F90] hover:text-[#2D3E50] transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Tasks</span>
+            </Link>
+            <span className="text-[#99ACC2] text-sm">|</span>
+            <span className="text-sm font-semibold text-[#2D3E50] truncate max-w-[300px]">{currentTask.title}</span>
+          </div>
+
+          {/* Center: task navigation */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigateToTask(prevTask)}
+              disabled={!prevTask}
+              className="w-7 h-7 flex items-center justify-center rounded border border-[#DFE3EB] text-[#516F90] hover:bg-[#F0F3F7] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <span className="text-xs font-medium text-[#516F90] px-1">
+              Task {currentTaskIndex + 1}/{activeTaskQueue.length}
+            </span>
+            <button
+              onClick={() => navigateToTask(nextTask)}
+              disabled={!nextTask}
+              className="w-7 h-7 flex items-center justify-center rounded border border-[#DFE3EB] text-[#516F90] hover:bg-[#F0F3F7] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+
+          {/* Right: Reschedule + Complete + Close */}
+          <div className="flex items-center gap-2 relative">
+            {/* Reschedule */}
+            <div className="relative">
+              <button
+                onClick={() => setShowReschedule(v => !v)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-[#DFE3EB] rounded-[3px] bg-white hover:bg-[#F0F3F7] text-[#425B76] transition-colors"
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                Reschedule
+              </button>
+              {showReschedule && (
+                <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl p-3 w-64">
+                  <p className="text-xs font-semibold text-[#425B76] mb-2">New due date</p>
+                  <input
+                    type="datetime-local"
+                    value={rescheduleDate}
+                    onChange={e => setRescheduleDate(e.target.value)}
+                    className="w-full h-8 px-2 text-xs border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50]"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={handleRescheduleTask}
+                      disabled={!rescheduleDate}
+                      className="flex-1 py-1.5 text-xs font-bold text-white rounded-[3px] disabled:opacity-40"
+                      style={{ backgroundColor: '#FF7A59' }}
+                    >Save</button>
+                    <button onClick={() => setShowReschedule(false)} className="px-3 py-1.5 text-xs text-[#516F90] hover:text-[#2D3E50]">Cancel</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Complete */}
+            <button
+              onClick={handleCompleteTask}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white rounded-[3px] transition-colors"
+              style={{ backgroundColor: '#00BDA5' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#00A896')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#00BDA5')}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Complete
+            </button>
+
+            {/* Close */}
+            <Link
+              href="/contacts"
+              className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#F0F3F7] text-[#99ACC2] hover:text-[#425B76] transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 px-6 py-3 border-b border-[#DFE3EB]">
+          <Link href="/contacts" className="inline-flex items-center gap-1.5 text-[#516F90] hover:text-[#2D3E50] text-sm transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Contacts
+          </Link>
+          <span className="text-[#99ACC2]">/</span>
+          <span className="text-sm text-[#2D3E50] font-medium">{contact.first_name} {contact.last_name}</span>
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden">
         {/* LEFT SIDEBAR - Contact info */}
@@ -350,6 +533,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     if (tab === 'email') { openEmail(); return; }
                     if (tab === 'call') { setShowMakeCallModal(true); return; }
                     if (tab === 'task') { setShowTaskModal(true); return; }
+                    if (tab === 'meet') { setShowMeetingModal(true); return; }
                     setActiveTab(tab);
                     setActiveButton(tab);
                   }}
@@ -596,6 +780,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     onClick={() => {
                       if (id === 'note') { openNote(); return; }
                       if (id === 'email') { openEmail(); return; }
+                      if (id === 'meet') { setShowMeetingModal(true); return; }
                       setActiveTab(id as ActivityTab);
                       setActiveButton(id);
                     }}
@@ -695,13 +880,24 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                       size="sm"
                       className="text-xs h-7"
                       disabled={!taskTitle.trim()}
-                      onClick={() => {
+                      onClick={async () => {
+                        // Write to activities table (contact feed)
                         addActivity({
                           type: 'task',
                           title: taskTitle,
                           contact_id: id,
                           due_date: taskDate || undefined,
                           priority: taskPriority,
+                        });
+                        // Write to tasks table (Tasks page)
+                        await createTaskInDB({
+                          title: taskTitle,
+                          due_date: taskDate ? new Date(taskDate).toISOString() : undefined,
+                          priority: (taskPriority as 'low' | 'medium' | 'high'),
+                          status: 'todo',
+                          task_type: 'To-do',
+                          contact_id: id,
+                          reminder_minutes: null,
                         });
                         setTaskTitle('');
                         setTaskDate('');
@@ -800,8 +996,8 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
               {(() => {
                 const filtered = activityFilter === 'all'
-                  ? contactActivities
-                  : contactActivities.filter(a => a.type === activityFilter);
+                  ? mergedActivities
+                  : mergedActivities.filter(a => a.type === activityFilter);
                 const gmailEmails = gmailConnected ? getEmailsForContact(id) : [];
                 const hasGmail = (activityFilter === 'all' || activityFilter === 'email') && gmailEmails.length > 0;
                 if (filtered.length === 0 && !hasGmail) return (
@@ -813,7 +1009,11 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                 return filtered.length > 0 ? (
                 <div className="space-y-3">
                   {filtered.map((activity) => {
-                    // Parse call metadata if it's a call activity
+                    // Check if this is a task from the tasks table
+                    const taskRef = (activity as typeof activity & { _taskRef?: { id: string; status: string } })._taskRef;
+                    const isCompleted = taskRef?.status === 'completed';
+
+                    // Parse call metadata
                     let callMeta: { outcome?: string; direction?: string; duration_seconds?: number; phone?: string; notes?: string } | null = null;
                     if (activity.type === 'call' && activity.description) {
                       try { callMeta = JSON.parse(activity.description); } catch { /* plain text */ }
@@ -828,15 +1028,40 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     <div
                       key={activity.id}
                       className={`flex gap-3 p-3.5 rounded-lg border ${ACTIVITY_COLORS[activity.type] || 'bg-white border-[#DFE3EB]'}`}
+                      style={{ opacity: isCompleted ? 0.7 : 1 }}
                     >
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#F0F3F7] flex items-center justify-center">
-                        {ACTIVITY_ICONS[activity.type]}
-                      </div>
+                      {/* Task status circle toggle (only for tasks-table items) */}
+                      {activity.type === 'task' && taskRef ? (
+                        <button
+                          type="button"
+                          onClick={() => updateTaskInDB(taskRef.id, {
+                            status: isCompleted ? 'todo' : 'completed',
+                            completed_at: isCompleted ? undefined : new Date().toISOString(),
+                          })}
+                          className="flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all hover:scale-110 mt-1"
+                          style={{ borderColor: isCompleted ? '#00BDA5' : '#99ACC2', backgroundColor: isCompleted ? '#00BDA5' : 'transparent' }}
+                          title={isCompleted ? 'Mark as to-do' : 'Mark as complete'}
+                        >
+                          {isCompleted && (
+                            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                      ) : (
+                        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#F0F3F7] flex items-center justify-center">
+                          {ACTIVITY_ICONS[activity.type]}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium text-[#2D3E50]">{activity.title}</p>
+                          <p className="text-sm font-medium text-[#2D3E50]" style={{ textDecoration: isCompleted ? 'line-through' : 'none' }}>
+                            {activity.title}
+                          </p>
                           <span className="text-xs text-[#7C98B6] flex-shrink-0">
-                            {activity.created_at ? formatRelativeTime(activity.created_at) : ''}
+                            {activity.due_date
+                              ? `Due: ${new Date(activity.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                              : activity.created_at ? formatRelativeTime(activity.created_at) : ''}
                           </span>
                         </div>
                         {callMeta ? (
@@ -855,13 +1080,9 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                   · {Math.floor(callMeta.duration_seconds / 60)}m {callMeta.duration_seconds % 60}s
                                 </span>
                               )}
-                              {callMeta.phone && (
-                                <span className="text-[10px] text-[#99ACC2]">{callMeta.phone}</span>
-                              )}
+                              {callMeta.phone && <span className="text-[10px] text-[#99ACC2]">{callMeta.phone}</span>}
                             </div>
-                            {callMeta.notes && (
-                              <p className="text-xs text-[#516F90]">{callMeta.notes}</p>
-                            )}
+                            {callMeta.notes && <p className="text-xs text-[#516F90]">{callMeta.notes}</p>}
                           </div>
                         ) : activity.description ? (
                           <p
@@ -1078,6 +1299,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
           contactId={id}
           onClose={() => setShowTaskModal(false)}
           onSave={async (task) => {
+            // 1. Add to activity feed on the contact page
             addActivity({
               type: 'task',
               title: task.title,
@@ -1087,36 +1309,29 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
               priority: task.priority,
             });
 
-            // Sync to Google Calendar if reminder is set
-            if (task.reminder !== 'none' && task.dueDate) {
-              try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                  const startDateTime = `${task.dueDate}T${task.dueTime || '09:00'}:00`;
-                  const endDate = new Date(`${task.dueDate}T${task.dueTime || '09:00'}:00`);
-                  endDate.setMinutes(endDate.getMinutes() + 30);
-                  const endDateTime = endDate.toISOString().slice(0, 19);
-
-                  const reminderMinutes: Record<string, number> = {
-                    at_due: 0, '15min': 15, '1hour': 60, '1day': 1440,
-                  };
-                  const minutes = reminderMinutes[task.reminder] ?? 15;
-
-                  await fetch('/api/calendar/events', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      user_id: user.id,
-                      title: `Task: ${task.title}`,
-                      startDateTime,
-                      endDateTime,
-                      description: task.notes || '',
-                      reminderMinutes: minutes,
-                    }),
-                  });
-                }
-              } catch { /* silently ignore if calendar not connected */ }
-            }
+            // 2. Also write to the tasks table so it appears on the Tasks page
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.access_token) {
+                const reminderMap: Record<string, number> = { at_due: 0, '15min': 15, '1hour': 60, '1day': 1440 };
+                const reminder_minutes = task.reminder !== 'none' ? (reminderMap[task.reminder] ?? null) : null;
+                const due_date = task.dueDate ? new Date(`${task.dueDate}T${task.dueTime || '09:00'}`).toISOString() : undefined;
+                await fetch('/api/tasks', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                  body: JSON.stringify({
+                    title: task.title,
+                    description: task.notes || '',
+                    due_date,
+                    priority: task.priority === 'none' ? 'medium' : (task.priority || 'medium'),
+                    status: 'todo',
+                    task_type: task.taskType === 'call' ? 'Call' : task.taskType === 'email' ? 'Email' : 'To-do',
+                    contact_id: id,
+                    reminder_minutes,
+                  }),
+                });
+              }
+            } catch { /* non-fatal — activity feed already updated */ }
 
             setShowTaskModal(false);
             setMainTab('activities');
@@ -1152,6 +1367,27 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
               });
             }
             setShowMakeCallModal(false);
+            setMainTab('activities');
+          }}
+        />
+      )}
+
+      {/* Schedule meeting modal */}
+      {showMeetingModal && contact && (
+        <ScheduleMeetingModal
+          contextName={`${contact.first_name} ${contact.last_name}`}
+          contextType="contact"
+          onClose={() => setShowMeetingModal(false)}
+          onSave={(meeting) => {
+            addActivity({
+              type: 'meeting',
+              title: meeting.title,
+              description: meeting.description || meeting.internalNote || undefined,
+              contact_id: id,
+              due_date: meeting.startDate ? new Date(`${meeting.startDate}T${meeting.startTime}`).toISOString() : undefined,
+              location: meeting.location || undefined,
+            });
+            setShowMeetingModal(false);
             setMainTab('activities');
           }}
         />
@@ -1277,6 +1513,16 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                   description: html || text,
                   contact_id: id,
                 });
+                if (noteTodo && contact) {
+                  createTaskInDB({
+                    title: `Follow up with ${contact.first_name} ${contact.last_name}`,
+                    due_date: addBusinessDays(new Date(), 3).toISOString(),
+                    priority: 'medium',
+                    status: 'todo',
+                    task_type: 'To-do',
+                    contact_id: id,
+                  });
+                }
                 closeModals();
                 setNoteText('');
                 setNoteTodo(false);

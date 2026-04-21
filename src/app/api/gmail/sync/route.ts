@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getClientIp, apiTooManyRequests } from '@/lib/api-error';
+import { apiLimiter } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -49,6 +52,10 @@ function companyFromDomain(email: string): { name: string; domain: string } | nu
 }
 
 export async function GET(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rl = apiLimiter.check(ip);
+  if (!rl.ok) return apiTooManyRequests(rl.retryAfter);
+
   const userId = request.nextUrl.searchParams.get('user_id');
   if (!userId) return new Response('Missing user_id', { status: 400 });
 
@@ -185,7 +192,7 @@ export async function GET(request: NextRequest) {
                       )
                       .select('id')
                       .single();
-                    if (compErr) console.error('[gmail-sync] company insert error:', compErr.message, companyInfo.domain);
+                    if (compErr) logger.error('gmail/sync: company insert error', { err: compErr.message, domain: companyInfo.domain });
                     companyId = created?.id;
                   }
                   if (companyId) companyCache.set(companyInfo.domain, companyId);
@@ -223,7 +230,7 @@ export async function GET(request: NextRequest) {
                     })
                     .select('id')
                     .single();
-                  if (contactErr) console.error('[gmail-sync] contact insert error:', contactErr.message, fromEmail);
+                  if (contactErr) logger.error('gmail/sync: contact insert error', { err: contactErr.message, email: fromEmail });
                   contactId = created?.id;
                 }
                 if (contactId) contactCache.set(fromEmail, contactId);
@@ -248,7 +255,9 @@ export async function GET(request: NextRequest) {
                 { onConflict: 'user_id,gmail_message_id' }
               );
             } catch (e) {
-              console.error('[gmail-sync] message processing error:', e);
+              logger.error('gmail/sync: message processing error', {
+                err: e instanceof Error ? e.message : String(e),
+              });
             }
 
             synced++;
@@ -263,8 +272,10 @@ export async function GET(request: NextRequest) {
 
         send({ type: 'complete', synced, gmailEmail: tokenRow.gmail_email });
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Sync failed';
-        send({ type: 'error', message });
+        logger.error('gmail/sync: fatal error', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+        send({ type: 'error', message: 'Email sync failed. Please try again.' });
       } finally {
         try { controller.close(); } catch {}
       }

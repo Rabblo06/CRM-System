@@ -2,18 +2,19 @@
  * GET /api/tasks/reminders
  *
  * Background cron job — checks for due reminders and fires them.
- * Call this every 60 seconds via:
- *   - Vercel Cron (vercel.json)
- *   - Client-side polling in useReminderPoller hook
- *   - External cron service hitting: GET /api/tasks/reminders?secret=YOUR_CRON_SECRET
+ * Protected by CRON_SECRET query param for external callers.
+ * Client polling (same origin) is allowed without the secret.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { apiOk, apiErr, apiTooManyRequests, getClientIp } from '@/lib/api-error';
+import { cronLimiter } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 function adminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 }
 
@@ -27,25 +28,29 @@ interface DueTask {
 }
 
 export async function GET(request: NextRequest) {
-  // Optional secret guard for external cron callers
+  // Rate-limit cron polling
+  const ip = getClientIp(request);
+  const rl = cronLimiter.check(ip);
+  if (!rl.ok) return apiTooManyRequests(rl.retryAfter);
+
+  // Secret guard for external cron callers
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get('secret');
   if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
-    // Allow unauthenticated from same origin (client polling)
     const origin = request.headers.get('origin') || '';
     const host = request.headers.get('host') || '';
-    const isInternal = origin.includes(host) || !origin;
+    const isInternal = !origin || origin.includes(host);
     if (!isInternal) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      logger.warn('reminders: unauthorized cron request', { origin });
+      return apiErr('Forbidden', 403);
     }
   }
 
   const supabase = adminClient();
   const now = new Date().toISOString();
 
-  console.log('[reminders] Running check at', now);
+  logger.info('reminders: checking due reminders', { at: now });
 
-  // Find all tasks where reminder is due and not yet sent
   const { data: dueTasks, error } = await supabase
     .from('tasks')
     .select('id, title, due_date, reminder_minutes, reminder_time, created_by')
@@ -54,41 +59,41 @@ export async function GET(request: NextRequest) {
     .not('reminder_time', 'is', null);
 
   if (error) {
-    console.error('[reminders] Query error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('reminders: DB query failed', { err: error.message });
+    return apiErr('Failed to query reminders', 500);
   }
 
-  console.log('[reminders] Found', dueTasks?.length ?? 0, 'due reminders');
+  const tasks = dueTasks ?? [];
+  logger.info('reminders: found due tasks', { count: tasks.length });
 
-  if (!dueTasks || dueTasks.length === 0) {
-    return NextResponse.json({ triggered: 0, tasks: [] });
+  if (tasks.length === 0) {
+    return apiOk({ triggered: 0, tasks: [] });
   }
 
   const triggered: { id: string; title: string }[] = [];
 
-  for (const task of dueTasks as DueTask[]) {
-    console.log('[reminders] Triggering reminder for task:', task.id, task.title);
-
+  for (const task of tasks as DueTask[]) {
     try {
-      // Mark as sent FIRST to prevent double-firing even if subsequent steps fail
       const { error: updateError } = await supabase
         .from('tasks')
         .update({ reminder_sent: true })
         .eq('id', task.id);
 
       if (updateError) {
-        console.error('[reminders] Failed to mark task sent:', task.id, updateError.message);
+        logger.error('reminders: failed to mark sent', { taskId: task.id, err: updateError.message });
         continue;
       }
 
-      console.log('[reminders] ✓ Marked reminder_sent=true for task:', task.id);
-
+      logger.info('reminders: triggered', { taskId: task.id, title: task.title });
       triggered.push({ id: task.id, title: task.title });
     } catch (err) {
-      console.error('[reminders] Error processing task:', task.id, err);
+      logger.error('reminders: error processing task', {
+        taskId: task.id,
+        err: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
-  console.log('[reminders] Done. Triggered:', triggered.length);
-  return NextResponse.json({ triggered: triggered.length, tasks: triggered });
+  logger.info('reminders: done', { triggered: triggered.length });
+  return apiOk({ triggered: triggered.length, tasks: triggered });
 }

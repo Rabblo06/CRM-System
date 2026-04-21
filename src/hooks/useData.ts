@@ -423,37 +423,57 @@ function saveLocalTasks(list: Task[]) {
   } catch { /* ignore */ }
 }
 
+const TASKS_SELECT = '*, contact:contacts(first_name, last_name, last_contacted_at, company_id, company:companies(name)), company:companies(name), deal:deals(title)';
+
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // 1. Show localStorage data immediately — never blank on refresh
-    const local = loadLocalTasks();
-    setTasks(local);
-
-    // 2. Try Supabase in background to sync
-    const syncFromSupabase = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('tasks')
-          .select('*, contact:contacts(first_name, last_name, last_contacted_at, company_id, company:companies(name)), company:companies(name), deal:deals(title)')
-          .order('created_at', { ascending: false });
-        if (!error && data && data.length > 0) {
-          setTasks(data);
-          saveLocalTasks(data);
-        }
-        // If Supabase returns empty or errors, keep localStorage data (do nothing)
-      } catch { /* keep localStorage data */ } finally {
-        setLoading(false);
+  // Fetch all tasks for the current user from Supabase
+  const fetchFromDB = async (): Promise<Task[] | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(TASKS_SELECT)
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('[useTasks] Supabase fetch error:', error.message);
+        return null;
       }
-    };
-    syncFromSupabase();
+      return data ?? [];
+    } catch {
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // Show cached data immediately so the page isn't blank
+      const cached = loadLocalTasks();
+      if (cached.length > 0 && !cancelled) setTasks(cached);
+
+      // Fetch live data from Supabase (primary source of truth)
+      const dbTasks = await fetchFromDB();
+      if (cancelled) return;
+
+      if (dbTasks !== null) {
+        // Supabase is the truth — use it (even if empty, so deleted tasks disappear)
+        setTasks(dbTasks);
+        saveLocalTasks(dbTasks);
+      }
+      // If Supabase failed (null), keep showing cached data
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const createTask = async (task: Partial<Task> & { reminder_minutes?: number | null }) => {
-    const newTask: Task = {
-      id: `task-${Date.now()}`,
+    // Optimistic: add to UI immediately with a temp id
+    const tempId = `task-${Date.now()}`;
+    const optimistic: Task = {
+      id: tempId,
       title: task.title || '',
       description: task.description,
       due_date: task.due_date,
@@ -465,95 +485,91 @@ export function useTasks() {
       deal_id: task.deal_id,
       assigned_to: task.assigned_to,
       reminder_minutes: task.reminder_minutes ?? null,
-      reminder_time: task.reminder_time ?? null,
+      reminder_time: null,
       reminder_sent: false,
       calendar_event_id: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
+    setTasks(prev => { const next = [optimistic, ...prev]; saveLocalTasks(next); return next; });
 
-    // Always save locally first — guaranteed to work
-    setTasks((prev) => {
-      const next = [...prev, newTask];
-      saveLocalTasks(next);
-      return next;
-    });
-
-    // Try API route in background (Google Calendar + reminder_time)
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
+        // Use the API route (handles Google Calendar + reminder_time)
         const res = await fetch('/api/tasks', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
           body: JSON.stringify(task),
         });
         if (res.ok) {
           const serverTask = await res.json();
-          // Replace the optimistic local task with the server version
-          setTasks((prev) => {
-            const next = prev.map((t) => t.id === newTask.id ? { ...serverTask } : t);
+          // Replace optimistic entry with real server record
+          setTasks(prev => {
+            const next = prev.map(t => t.id === tempId ? serverTask : t);
             saveLocalTasks(next);
             return next;
           });
           return { data: serverTask, error: null };
         }
       } else {
-        // No session — try direct Supabase insert
+        // No session: insert directly
         const userId = await getCurrentUserId();
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('tasks')
-          .insert({ ...task, id: newTask.id, created_by: userId ?? null })
-          .select('*, contact:contacts(first_name, last_name, last_contacted_at, company_id, company:companies(name)), company:companies(name), deal:deals(title)')
+          .insert({ ...task, created_by: userId ?? null })
+          .select(TASKS_SELECT)
           .single();
-        if (data) {
-          setTasks((prev) => {
-            const next = prev.map((t) => t.id === newTask.id ? data : t);
+        if (!error && data) {
+          setTasks(prev => {
+            const next = prev.map(t => t.id === tempId ? data : t);
             saveLocalTasks(next);
             return next;
           });
           return { data, error: null };
         }
       }
-    } catch { /* Supabase failed — localStorage version already saved */ }
+    } catch { /* optimistic version stays */ }
 
-    return { data: newTask, error: null };
+    return { data: optimistic, error: null };
   };
 
   const updateTask = async (id: string, updates: Partial<Task>) => {
     const merged = { ...updates, updated_at: new Date().toISOString() };
-
-    // Always update locally first
-    setTasks((prev) => {
-      const next = prev.map((t) => (t.id === id ? { ...t, ...merged } : t));
+    // Optimistic update
+    setTasks(prev => {
+      const next = prev.map(t => t.id === id ? { ...t, ...merged } : t);
       saveLocalTasks(next);
       return next;
     });
-
-    // Try Supabase in background
+    // Persist to Supabase
     try {
       await supabase.from('tasks').update(merged).eq('id', id);
-    } catch { /* ignore */ }
+    } catch { /* optimistic stays */ }
   };
 
   const deleteTask = async (id: string) => {
-    // Always delete locally first
-    setTasks((prev) => {
-      const next = prev.filter((t) => t.id !== id);
+    // Optimistic delete
+    setTasks(prev => {
+      const next = prev.filter(t => t.id !== id);
       saveLocalTasks(next);
       return next;
     });
-
-    // Try Supabase in background
     try {
       await supabase.from('tasks').delete().eq('id', id);
-    } catch { /* ignore */ }
+    } catch { /* optimistic stays */ }
   };
 
-  return { tasks, loading, createTask, updateTask, deleteTask };
+  // Expose a manual refresh so pages can pull latest from DB on demand
+  const refreshTasks = async () => {
+    const dbTasks = await fetchFromDB();
+    if (dbTasks !== null) {
+      setTasks(dbTasks);
+      saveLocalTasks(dbTasks);
+    }
+  };
+
+  return { tasks, loading, createTask, updateTask, deleteTask, refreshTasks };
 }
 
 /* ═══════════════════════════════════════════════════════

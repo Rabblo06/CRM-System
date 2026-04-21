@@ -1,19 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { apiOk, apiErr, apiTooManyRequests, getClientIp, withRoute } from '@/lib/api-error';
+import { apiLimiter } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const DEFAULT_SETTINGS = {
-  // Calendar
   calendar_sync: true,
   tasks_calendar_sync: false,
   meeting_scheduling: false,
   out_of_office: false,
   availability_calendar: '',
-  // Email
   email_tracking: true,
   log_to_crm: true,
-  // Calling
   auto_log_calls: true,
-  // Notifications
   notif_deal_stage: true,
   notif_new_contact: true,
   notif_task_due: true,
@@ -25,24 +24,25 @@ const DEFAULT_SETTINGS = {
 function adminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 }
 
 async function getUserId(request: NextRequest): Promise<string | null> {
   const auth = request.headers.get('Authorization');
   if (!auth?.startsWith('Bearer ')) return null;
-  const token = auth.slice(7);
-  const { data: { user }, error } = await adminClient().auth.getUser(token);
+  const { data: { user }, error } = await adminClient().auth.getUser(auth.slice(7));
   if (error || !user) return null;
   return user.id;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withRoute(async (request: NextRequest) => {
+  const ip = getClientIp(request);
+  const rl = apiLimiter.check(ip);
+  if (!rl.ok) return apiTooManyRequests(rl.retryAfter);
+
   const userId = await getUserId(request);
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return apiErr('Unauthorized', 401);
 
   const supabase = adminClient();
   const { data, error } = await supabase
@@ -52,34 +52,36 @@ export async function GET(request: NextRequest) {
     .maybeSingle();
 
   if (error) {
-    console.error('[settings GET] Supabase error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('settings GET: DB error', { err: error.message });
+    return apiErr('Failed to load settings', 500);
   }
 
-  // Return row or defaults if first visit
-  const settings = data ? { ...DEFAULT_SETTINGS, ...data } : { ...DEFAULT_SETTINGS, user_id: userId };
-  console.log('[settings GET] userId:', userId, 'settings:', settings);
-  return NextResponse.json(settings);
-}
+  const settings = data
+    ? { ...DEFAULT_SETTINGS, ...data }
+    : { ...DEFAULT_SETTINGS, user_id: userId };
 
-export async function PUT(request: NextRequest) {
+  logger.info('settings GET', { userId });
+  return apiOk(settings);
+});
+
+export const PUT = withRoute(async (request: NextRequest) => {
+  const ip = getClientIp(request);
+  const rl = apiLimiter.check(ip);
+  if (!rl.ok) return apiTooManyRequests(rl.retryAfter);
+
   const userId = await getUserId(request);
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!userId) return apiErr('Unauthorized', 401);
+
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== 'object') {
+    return apiErr('Invalid JSON body', 400);
   }
 
-  let body: Record<string, unknown>;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  // Whitelist allowed fields
+  // Whitelist — only allow known setting keys
   const allowed = Object.keys(DEFAULT_SETTINGS) as (keyof typeof DEFAULT_SETTINGS)[];
   const patch: Record<string, unknown> = { user_id: userId };
   for (const key of allowed) {
-    if (key in body) patch[key] = body[key];
+    if (key in body) patch[key] = (body as Record<string, unknown>)[key];
   }
 
   const supabase = adminClient();
@@ -90,10 +92,10 @@ export async function PUT(request: NextRequest) {
     .single();
 
   if (error) {
-    console.error('[settings PUT] Supabase error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('settings PUT: DB error', { err: error.message });
+    return apiErr('Failed to save settings', 500);
   }
 
-  console.log('[settings PUT] saved:', data);
-  return NextResponse.json(data);
-}
+  logger.info('settings PUT: saved', { userId });
+  return apiOk(data);
+});

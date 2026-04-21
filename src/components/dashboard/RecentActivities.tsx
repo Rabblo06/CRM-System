@@ -1,4 +1,5 @@
-import { Phone, Mail, Calendar, FileText, CheckSquare, TrendingUp, Users } from 'lucide-react';
+import Link from 'next/link';
+import { Phone, Mail, Calendar, FileText, CheckSquare, TrendingUp, Users, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatRelativeTime } from '@/lib/utils';
 import type { Activity } from '@/types';
@@ -29,15 +30,29 @@ interface RecentActivitiesProps {
   activities: Activity[];
 }
 
+const PREVIEW_COUNT = 5;
+
 export function RecentActivities({ activities }: RecentActivitiesProps) {
+  const preview = activities.slice(0, PREVIEW_COUNT);
+  const hasMore = activities.length > PREVIEW_COUNT;
+
   return (
     <Card className="bg-white border-[#DFE3EB]">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-base text-[#2D3E50]">Recent Activities</CardTitle>
+        {hasMore && (
+          <Link
+            href="/activities"
+            className="text-xs font-medium flex items-center gap-1 transition-colors"
+            style={{ color: '#FF7A59' }}
+          >
+            Show all <ArrowRight size={12} />
+          </Link>
+        )}
       </CardHeader>
       <CardContent className="p-0">
         <div className="divide-y divide-[#DFE3EB]">
-          {activities.slice(0, 8).map((activity) => {
+          {preview.map((activity) => {
             const Icon = activityIcons[activity.type] || FileText;
             const colorClass = activityColors[activity.type] || 'text-[#516F90] bg-[#F0F3F7]';
             return (
@@ -66,6 +81,20 @@ export function RecentActivities({ activities }: RecentActivitiesProps) {
             <div className="px-6 py-8 text-center text-[#7C98B6] text-sm">No recent activities</div>
           )}
         </div>
+
+        {/* Show More footer */}
+        {hasMore && (
+          <div className="px-6 py-3 border-t" style={{ borderColor: '#DFE3EB' }}>
+            <Link
+              href="/activities"
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-lg transition-colors hover:bg-[#F6F9FC]"
+              style={{ color: '#516F90' }}
+            >
+              Show all {activities.length} activities
+              <ArrowRight size={12} />
+            </Link>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -1,14 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { apiErr, apiTooManyRequests, getClientIp } from '@/lib/api-error';
+import { authLimiter } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rl = authLimiter.check(ip);
+  if (!rl.ok) {
+    logger.warn('Rate limit hit on gmail/auth', { ip });
+    return apiTooManyRequests(rl.retryAfter);
+  }
+
   const userId = request.nextUrl.searchParams.get('user_id');
-  if (!userId) return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
+  if (!userId) return apiErr('Missing user_id', 400);
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
-  if (!clientId) return NextResponse.json({ error: 'Google OAuth not configured' }, { status: 500 });
+  if (!clientId) {
+    logger.error('gmail/auth: GOOGLE_CLIENT_ID not configured');
+    return apiErr('Google OAuth is not configured on this server', 503);
+  }
 
   const origin = request.nextUrl.origin;
-
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: `${origin}/api/gmail/callback`,
@@ -25,7 +37,6 @@ export async function GET(request: NextRequest) {
     state: userId,
   });
 
-  return NextResponse.redirect(
-    `https://accounts.google.com/o/oauth2/v2/auth?${params}`
-  );
+  logger.info('gmail/auth: initiating OAuth', { userId });
+  return NextResponse.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
 }

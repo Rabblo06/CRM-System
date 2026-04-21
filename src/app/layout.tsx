@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
+import { PageErrorBoundary } from "@/components/ui/error-boundary";
 
 export const metadata: Metadata = {
   title: "CRM Pro - Sales Platform",
@@ -20,7 +21,9 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ToastProvider>
-          {children}
+          <PageErrorBoundary>
+            {children}
+          </PageErrorBoundary>
         </ToastProvider>
       </body>
     </html>

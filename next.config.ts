@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   turbopack: {
     resolveAlias: {
       tailwindcss: path.resolve(process.cwd(), 'node_modules/tailwindcss'),

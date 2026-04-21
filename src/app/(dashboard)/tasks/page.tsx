@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import {
-  Plus, Search, X, ChevronDown, CheckCircle2, Bell, Phone, Mail, CalendarDays,
-  ClipboardList, Trash2, MoreHorizontal, SlidersHorizontal, Loader2,
+  Plus, Search, X, ChevronDown, Bell, Phone, Mail, CalendarDays,
+  ClipboardList, Trash2, MoreHorizontal, Loader2, CheckCheck,
 } from 'lucide-react';
 import { useTasks, useContacts, useCompanies } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
@@ -96,6 +97,17 @@ function getLastContacted(task: Task, contacts: Contact[]): string {
   const lc = task.contact?.last_contacted_at
     ?? contacts.find(c => c.id === task.contact_id)?.last_contacted_at;
   return relativeTime(lc);
+}
+
+function getContactId(task: Task): string | null {
+  return task.contact_id || task.contact?.id || null;
+}
+
+function getCompanyId(task: Task, contacts: Contact[]): string | null {
+  if (task.company_id) return task.company_id;
+  if ((task.company as Company & { id?: string })?.id) return (task.company as Company & { id?: string }).id!;
+  const contact = task.contact || contacts.find(c => c.id === task.contact_id);
+  return contact?.company_id || null;
 }
 
 function taskTypeIcon(type?: string) {
@@ -534,6 +546,203 @@ function CreateTaskDrawer({
   );
 }
 
+/* ─── Edit Task Drawer ────────────────────────────────────── */
+function EditTaskDrawer({
+  task, open, onClose, onSave, onDelete, contacts, companies, currentUserName,
+}: {
+  task: Task | null; open: boolean; onClose: () => void;
+  onSave: (id: string, data: Partial<Task> & { reminder_minutes: number | null }) => Promise<void>;
+  onDelete: (id: string) => void;
+  contacts: Contact[]; companies: Company[]; currentUserName: string;
+}) {
+  const blank = {
+    title: '', task_type: 'To-do', priority: '', contact_id: '', company_id: '',
+    due_date: '', due_time: '08:00', reminder_minutes: '-1', notes: '',
+  };
+  const [form, setForm] = useState(blank);
+  const [saving, setSaving] = useState(false);
+  const [showAssocPicker, setShowAssocPicker] = useState(false);
+  const assocRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open && task) {
+      const dd = task.due_date ? new Date(task.due_date) : null;
+      setForm({
+        title: task.title,
+        task_type: task.task_type || 'To-do',
+        priority: task.priority || '',
+        contact_id: task.contact_id || '',
+        company_id: task.company_id || '',
+        due_date: dd ? dd.toISOString().slice(0, 10) : '',
+        due_time: dd ? `${String(dd.getHours()).padStart(2,'0')}:${String(dd.getMinutes()).padStart(2,'0')}` : '08:00',
+        reminder_minutes: task.reminder_minutes != null && task.reminder_minutes >= 0 ? String(task.reminder_minutes) : '-1',
+        notes: task.description || '',
+      });
+      setSaving(false);
+      setTimeout(() => titleRef.current?.focus(), 80);
+    }
+  }, [open, task]);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (assocRef.current && !assocRef.current.contains(e.target as Node)) setShowAssocPicker(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  if (!open || !task) return null;
+
+  const selectedContact = contacts.find(c => c.id === form.contact_id);
+  const selectedCompany = companies.find(c => c.id === form.company_id);
+  const assocCount = (form.contact_id ? 1 : 0) + (form.company_id ? 1 : 0);
+
+  const handleSave = async () => {
+    if (!form.title.trim()) { titleRef.current?.focus(); return; }
+    setSaving(true);
+    const dueDateISO = form.due_date
+      ? new Date(`${form.due_date}T${form.due_time || '00:00'}`).toISOString()
+      : undefined;
+    const rm = parseInt(form.reminder_minutes, 10);
+    await onSave(task.id, {
+      title: form.title.trim(),
+      description: form.notes.trim() || undefined,
+      due_date: dueDateISO,
+      priority: (form.priority as Task['priority']) || 'medium',
+      task_type: form.task_type,
+      contact_id: form.contact_id || undefined,
+      company_id: form.company_id || undefined,
+      reminder_minutes: !isNaN(rm) && rm >= 0 ? rm : null,
+    });
+    setSaving(false);
+    onClose();
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
+      <div className="fixed right-0 top-0 h-full z-50 bg-white shadow-2xl flex flex-col" style={{ width: 440, borderLeft: '1px solid #DFE3EB' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#DFE3EB] flex-shrink-0">
+          <h2 className="text-base font-bold text-[#2D3E50]">Edit task</h2>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => { onDelete(task.id); onClose(); }}
+              className="p-1.5 rounded hover:bg-red-50 text-[#99ACC2] hover:text-red-400 transition-colors" title="Delete task">
+              <Trash2 className="w-4 h-4" />
+            </button>
+            <button type="button" onClick={onClose} className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2] hover:text-[#425B76]">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <div className="px-6 py-5 space-y-5">
+            <div>
+              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Task Title <span style={{ color: '#FF7A59' }}>*</span></label>
+              <input ref={titleRef} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50]"
+                onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; e.currentTarget.style.boxShadow = '0 0 0 1px #FF7A59'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; e.currentTarget.style.boxShadow = 'none'; }} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Task Type</label>
+                <select value={form.task_type} onChange={e => setForm(f => ({ ...f, task_type: e.target.value }))}
+                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white">
+                  {TASK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Priority</label>
+                <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
+                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white">
+                  {PRIORITY_OPTIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div ref={assocRef} className="relative">
+              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Associate with records</label>
+              <button type="button" onClick={() => setShowAssocPicker(v => !v)}
+                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] text-left flex items-center justify-between bg-white hover:border-[#99ACC2]">
+                <span style={{ color: assocCount > 0 ? '#2D3E50' : '#B0C1D4' }}>
+                  {assocCount === 0 ? 'Associated with 0 records' : `Associated with ${assocCount} record${assocCount > 1 ? 's' : ''}`}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-[#99ACC2]" />
+              </button>
+              {assocCount > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {selectedContact && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-[#EBF5FB] text-[#0091AE] font-medium">
+                      {selectedContact.first_name} {selectedContact.last_name}
+                      <button type="button" onClick={() => setForm(f => ({ ...f, contact_id: '' }))}><X className="w-3 h-3" /></button>
+                    </span>
+                  )}
+                  {selectedCompany && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-[#F0FBF9] text-[#00A38D] font-medium">
+                      {selectedCompany.name}
+                      <button type="button" onClick={() => setForm(f => ({ ...f, company_id: '' }))}><X className="w-3 h-3" /></button>
+                    </span>
+                  )}
+                </div>
+              )}
+              {showAssocPicker && (
+                <AssociatePicker contacts={contacts} companies={companies}
+                  selectedContactId={form.contact_id} selectedCompanyId={form.company_id}
+                  onSelect={(cId, coId) => setForm(f => ({ ...f, contact_id: cId, company_id: coId }))}
+                  onClose={() => setShowAssocPicker(false)} />
+              )}
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Assigned to</label>
+              <input value={currentUserName} readOnly className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] text-[#2D3E50] bg-[#F6F9FC] cursor-default" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Due date</label>
+              <div className="grid grid-cols-2 gap-3">
+                <input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))}
+                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white"
+                  onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
+                <input type="time" value={form.due_time} onChange={e => setForm(f => ({ ...f, due_time: e.target.value }))}
+                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white"
+                  onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">
+                <span className="flex items-center gap-1.5"><Bell className="w-3.5 h-3.5" /> Reminder</span>
+              </label>
+              <select value={form.reminder_minutes} onChange={e => setForm(f => ({ ...f, reminder_minutes: e.target.value }))}
+                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white">
+                {REMINDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Notes</label>
+              <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                placeholder="Add notes..." rows={3}
+                className="w-full px-3 py-2 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] resize-none"
+                onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; e.currentTarget.style.boxShadow = '0 0 0 1px #FF7A59'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; e.currentTarget.style.boxShadow = 'none'; }} />
+            </div>
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-[#DFE3EB] flex-shrink-0 flex items-center gap-2">
+          <button type="button" disabled={saving} onClick={handleSave}
+            className="px-4 py-2 text-sm font-bold text-white rounded-[3px] disabled:opacity-50 transition-colors"
+            style={{ backgroundColor: '#FF7A59' }}
+            onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLElement).style.backgroundColor = '#FF8F73'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FF7A59'; }}>
+            {saving ? <span className="flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</span> : 'Save'}
+          </button>
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-[#516F90] hover:text-[#2D3E50] transition-colors">Cancel</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 /* ─── Status Circle ───────────────────────────────────────── */
 function StatusCircle({ status, onClick }: { status: Task['status']; onClick: () => void }) {
   const done = status === 'completed';
@@ -613,15 +822,17 @@ function FilterDropdown({
 const PAGE_SIZES = [10, 25, 50, 100];
 
 export default function TasksPage() {
-  const { tasks, loading, createTask, updateTask, deleteTask } = useTasks();
+  const { tasks, loading, createTask, updateTask, deleteTask, refreshTasks } = useTasks();
   const { contacts } = useContacts();
   const { companies } = useCompanies();
 
-  const [activeTab, setActiveTab] = useState<'all' | 'due_today' | 'overdue' | 'upcoming'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'due_today' | 'overdue' | 'upcoming' | 'completed'>('all');
   const [filterTaskType, setFilterTaskType] = useState('');
-  const [filterAssignedToMe, setFilterAssignedToMe] = useState(true);
+  const [filterAssignedToMe, setFilterAssignedToMe] = useState(false);
   const [search, setSearch] = useState('');
   const [showDrawer, setShowDrawer] = useState(false);
+  const [showEditDrawer, setShowEditDrawer] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -659,12 +870,15 @@ export default function TasksPage() {
 
     // Tab filter
     if (activeTab === 'due_today') {
-      result = result.filter(t => isToday(t.due_date));
+      result = result.filter(t => isToday(t.due_date) && t.status !== 'completed');
     } else if (activeTab === 'overdue') {
       result = result.filter(t => t.due_date && isPast(t.due_date) && !isToday(t.due_date) && t.status !== 'completed');
     } else if (activeTab === 'upcoming') {
-      result = result.filter(t => isFuture(t.due_date));
+      result = result.filter(t => isFuture(t.due_date) && t.status !== 'completed');
+    } else if (activeTab === 'completed') {
+      result = result.filter(t => t.status === 'completed');
     }
+    // 'all' tab shows everything (active + completed)
 
     // Task type filter
     if (filterTaskType) {
@@ -730,20 +944,35 @@ export default function TasksPage() {
     setSelectedIds(new Set());
   }, [selectedIds, deleteTask]);
 
+  const handleMarkSelectedComplete = useCallback(() => {
+    selectedIds.forEach(id => {
+      const t = tasks.find(t => t.id === id);
+      if (t && t.status !== 'completed') {
+        updateTask(id, { status: 'completed', completed_at: new Date().toISOString() });
+      }
+    });
+    setSelectedIds(new Set());
+  }, [selectedIds, tasks, updateTask]);
+
+  const openEditDrawer = useCallback((task: Task) => {
+    setEditingTask(task);
+    setShowEditDrawer(true);
+  }, []);
+
   const clearFilters = () => {
     setFilterTaskType('');
-    setFilterAssignedToMe(false);
     setSearch('');
     setActiveTab('all');
   };
 
-  const hasFilters = filterTaskType || !filterAssignedToMe || activeTab !== 'all';
+  const hasFilters = filterTaskType || activeTab !== 'all';
 
   const TABS = [
     { id: 'all', label: 'All' },
     { id: 'due_today', label: 'Due today' },
     { id: 'overdue', label: `Overdue${counts.overdue > 0 ? ` (${counts.overdue})` : ''}` },
     { id: 'upcoming', label: 'Upcoming' },
+    { id: 'completed', label: `Completed${counts.completed > 0 ? ` (${counts.completed})` : ''}` },
   ] as const;
 
   const taskTypeOptions = [
@@ -843,7 +1072,7 @@ export default function TasksPage() {
           />
 
           {/* Clear all */}
-          {(filterAssignedToMe || filterTaskType || activeTab !== 'all') && (
+          {(filterTaskType || activeTab !== 'all') && (
             <button
               type="button"
               onClick={clearFilters}
@@ -872,19 +1101,26 @@ export default function TasksPage() {
 
           {/* Bulk actions */}
           {selectedIds.size > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-[#2D3E50]">{selectedIds.size} selected</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-[#2D3E50] mr-1">{selectedIds.size} selected</span>
+              <button
+                type="button"
+                onClick={handleMarkSelectedComplete}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#00BDA5] hover:bg-[#F0FBF9] rounded-[3px] border border-[#DFE3EB] transition-colors"
+              >
+                <CheckCheck className="w-3.5 h-3.5" /> Mark as completed
+              </button>
               <button
                 type="button"
                 onClick={handleDeleteSelected}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 rounded-[3px] transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 rounded-[3px] border border-[#DFE3EB] transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" /> Delete
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedIds(new Set())}
-                className="p-1 text-[#99ACC2] hover:text-[#425B76]"
+                className="p-1.5 text-[#99ACC2] hover:text-[#425B76]"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -942,7 +1178,11 @@ export default function TasksPage() {
                         <ClipboardList className="w-10 h-10 mx-auto mb-3 text-[#DFE3EB]" />
                         <p className="text-sm text-[#7C98B6]">No tasks found</p>
                         <p className="text-xs text-[#99ACC2] mt-1">
-                          {hasFilters || search ? 'Try adjusting your filters' : 'Create your first task to get started'}
+                          {(hasFilters || !!search)
+                            ? 'Try adjusting your filters'
+                            : (activeTab as string) === 'completed'
+                              ? 'No completed tasks yet'
+                              : 'Create your first task to get started'}
                         </p>
                       </div>
                     </td>
@@ -951,6 +1191,8 @@ export default function TasksPage() {
                   const contactName = getContactName(task, contacts);
                   const companyName = getCompanyName(task, companies);
                   const lastContacted = getLastContacted(task, contacts);
+                  const contactId = getContactId(task);
+                  const companyId = getCompanyId(task, contacts);
                   const isDone = task.status === 'completed';
                   const isOverdue = task.due_date && isPast(task.due_date) && !isToday(task.due_date) && !isDone;
 
@@ -975,17 +1217,32 @@ export default function TasksPage() {
                         <StatusCircle status={task.status} onClick={() => toggleStatus(task)} />
                       </td>
 
-                      {/* Title + due date */}
+                      {/* Title — if has contact, navigate to contact page with task context; else open edit drawer */}
                       <td className="px-4 py-3 min-w-[200px] max-w-[280px]">
-                        <p
-                          className="font-semibold text-xs truncate"
-                          style={{
-                            color: isDone ? '#7C98B6' : '#2D3E50',
-                            textDecoration: isDone ? 'line-through' : 'none',
-                          }}
-                        >
-                          {task.title}
-                        </p>
+                        {contactId ? (
+                          <Link
+                            href={`/contacts/${contactId}?taskId=${task.id}`}
+                            className="font-semibold text-xs truncate block max-w-full hover:underline"
+                            style={{
+                              color: isDone ? '#7C98B6' : '#0091AE',
+                              textDecoration: isDone ? 'line-through' : 'none',
+                            }}
+                          >
+                            {task.title}
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => openEditDrawer(task)}
+                            className="font-semibold text-xs truncate block max-w-full text-left hover:underline"
+                            style={{
+                              color: isDone ? '#7C98B6' : '#0091AE',
+                              textDecoration: isDone ? 'line-through' : 'none',
+                            }}
+                          >
+                            {task.title}
+                          </button>
+                        )}
                         {task.due_date && (
                           <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: isOverdue ? '#E8674A' : '#99ACC2' }}>
                             {isOverdue && <span className="font-semibold">Overdue · </span>}
@@ -1000,20 +1257,38 @@ export default function TasksPage() {
                         )}
                       </td>
 
-                      {/* Associated Contact */}
+                      {/* Associated Contact — click to navigate with task context */}
                       <td className="px-4 py-3">
-                        {contactName
-                          ? <span className="font-medium text-xs" style={{ color: '#0091AE' }}>{contactName}</span>
-                          : <span className="text-[#B0C1D4]">--</span>
-                        }
+                        {contactName && contactId ? (
+                          <Link
+                            href={`/contacts/${contactId}?taskId=${task.id}`}
+                            className="font-medium text-xs hover:underline"
+                            style={{ color: '#0091AE' }}
+                          >
+                            {contactName}
+                          </Link>
+                        ) : contactName ? (
+                          <span className="font-medium text-xs" style={{ color: '#0091AE' }}>{contactName}</span>
+                        ) : (
+                          <span className="text-[#B0C1D4]">--</span>
+                        )}
                       </td>
 
-                      {/* Associated Company */}
+                      {/* Associated Company — click to navigate */}
                       <td className="px-4 py-3">
-                        {companyName
-                          ? <span className="text-xs text-[#2D3E50]">{companyName}</span>
-                          : <span className="text-[#B0C1D4]">--</span>
-                        }
+                        {companyName && companyId ? (
+                          <Link
+                            href={`/companies/${companyId}`}
+                            className="text-xs hover:underline font-medium"
+                            style={{ color: '#2D3E50' }}
+                          >
+                            {companyName}
+                          </Link>
+                        ) : companyName ? (
+                          <span className="text-xs text-[#2D3E50]">{companyName}</span>
+                        ) : (
+                          <span className="text-[#B0C1D4]">--</span>
+                        )}
                       </td>
 
                       {/* Last Contacted */}
@@ -1034,14 +1309,19 @@ export default function TasksPage() {
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
+                            onClick={() => openEditDrawer(task)}
+                            className="p-1 rounded hover:bg-[#F0F3F7] text-[#99ACC2] hover:text-[#425B76] transition-colors"
+                            title="Edit"
+                          >
+                            <MoreHorizontal className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => deleteTask(task.id)}
                             className="p-1 rounded hover:bg-red-50 text-[#99ACC2] hover:text-red-400 transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button className="p-1 rounded hover:bg-[#F0F3F7] text-[#99ACC2] hover:text-[#425B76] transition-colors">
-                            <MoreHorizontal className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
@@ -1114,6 +1394,18 @@ export default function TasksPage() {
         companies={companies}
         currentUserName={currentUserName}
         currentUserId={currentUserId}
+      />
+
+      {/* Edit Task Drawer */}
+      <EditTaskDrawer
+        task={editingTask}
+        open={showEditDrawer}
+        onClose={() => { setShowEditDrawer(false); setEditingTask(null); }}
+        onSave={async (id, data) => { await updateTask(id, data); }}
+        onDelete={(id) => { deleteTask(id); }}
+        contacts={contacts}
+        companies={companies}
+        currentUserName={currentUserName}
       />
     </div>
   );

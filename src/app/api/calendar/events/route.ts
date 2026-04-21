@@ -1,16 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { apiOk, apiErr, apiTooManyRequests, getClientIp, withRoute } from '@/lib/api-error';
+import { apiLimiter } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 function adminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 }
 
 async function getValidToken(userId: string): Promise<string | null> {
   const supabase = adminClient();
-
   const { data, error } = await supabase
     .from('google_tokens')
     .select('calendar_access_token, calendar_refresh_token, calendar_expires_at')
@@ -20,14 +22,10 @@ async function getValidToken(userId: string): Promise<string | null> {
   if (error || !data) return null;
 
   const expiresAt = data.calendar_expires_at ? new Date(data.calendar_expires_at) : null;
-  const now = new Date();
-
-  // Token still valid
-  if (expiresAt && expiresAt > now && data.calendar_access_token) {
+  if (expiresAt && expiresAt > new Date() && data.calendar_access_token) {
     return data.calendar_access_token;
   }
 
-  // Refresh the token
   if (!data.calendar_refresh_token) return null;
 
   const refreshRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -40,36 +38,34 @@ async function getValidToken(userId: string): Promise<string | null> {
       grant_type: 'refresh_token',
     }),
   });
-
   const refreshed = await refreshRes.json();
   if (refreshed.error || !refreshed.access_token) return null;
 
-  const newExpiresAt = new Date(Date.now() + refreshed.expires_in * 1000).toISOString();
-
-  await supabase
-    .from('google_tokens')
-    .update({
-      calendar_access_token: refreshed.access_token,
-      calendar_expires_at: newExpiresAt,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', userId);
+  await supabase.from('google_tokens').update({
+    calendar_access_token: refreshed.access_token,
+    calendar_expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
+    updated_at: new Date().toISOString(),
+  }).eq('user_id', userId);
 
   return refreshed.access_token;
 }
 
 // GET: Fetch events from Google Calendar
-export async function GET(request: NextRequest) {
+export const GET = withRoute(async (request: NextRequest) => {
+  const ip = getClientIp(request);
+  const rl = apiLimiter.check(ip);
+  if (!rl.ok) return apiTooManyRequests(rl.retryAfter);
+
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get('user_id');
   const timeMin = searchParams.get('time_min');
   const timeMax = searchParams.get('time_max');
 
-  if (!userId) return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
+  if (!userId) return apiErr('Missing user_id', 400);
 
   const accessToken = await getValidToken(userId);
   if (!accessToken) {
-    return NextResponse.json({ error: 'No valid calendar token. Please reconnect Google Calendar.' }, { status: 401 });
+    return apiErr('No valid calendar token. Please reconnect Google Calendar.', 401);
   }
 
   const params = new URLSearchParams({
@@ -82,26 +78,22 @@ export async function GET(request: NextRequest) {
 
   const res = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` } },
   );
 
   if (!res.ok) {
     const errBody = await res.json();
-    return NextResponse.json({ error: errBody?.error?.message || 'Failed to fetch events' }, { status: res.status });
+    logger.error('calendar/events GET: Google API error', { status: res.status, msg: errBody?.error?.message });
+    return apiErr('Failed to fetch calendar events', res.status);
   }
 
   const data = await res.json();
-
-  // Normalize to CalendarEvent shape
   const events = (data.items || []).map((item: {
-    id: string;
-    summary?: string;
+    id: string; summary?: string;
     start?: { dateTime?: string; date?: string };
     end?: { dateTime?: string; date?: string };
-    location?: string;
-    description?: string;
-    attendees?: { email: string }[];
-    htmlLink?: string;
+    location?: string; description?: string;
+    attendees?: { email: string }[]; htmlLink?: string;
   }) => ({
     id: item.id,
     title: item.summary || '(No title)',
@@ -113,69 +105,68 @@ export async function GET(request: NextRequest) {
     htmlLink: item.htmlLink,
   }));
 
-  return NextResponse.json({ events });
-}
+  logger.info('calendar/events GET', { userId, count: events.length });
+  return apiOk({ events });
+});
 
 // POST: Create a new Google Calendar event
-export async function POST(request: NextRequest) {
-  const body = await request.json();
+export const POST = withRoute(async (request: NextRequest) => {
+  const ip = getClientIp(request);
+  const rl = apiLimiter.check(ip);
+  if (!rl.ok) return apiTooManyRequests(rl.retryAfter);
+
+  const body = await request.json().catch(() => null);
+  if (!body) return apiErr('Invalid request body', 400);
+
   const { user_id, title, startDateTime, endDateTime, attendees, location, description, reminderMinutes } = body;
 
-  if (!user_id) return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
+  if (!user_id) return apiErr('Missing user_id', 400);
   if (!title || !startDateTime || !endDateTime) {
-    return NextResponse.json({ error: 'title, startDateTime, endDateTime are required' }, { status: 400 });
+    return apiErr('title, startDateTime, and endDateTime are required', 400);
   }
 
   const accessToken = await getValidToken(user_id);
   if (!accessToken) {
-    return NextResponse.json({ error: 'No valid calendar token. Please reconnect Google Calendar.' }, { status: 401 });
+    return apiErr('No valid calendar token. Please reconnect Google Calendar.', 401);
   }
 
   const eventBody: Record<string, unknown> = {
     summary: title,
     start: { dateTime: startDateTime },
     end: { dateTime: endDateTime },
+    ...(location ? { location } : {}),
+    ...(description ? { description } : {}),
+    ...(attendees?.length ? { attendees: attendees.map((email: string) => ({ email })) } : {}),
+    reminders: typeof reminderMinutes === 'number'
+      ? { useDefault: false, overrides: [
+          { method: 'popup', minutes: reminderMinutes },
+          { method: 'email', minutes: reminderMinutes },
+        ]}
+      : { useDefault: true },
   };
-  if (location) eventBody.location = location;
-  if (description) eventBody.description = description;
-  if (attendees && Array.isArray(attendees) && attendees.length > 0) {
-    eventBody.attendees = attendees.map((email: string) => ({ email }));
-  }
-  if (typeof reminderMinutes === 'number') {
-    eventBody.reminders = {
-      useDefault: false,
-      overrides: [
-        { method: 'popup', minutes: reminderMinutes },
-        { method: 'email', minutes: reminderMinutes },
-      ],
-    };
-  } else {
-    eventBody.reminders = { useDefault: true };
-  }
 
   const res = await fetch(
     'https://www.googleapis.com/calendar/v3/calendars/primary/events',
     {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(eventBody),
-    }
+    },
   );
 
   if (!res.ok) {
     const errBody = await res.json();
-    return NextResponse.json({ error: errBody?.error?.message || 'Failed to create event' }, { status: res.status });
+    logger.error('calendar/events POST: Google API error', { status: res.status, msg: errBody?.error?.message });
+    return apiErr('Failed to create calendar event', res.status);
   }
 
   const created = await res.json();
-  return NextResponse.json({
+  logger.info('calendar/events POST: created', { eventId: created.id, userId: user_id });
+  return apiOk({
     id: created.id,
     title: created.summary,
     start: created.start?.dateTime || created.start?.date,
     end: created.end?.dateTime || created.end?.date,
     htmlLink: created.htmlLink,
   });
-}
+});
