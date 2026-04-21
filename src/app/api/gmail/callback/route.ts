@@ -85,9 +85,7 @@ export async function GET(request: NextRequest) {
       {
         id: state,
         email: userInfo.email,
-        username: userInfo.email.split('@')[0],
         full_name: userInfo.name || '',
-        password_hash: 'oauth_user',
       },
       { onConflict: 'id', ignoreDuplicates: true },
     );

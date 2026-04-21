@@ -34,9 +34,7 @@ export const POST = withRoute(async (request: NextRequest) => {
     {
       id: user.id,
       email: user.email || '',
-      username: user.user_metadata?.username || (user.email || '').split('@')[0],
       full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-      password_hash: 'oauth_user',
     },
     { onConflict: 'id', ignoreDuplicates: true },
   );
