@@ -252,9 +252,9 @@ export default function SplashPage() {
           </div>
           <p className="text-xs text-[#7c98b6]">© 2026 CRM Pro. All rights reserved.</p>
           <div className="flex gap-4">
-            {['Privacy', 'Terms', 'Security'].map((l) => (
-              <a key={l} href="#" className="text-xs text-[#7c98b6] hover:text-[#425b76] transition-colors">{l}</a>
-            ))}
+            <a href="/privacy" className="text-xs text-[#7c98b6] hover:text-[#425b76] transition-colors">Privacy</a>
+            <a href="/terms" className="text-xs text-[#7c98b6] hover:text-[#425b76] transition-colors">Terms</a>
+            <a href="#" className="text-xs text-[#7c98b6] hover:text-[#425b76] transition-colors">Security</a>
           </div>
         </div>
       </footer>
