@@ -64,9 +64,10 @@ export function GmailConnectBanner() {
 
         } else if (msg.type === 'complete') {
           es.close();
-          connectGmail(email); // Mark as connected only on success
+          connectGmail(email);
           setSync({ phase: 'complete', synced: msg.synced, gmailEmail: email });
-          setTimeout(() => setSync({ phase: 'idle' }), 4000);
+          // Reload page after 2s so contacts/companies appear
+          setTimeout(() => window.location.reload(), 2000);
 
         } else if (msg.type === 'error') {
           es.close();
@@ -77,10 +78,9 @@ export function GmailConnectBanner() {
 
     es.onerror = () => {
       es.close();
-      // SSE disconnected — mark as connected anyway since sync likely completed
       connectGmail(email);
       setSync({ phase: 'complete', synced: 0, gmailEmail: email });
-      setTimeout(() => setSync({ phase: 'idle' }), 3000);
+      setTimeout(() => window.location.reload(), 2000);
     };
   };
 

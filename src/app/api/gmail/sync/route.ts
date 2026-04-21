@@ -88,9 +88,7 @@ export async function GET(request: NextRequest) {
           {
             id: userId,
             email: tokenRow.gmail_email,
-            username: tokenRow.gmail_email.split('@')[0],
             full_name: '',
-            password_hash: 'oauth_user',
           },
           { onConflict: 'id', ignoreDuplicates: true }
         );
