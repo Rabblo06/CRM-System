@@ -20,12 +20,14 @@ export function useCalendar() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   useEffect(() => {
-    // If returning from calendar OAuth, force a re-check
     const justConnected = localStorage.getItem('calendar_just_connected');
     if (justConnected) {
       localStorage.removeItem('calendar_just_connected');
+      // Small delay to let the DB write from the callback settle
+      setTimeout(() => checkConnection(), 800);
+    } else {
+      checkConnection();
     }
-    checkConnection();
   }, []);
 
   const checkConnection = async () => {
@@ -49,7 +51,7 @@ export function useCalendar() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     // Store current path so we can return after OAuth
-    localStorage.setItem('calendar_oauth_return', '/meetings');
+    localStorage.setItem('calendar_oauth_return', '/settings?tab=calendar');
     window.location.href = `/api/calendar/auth?user_id=${user.id}`;
   };
 

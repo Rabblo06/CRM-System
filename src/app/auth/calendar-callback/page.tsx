@@ -23,9 +23,9 @@ function CalendarCallbackInner() {
       setStatus('done');
     }
 
-    const returnPath = localStorage.getItem('calendar_oauth_return') || '/meetings';
+    const returnPath = localStorage.getItem('calendar_oauth_return') || '/settings?tab=calendar';
     localStorage.removeItem('calendar_oauth_return');
-    setTimeout(() => router.replace(returnPath), 1200);
+    setTimeout(() => router.replace(returnPath), 800);
   }, [params, router]);
 
   return (
@@ -44,7 +44,7 @@ function CalendarCallbackInner() {
             <span style={{ color: '#00BDA5', fontSize: 22 }}>✓</span>
           </div>
           <p style={{ color: '#00BDA5', fontWeight: 600, fontSize: 14 }}>Calendar connected!</p>
-          <p style={{ color: '#7C98B6', fontSize: 12 }}>Taking you to your meetings…</p>
+          <p style={{ color: '#7C98B6', fontSize: 12 }}>Taking you back to settings…</p>
         </>
       ) : (
         <p style={{ color: '#516f90', fontSize: 14 }}>Connecting calendar…</p>
