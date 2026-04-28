@@ -4,7 +4,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ChevronDown, ChevronRight, Plus, MoreHorizontal, Search, X,
-  Trash2, Edit2, FolderPlus, Download, Building2,
+  Trash2, Edit2, FolderPlus, Download, Building2, MoveRight,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import CompanyImportWizard from '@/components/contacts/CompanyImportWizard';
@@ -59,13 +59,13 @@ const THREE_DOT_ITEMS = [
 ];
 
 const AVATAR_COLORS = ['#ff7a59','#0091AE','#00a38d','#3b82f6','#8b5cf6','#f59e0b','#10b981','#6366f1'];
-function avatarColor(name: string) { return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]; }
+function avatarColor(name: string) { return AVATAR_COLORS[(name.charCodeAt(0) || 65) % AVATAR_COLORS.length]; }
 function companyInitials(name: string) { return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
 function storageKey(suffix: string, email: string) { return `crm_co_${suffix}_${email}`; }
 
 function getPhoneFlag(phone: string): string {
   const p = (phone || '').replace(/\s/g, '');
-  if (p.startsWith('+1')) return '🇺🇸';
+  if (p.startsWith('+1'))  return '🇺🇸';
   if (p.startsWith('+44')) return '🇬🇧';
   if (p.startsWith('+33')) return '🇫🇷';
   if (p.startsWith('+49')) return '🇩🇪';
@@ -74,7 +74,7 @@ function getPhoneFlag(phone: string): string {
   return '';
 }
 
-/* ── StatusBadge ────────────────────────────────────────────── */
+/* ── Status badge ───────────────────────────────────────────── */
 function StatusBadge({ status, onChange }: { status: Status; onChange?: (s: Status) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -93,7 +93,7 @@ function StatusBadge({ status, onChange }: { status: Status; onChange?: (s: Stat
       </button>
       {open && onChange && (
         <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[120px]">
-          <button onClick={() => { onChange(''); setOpen(false); }} className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] text-[#99ACC2]">None</button>
+          <button onClick={() => { onChange(''); setOpen(false); }} className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] text-[#99ACC2]">— None</button>
           {Object.entries(STATUS_CONFIG).map(([k, v]) => (
             <button key={k} onClick={() => { onChange(k as Status); setOpen(false); }}
               className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] flex items-center gap-2">
@@ -117,10 +117,9 @@ function Pill({ label, color = '#0091AE' }: { label: string; color?: string }) {
   );
 }
 
-/* ── ThreeDotMenu ───────────────────────────────────────────── */
+/* ── Three-dot menu ─────────────────────────────────────────── */
 function ThreeDotMenu({ groupId, isFixed, onAction }: {
-  groupId: string; isFixed: boolean;
-  onAction: (action: string, groupId: string) => void;
+  groupId: string; isFixed: boolean; onAction: (action: string, groupId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -135,7 +134,7 @@ function ThreeDotMenu({ groupId, isFixed, onAction }: {
         <MoreHorizontal className="w-4 h-4 text-white" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[220px]">
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[230px]">
           {THREE_DOT_ITEMS.map((item, i) => {
             if (!item) return <div key={i} className="my-1 border-t border-[#DFE3EB]" />;
             const disabled = isFixed && ['rename','color','delete','archive','duplicate','move'].includes(item.id);
@@ -148,6 +147,40 @@ function ThreeDotMenu({ groupId, isFixed, onAction }: {
               </button>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Move-to-group dropdown ─────────────────────────────────── */
+function MoveToGroupDropdown({ companyId, currentGroupId, groups, onMove }: {
+  companyId: string; currentGroupId: string; groups: Group[];
+  onMove: (companyId: string, targetGroupId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+  const available = groups.filter(g => g.id !== currentGroupId);
+  return (
+    <div ref={ref} className="relative">
+      <button onClick={() => setOpen(v => !v)} title="Move to group" className="p-0.5 rounded hover:bg-[#E8F4FD]">
+        <MoveRight className="w-3 h-3 text-[#7C98B6]" />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[180px]">
+          <p className="px-3 py-1.5 text-[10px] font-semibold text-[#99ACC2] uppercase tracking-wide">Move to group</p>
+          {available.map(g => (
+            <button key={g.id} onClick={() => { onMove(companyId, g.id); setOpen(false); }}
+              className="w-full px-3 py-2 text-xs text-left hover:bg-[#F6F9FC] flex items-center gap-2 text-[#2D3E50]">
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: g.color }} />
+              {g.name}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -208,11 +241,86 @@ function RenameModal({ groupName, onSave, onClose }: {
   );
 }
 
+/* ── Inline add row ─────────────────────────────────────────── */
+function InlineAddRow({ onSave, onCancel }: {
+  onSave: (data: { name: string; domain: string; phone: string; industry: string }) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [name,     setName]     = useState('');
+  const [domain,   setDomain]   = useState('');
+  const [phone,    setPhone]    = useState('');
+  const [industry, setIndustry] = useState('');
+  const [saving,   setSaving]   = useState(false);
+
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    await onSave({ name: name.trim(), domain: domain.trim(), phone: phone.trim(), industry: industry.trim() });
+    setSaving(false);
+  };
+
+  const inp = "h-7 px-2 text-xs border border-[#CBD6E2] rounded outline-none text-[#2D3E50] w-full";
+  const focus = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#0091AE'; };
+  const blur  = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#CBD6E2'; };
+
+  return (
+    <tr className="border-b border-[#F0F3F7] bg-blue-50/20">
+      <td className="w-10 px-3 py-2" />
+      {/* Company name */}
+      <td className="px-2 py-2 min-w-[200px]">
+        <input autoFocus placeholder="Company name *" value={name} onChange={e => setName(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onCancel(); }}
+          className={inp} onFocus={focus} onBlur={blur} />
+      </td>
+      {/* Domain */}
+      <td className="px-2 py-2 min-w-[160px]">
+        <input placeholder="Domain" value={domain} onChange={e => setDomain(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onCancel(); }}
+          className={inp} onFocus={focus} onBlur={blur} />
+      </td>
+      {/* Phone */}
+      <td className="px-2 py-2 min-w-[140px]">
+        <input placeholder="Phone" value={phone} onChange={e => setPhone(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onCancel(); }}
+          className={inp} onFocus={focus} onBlur={blur} />
+      </td>
+      {/* Owner */}
+      <td className="px-2 py-2 w-[120px]" />
+      {/* Industry */}
+      <td className="px-2 py-2 min-w-[120px]">
+        <input placeholder="Industry" value={industry} onChange={e => setIndustry(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onCancel(); }}
+          className={inp} onFocus={focus} onBlur={blur} />
+      </td>
+      {/* Deals */}
+      <td className="px-2 py-2 w-[80px]" />
+      {/* Deals value */}
+      <td className="px-2 py-2 w-[100px]" />
+      {/* Status / Actions */}
+      <td className="px-2 py-2 w-[140px]">
+        <div className="flex items-center gap-1">
+          <button onClick={handleSave} disabled={saving || !name.trim()}
+            className="px-2.5 py-1 text-xs font-bold text-white rounded-[3px] disabled:opacity-40"
+            style={{ backgroundColor: '#0091AE' }}>
+            {saving ? '…' : 'Add'}
+          </button>
+          <button onClick={onCancel}
+            className="px-2 py-1 text-xs text-[#7C98B6] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">✕</button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 /* ── Company Row ────────────────────────────────────────────── */
-function CompanyRow({ company, selected, onSelect, status, onStatusChange, onEdit, onDelete }: {
+function CompanyRow({
+  company, selected, onSelect, status, onStatusChange, onEdit, onDelete, onMoveToGroup, allGroups, currentGroupId,
+}: {
   company: Company; selected: boolean; onSelect: (id: string) => void;
   status: Status; onStatusChange: (id: string, s: Status) => void;
   onEdit: (c: Company) => void; onDelete: (id: string) => void;
+  onMoveToGroup: (id: string, groupId: string) => void;
+  allGroups: Group[]; currentGroupId: string;
 }) {
   return (
     <tr className="border-b border-[#F0F3F7] hover:bg-[#F8FAFC] transition-colors group/row">
@@ -229,22 +337,28 @@ function CompanyRow({ company, selected, onSelect, status, onStatusChange, onEdi
             {companyInitials(company.name || '?')}
           </div>
           <Link href={`/companies/${company.id}`}
-            className="text-xs font-semibold hover:underline truncate max-w-[150px]"
+            className="text-xs font-semibold hover:underline truncate max-w-[140px]"
             style={{ color: '#0091AE' }}>
             {company.name}
           </Link>
           <div className="opacity-0 group-hover/row:opacity-100 flex items-center gap-1 flex-shrink-0">
-            <button onClick={() => onEdit(company)} className="p-0.5 rounded hover:bg-[#E8F4FD]" title="Edit">
+            <button onClick={() => onEdit(company)} title="Edit" className="p-0.5 rounded hover:bg-[#E8F4FD]">
               <Edit2 className="w-3 h-3 text-[#7C98B6]" />
             </button>
-            <button onClick={() => onDelete(company.id)} className="p-0.5 rounded hover:bg-red-50" title="Delete">
+            <button onClick={() => onDelete(company.id)} title="Delete" className="p-0.5 rounded hover:bg-red-50">
               <Trash2 className="w-3 h-3 text-[#99ACC2] hover:text-red-400" />
             </button>
+            <MoveToGroupDropdown
+              companyId={company.id}
+              currentGroupId={currentGroupId}
+              groups={allGroups}
+              onMove={onMoveToGroup}
+            />
           </div>
         </div>
       </td>
 
-      {/* Domain/Email */}
+      {/* Domain */}
       <td className="px-3 py-2.5 min-w-[160px]">
         {company.domain ? (
           <a href={`https://${company.domain}`} target="_blank" rel="noopener noreferrer"
@@ -264,7 +378,7 @@ function CompanyRow({ company, selected, onSelect, status, onStatusChange, onEdi
 
       {/* Owner */}
       <td className="px-3 py-2.5 w-[120px]">
-        <span className="text-xs text-[#2D3E50]">—</span>
+        <span className="text-xs text-[#B0C1D4]">—</span>
       </td>
 
       {/* Industry */}
@@ -291,8 +405,11 @@ function CompanyRow({ company, selected, onSelect, status, onStatusChange, onEdi
 }
 
 /* ── Group Section ──────────────────────────────────────────── */
-function GroupSection({ group, companies, collapsed, onToggleCollapse, selectedIds, onSelect, onSelectAll,
-  statuses, onStatusChange, onEdit, onDelete, onGroupAction }: {
+function GroupSection({
+  group, companies, collapsed, onToggleCollapse, selectedIds, onSelect, onSelectAll,
+  statuses, onStatusChange, onEdit, onDelete, onGroupAction,
+  onMoveToGroup, allGroups, addingToGroup, onStartAdd, onSaveAdd, onCancelAdd,
+}: {
   group: Group; companies: Company[]; collapsed: boolean;
   onToggleCollapse: (id: string) => void;
   selectedIds: Set<string>; onSelect: (id: string) => void;
@@ -300,6 +417,11 @@ function GroupSection({ group, companies, collapsed, onToggleCollapse, selectedI
   statuses: Record<string, Status>; onStatusChange: (id: string, s: Status) => void;
   onEdit: (c: Company) => void; onDelete: (id: string) => void;
   onGroupAction: (action: string, groupId: string) => void;
+  onMoveToGroup: (id: string, groupId: string) => void;
+  allGroups: Group[]; addingToGroup: string | null;
+  onStartAdd: (groupId: string) => void;
+  onSaveAdd: (data: { name: string; domain: string; phone: string; industry: string }, groupId: string) => Promise<void>;
+  onCancelAdd: () => void;
 }) {
   const isFixed = group.id === 'all';
   return (
@@ -341,12 +463,26 @@ function GroupSection({ group, companies, collapsed, onToggleCollapse, selectedI
               <CompanyRow key={company.id} company={company}
                 selected={selectedIds.has(company.id)} onSelect={onSelect}
                 status={statuses[company.id] || ''} onStatusChange={onStatusChange}
-                onEdit={onEdit} onDelete={onDelete} />
+                onEdit={onEdit} onDelete={onDelete}
+                onMoveToGroup={onMoveToGroup} allGroups={allGroups} currentGroupId={group.id}
+              />
             ))}
+
+            {/* Inline add row */}
+            {addingToGroup === group.id && (
+              <InlineAddRow
+                onSave={(data) => onSaveAdd(data, group.id)}
+                onCancel={onCancelAdd}
+              />
+            )}
+
+            {/* Add company button */}
             <tr>
               <td />
               <td className="px-3 py-2.5" colSpan={8}>
-                <button className="flex items-center gap-1.5 text-xs font-medium hover:text-[#0091AE] transition-colors" style={{ color: '#7C98B6' }}>
+                <button onClick={() => onStartAdd(group.id)}
+                  className="flex items-center gap-1.5 text-xs font-medium hover:text-[#0091AE] transition-colors"
+                  style={{ color: '#7C98B6' }}>
                   <Plus className="w-3.5 h-3.5" /> Add company
                 </button>
               </td>
@@ -365,21 +501,22 @@ export default function CompaniesPage() {
   const { companies, loading, createCompany, updateCompany, deleteCompany } = useCompanies();
   const [userEmail, setUserEmail] = useState('');
 
-  const [customGroups, setCustomGroups] = useState<Group[]>([]);
-  const [groupMap, setGroupMap] = useState<Record<string, string>>({});
-  const [statuses, setStatuses] = useState<Record<string, Status>>({});
+  const [customGroups,    setCustomGroups]    = useState<Group[]>([]);
+  const [groupMap,        setGroupMap]        = useState<Record<string, string>>({});
+  const [statuses,        setStatuses]        = useState<Record<string, Status>>({});
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  const [search, setSearch] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [showImport, setShowImport] = useState(false);
+  const [search,          setSearch]          = useState('');
+  const [selectedIds,     setSelectedIds]     = useState<Set<string>>(new Set());
+  const [showImport,      setShowImport]      = useState(false);
   const [showNewDropdown, setShowNewDropdown] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editCompany, setEditCompany] = useState<Company | null>(null);
-  const [editName, setEditName] = useState('');
+  const [showEditModal,   setShowEditModal]   = useState(false);
+  const [editCompany,     setEditCompany]     = useState<Company | null>(null);
+  const [editName,        setEditName]        = useState('');
+  const [addingToGroup,   setAddingToGroup]   = useState<string | null>(null);
 
   const [colorPickerGroup, setColorPickerGroup] = useState<string | null>(null);
-  const [renameGroup, setRenameGroup] = useState<string | null>(null);
+  const [renameGroupId,    setRenameGroupId]    = useState<string | null>(null);
 
   const newBtnRef = useRef<HTMLDivElement>(null);
 
@@ -398,10 +535,10 @@ export default function CompaniesPage() {
     }).catch(() => {});
   }, []);
 
-  const saveGroups   = (g: Group[])                => { if (userEmail) localStorage.setItem(storageKey('groups',    userEmail), JSON.stringify(g)); };
-  const saveMap      = (m: Record<string, string>) => { if (userEmail) localStorage.setItem(storageKey('map',       userEmail), JSON.stringify(m)); };
-  const saveStatuses = (s: Record<string, Status>) => { if (userEmail) localStorage.setItem(storageKey('statuses',  userEmail), JSON.stringify(s)); };
-  const saveCollapsed= (s: Set<string>)            => { if (userEmail) localStorage.setItem(storageKey('collapsed', userEmail), JSON.stringify([...s])); };
+  const saveGroups    = useCallback((g: Group[])                => { if (userEmail) localStorage.setItem(storageKey('groups',    userEmail), JSON.stringify(g)); }, [userEmail]);
+  const saveMap       = useCallback((m: Record<string, string>) => { if (userEmail) localStorage.setItem(storageKey('map',       userEmail), JSON.stringify(m)); }, [userEmail]);
+  const saveStatuses  = useCallback((s: Record<string, Status>) => { if (userEmail) localStorage.setItem(storageKey('statuses',  userEmail), JSON.stringify(s)); }, [userEmail]);
+  const saveCollapsed = useCallback((s: Set<string>)            => { if (userEmail) localStorage.setItem(storageKey('collapsed', userEmail), JSON.stringify([...s])); }, [userEmail]);
 
   const allGroups = useMemo(() => [
     DEFAULT_GROUP,
@@ -414,7 +551,11 @@ export default function CompaniesPage() {
     else base = companies.filter(c => groupMap[c.id] === groupId);
     if (!search.trim()) return base;
     const q = search.toLowerCase();
-    return base.filter(c => c.name.toLowerCase().includes(q) || (c.industry || '').toLowerCase().includes(q) || (c.city || '').toLowerCase().includes(q));
+    return base.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.industry || '').toLowerCase().includes(q) ||
+      (c.domain || '').toLowerCase().includes(q)
+    );
   }, [companies, groupMap, search]);
 
   const toggleSelect = (id: string) => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -425,16 +566,39 @@ export default function CompaniesPage() {
   };
 
   const handleStatusChange = (id: string, s: Status) => {
-    const next = { ...statuses, [id]: s };
-    setStatuses(next); saveStatuses(next);
+    const next = { ...statuses, [id]: s }; setStatuses(next); saveStatuses(next);
   };
 
-  const toggleCollapse = (groupId: string) => {
-    setCollapsedGroups(prev => {
-      const n = new Set(prev); n.has(groupId) ? n.delete(groupId) : n.add(groupId);
-      saveCollapsed(n); return n;
-    });
-  };
+  const toggleCollapse = useCallback((groupId: string) => {
+    setCollapsedGroups(prev => { const n = new Set(prev); n.has(groupId) ? n.delete(groupId) : n.add(groupId); saveCollapsed(n); return n; });
+  }, [saveCollapsed]);
+
+  /* ── Move company between groups ── */
+  const handleMoveToGroup = useCallback((companyId: string, targetGroupId: string) => {
+    const nextMap = { ...groupMap };
+    if (targetGroupId === 'all') delete nextMap[companyId];
+    else nextMap[companyId] = targetGroupId;
+    setGroupMap(nextMap); saveMap(nextMap);
+  }, [groupMap, saveMap]);
+
+  /* ── Inline add company ── */
+  const handleSaveAdd = useCallback(async (
+    data: { name: string; domain: string; phone: string; industry: string },
+    groupId: string,
+  ) => {
+    const payload: Partial<Company> = {
+      name: data.name,
+      ...(data.domain && { domain: data.domain }),
+      ...(data.phone && { phone: data.phone }),
+      ...(data.industry && { industry: data.industry }),
+    };
+    const res = await createCompany(payload);
+    if (res?.data?.id && groupId !== 'all') {
+      const nextMap = { ...groupMap, [res.data.id]: groupId };
+      setGroupMap(nextMap); saveMap(nextMap);
+    }
+    setAddingToGroup(null);
+  }, [createCompany, groupMap, saveMap]);
 
   /* ── Group actions ── */
   const handleGroupAction = useCallback((action: string, groupId: string) => {
@@ -471,7 +635,7 @@ export default function CompaniesPage() {
         break;
       }
 
-      case 'rename': setRenameGroup(groupId); break;
+      case 'rename': setRenameGroupId(groupId); break;
       case 'color':  setColorPickerGroup(groupId); break;
 
       case 'export': {
@@ -509,27 +673,38 @@ export default function CompaniesPage() {
         break;
       }
     }
-  }, [allGroups, customGroups, groupMap, statuses, getGroupCompanies, toggleCollapse]);
+  }, [allGroups, customGroups, groupMap, statuses, getGroupCompanies, toggleCollapse, saveGroups, saveMap, saveCollapsed]);
 
   /* ── Import complete ── */
   const handleImportComplete = useCallback((result: CompanyImportResult) => {
+    const existing = customGroups.find(g => g.name === result.groupName && !g.archived);
+    if (existing) {
+      const nextMap = { ...groupMap }; result.companyIds.forEach(id => { nextMap[id] = existing.id; });
+      setGroupMap(nextMap); saveMap(nextMap);
+      return;
+    }
     const ng: Group = { id: result.groupId, name: result.groupName, color: GROUP_COLORS[customGroups.length % GROUP_COLORS.length], order: customGroups.length };
     const nextGroups = [...customGroups, ng];
     const nextMap = { ...groupMap }; result.companyIds.forEach(id => { nextMap[id] = result.groupId; });
     setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveMap(nextMap);
-    setShowImport(false);
-  }, [customGroups, groupMap]);
+  }, [customGroups, groupMap, saveGroups, saveMap]);
 
-  /* ── Create company via import ── */
   const handleCreateCompany = useCallback(async (data: Record<string, string>) => {
     return await createCompany(data as Parameters<typeof createCompany>[0]);
   }, [createCompany]);
 
-  /* ── Quick edit modal ── */
+  const handleUpdateCompany = useCallback(async (id: string, data: Record<string, string>) => {
+    return await updateCompany(id, data as Parameters<typeof updateCompany>[1]);
+  }, [updateCompany]);
+
   const openEdit = (c: Company) => { setEditCompany(c); setEditName(c.name); setShowEditModal(true); };
   const saveEdit = async () => {
-    if (!editCompany) return;
-    await updateCompany(editCompany.id, { name: editName });
+    if (!editCompany) {
+      if (!editName.trim()) return;
+      await createCompany({ name: editName.trim() } as Parameters<typeof createCompany>[0]);
+    } else {
+      await updateCompany(editCompany.id, { name: editName } as Parameters<typeof updateCompany>[1]);
+    }
     setShowEditModal(false); setEditCompany(null);
   };
 
@@ -539,7 +714,6 @@ export default function CompaniesPage() {
     const nextMap = { ...groupMap }; delete nextMap[id]; setGroupMap(nextMap); saveMap(nextMap);
   };
 
-  /* ── Close new dropdown ── */
   useEffect(() => {
     const h = (e: MouseEvent) => { if (newBtnRef.current && !newBtnRef.current.contains(e.target as Node)) setShowNewDropdown(false); };
     document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h);
@@ -547,19 +721,19 @@ export default function CompaniesPage() {
 
   return (
     <div className="flex flex-col h-full bg-white">
+
       {/* ── Top bar ── */}
       <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#DFE3EB] flex-shrink-0">
         <div className="flex items-center gap-2">
-          {/* New company dropdown */}
           <div ref={newBtnRef} className="relative">
             <div className="flex items-center border border-[#FF7A59] rounded-[3px] overflow-hidden">
-              <button
-                onClick={() => { setEditCompany(null); setEditName(''); setShowEditModal(true); }}
+              <button onClick={() => { setEditCompany(null); setEditName(''); setShowEditModal(true); }}
                 className="px-4 py-1.5 text-sm font-bold text-white"
                 style={{ backgroundColor: '#FF7A59' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}
-              >New company</button>
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}>
+                New company
+              </button>
               <button onClick={() => setShowNewDropdown(v => !v)}
                 className="px-2 py-1.5 text-white border-l border-white/30"
                 style={{ backgroundColor: '#FF7A59' }}
@@ -586,7 +760,6 @@ export default function CompaniesPage() {
             )}
           </div>
 
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#99ACC2]" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search"
@@ -622,14 +795,26 @@ export default function CompaniesPage() {
             selectedIds={selectedIds} onSelect={toggleSelect} onSelectAll={handleSelectAll}
             statuses={statuses} onStatusChange={handleStatusChange}
             onEdit={openEdit} onDelete={handleDelete}
-            onGroupAction={handleGroupAction} />
+            onGroupAction={handleGroupAction}
+            onMoveToGroup={handleMoveToGroup}
+            allGroups={allGroups}
+            addingToGroup={addingToGroup}
+            onStartAdd={setAddingToGroup}
+            onSaveAdd={handleSaveAdd}
+            onCancelAdd={() => setAddingToGroup(null)}
+          />
         ))}
       </div>
 
       {/* ── Modals ── */}
       {showImport && (
-        <CompanyImportWizard onClose={() => setShowImport(false)}
-          onImportComplete={handleImportComplete} createCompany={handleCreateCompany} />
+        <CompanyImportWizard
+          onClose={() => setShowImport(false)}
+          onImportComplete={handleImportComplete}
+          createCompany={handleCreateCompany}
+          updateCompany={handleUpdateCompany}
+          existingCompanies={companies.map(c => ({ id: c.id, name: c.name, domain: c.domain }))}
+        />
       )}
 
       {showEditModal && (
@@ -640,7 +825,9 @@ export default function CompaniesPage() {
               <button onClick={() => { setShowEditModal(false); setEditCompany(null); }}><X className="w-4 h-4 text-[#99ACC2]" /></button>
             </div>
             <div className="px-5 py-4">
-              <label className="block text-xs font-semibold text-[#425B76] uppercase tracking-wide mb-1.5">Company name <span className="text-[#FF7A59]">*</span></label>
+              <label className="block text-xs font-semibold text-[#425B76] uppercase tracking-wide mb-1.5">
+                Company name <span className="text-[#FF7A59]">*</span>
+              </label>
               <input autoFocus value={editName} onChange={e => setEditName(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setShowEditModal(false); }}
                 placeholder="Enter company name"
@@ -653,9 +840,7 @@ export default function CompaniesPage() {
                 className="px-4 py-2 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">Cancel</button>
               <button onClick={saveEdit} disabled={!editName.trim()}
                 className="px-5 py-2 text-sm font-bold text-white rounded-[3px] disabled:opacity-40"
-                style={{ backgroundColor: '#FF7A59' }}
-                onMouseEnter={e => { if (editName.trim()) (e.currentTarget as HTMLElement).style.backgroundColor = '#FF8F73'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FF7A59'; }}>
+                style={{ backgroundColor: '#FF7A59' }}>
                 {editCompany ? 'Save' : 'Create'}
               </button>
             </div>
@@ -670,11 +855,11 @@ export default function CompaniesPage() {
           onClose={() => setColorPickerGroup(null)} />;
       })()}
 
-      {renameGroup && (() => {
-        const g = customGroups.find(g => g.id === renameGroup); if (!g) return null;
+      {renameGroupId && (() => {
+        const g = customGroups.find(g => g.id === renameGroupId); if (!g) return null;
         return <RenameModal groupName={g.name}
-          onSave={name => { const next = customGroups.map(g => g.id === renameGroup ? { ...g, name } : g); setCustomGroups(next); saveGroups(next); }}
-          onClose={() => setRenameGroup(null)} />;
+          onSave={name => { const next = customGroups.map(g => g.id === renameGroupId ? { ...g, name } : g); setCustomGroups(next); saveGroups(next); }}
+          onClose={() => setRenameGroupId(null)} />;
       })()}
     </div>
   );
