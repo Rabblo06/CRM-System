@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
-const INACTIVITY_MS = 15 * 60 * 1000; // 15 minutes
+const INACTIVITY_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 const IS_DEMO =
   !process.env.NEXT_PUBLIC_SUPABASE_URL ||
@@ -51,7 +51,7 @@ export function useInactivityLogout(
       const raw = localStorage.getItem('crm_session_start');
       if (raw) {
         const elapsed = Date.now() - parseInt(raw, 10);
-        if (elapsed > 60 * 60 * 1000) {
+        if (elapsed > 4 * 60 * 60 * 1000) {
           doLogout('expired');
           return;
         }

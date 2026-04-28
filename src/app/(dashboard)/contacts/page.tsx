@@ -1,815 +1,989 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import {
-  Search, SlidersHorizontal, Columns, ChevronDown, ChevronLeft, ChevronRight,
-  Plus, Upload, X, Check, Trash2, UserCheck, ClipboardList, Pencil,
+  ChevronDown, ChevronRight, Plus, MoreHorizontal, Search, X,
+  Trash2, Edit2, FolderPlus, Download, Users,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { ContactForm } from '@/components/contacts/ContactForm';
+import ImportWizard from '@/components/contacts/ImportWizard';
 import { useContacts } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
-import { GmailConnectBanner } from '@/components/emails/GmailConnectBanner';
 import type { Contact } from '@/types';
+import type { ImportResult } from '@/components/contacts/ImportWizard';
 
-/* ── Helpers ─────────────────────────────────────────────── */
+/* ── Types ─────────────────────────────────────────────────── */
+interface Group {
+  id: string;
+  name: string;
+  color: string;
+  order: number;
+  sourceFile?: string;
+  archived?: boolean;
+}
+
+type Priority = 'high' | 'medium' | 'low' | '';
+
+/* ── Constants ─────────────────────────────────────────────── */
+const FIXED_GROUPS: Group[] = [
+  { id: 'active',   name: 'Active Contacts',   color: '#00A38D', order: 0 },
+  { id: 'inactive', name: 'Inactive Contacts',  color: '#7C98B6', order: 1 },
+];
+
+const GROUP_COLORS = [
+  '#00A38D','#0091AE','#8B5CF6','#F59E0B','#EF4444',
+  '#3B82F6','#10B981','#F97316','#EC4899','#6366F1',
+];
+
+const PRIORITY_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
+  high:   { label: 'High',   bg: '#FFF3F0', text: '#FF7A59' },
+  medium: { label: 'Medium', bg: '#EFF6FF', text: '#3B82F6' },
+  low:    { label: 'Low',    bg: '#ECFDF5', text: '#10B981' },
+};
+
+const THREE_DOT_ITEMS = [
+  { id: 'collapse_this',   label: 'Collapse this group' },
+  { id: 'collapse_all',    label: 'Collapse all groups' },
+  { id: 'select_all',      label: 'Select all Contacts in group' },
+  null,
+  { id: 'add_group',       label: 'Add group' },
+  { id: 'duplicate',       label: 'Duplicate this group' },
+  { id: 'move',            label: 'Move group' },
+  { id: 'rename',          label: 'Rename group' },
+  { id: 'color',           label: 'Change group color' },
+  null,
+  { id: 'export',          label: 'Export to Excel' },
+  { id: 'apps',            label: 'Apps' },
+  null,
+  { id: 'delete',          label: 'Delete group', danger: true },
+  { id: 'archive',         label: 'Archive group', danger: false },
+];
+
 const AVATAR_COLORS = ['#ff7a59','#f2547d','#00a38d','#3b82f6','#8b5cf6','#f59e0b','#10b981','#6366f1'];
 function avatarColor(name: string) { return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]; }
-function initials(c: Contact) { return `${c.first_name[0] || ''}${c.last_name[0] || ''}`.toUpperCase(); }
+function initials(c: Contact) { return `${c.first_name?.[0] || ''}${c.last_name?.[0] || ''}`.toUpperCase(); }
 function fullName(c: Contact) { return `${c.first_name} ${c.last_name}`.trim(); }
 
-const PERSONAL_DOMAINS = new Set(['gmail.com','yahoo.com','hotmail.com','outlook.com','aol.com','icloud.com','me.com','live.com','msn.com']);
-function getContactDomain(c: Contact): string | null {
-  // Prefer company domain, fall back to email domain
-  const companyDomain = (c as { company?: { domain?: string } }).company?.domain;
-  if (companyDomain) return companyDomain;
-  const emailDomain = c.email?.split('@')[1];
-  if (emailDomain && !PERSONAL_DOMAINS.has(emailDomain)) return emailDomain;
-  return null;
-}
-function faviconUrl(domain: string) {
-  return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-}
-function fmtDate(d?: string | null) {
-  if (!d) return '--';
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' +
-    new Date(d).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' GMT';
+function getPhoneFlag(phone: string): string {
+  if (!phone) return '';
+  const p = phone.replace(/\s/g, '');
+  if (p.startsWith('+1')) return '🇺🇸';
+  if (p.startsWith('+44')) return '🇬🇧';
+  if (p.startsWith('+33')) return '🇫🇷';
+  if (p.startsWith('+49')) return '🇩🇪';
+  if (p.startsWith('+61')) return '🇦🇺';
+  if (p.startsWith('+81')) return '🇯🇵';
+  if (p.startsWith('+91')) return '🇮🇳';
+  if (p.startsWith('+55')) return '🇧🇷';
+  if (p.startsWith('+86')) return '🇨🇳';
+  if (p.startsWith('+52')) return '🇲🇽';
+  return '📞';
 }
 
-/* ── Column definitions ───────────────────────────────────── */
-interface ColDef { id: string; label: string; width: number; always?: boolean }
-const ALL_COLS: ColDef[] = [
-  { id: 'email',      label: 'Email',                    width: 220, always: true },
-  { id: 'phone',      label: 'Phone Number',             width: 160 },
-  { id: 'job_title',  label: 'Job Title',                width: 180 },
-  { id: 'owner',      label: 'Contact owner',            width: 160 },
-  { id: 'priority',   label: 'Support Priority',         width: 150 },
-  { id: 'lang',       label: 'Preferred language',       width: 170 },
-  { id: 'product',    label: 'Product Purchased',        width: 180 },
-  { id: 'company',    label: 'Company Name',             width: 180 },
-  { id: 'created_at', label: 'Create Date (GMT)',        width: 220 },
-  { id: 'updated_at', label: 'Last Activity Date (GMT)', width: 220 },
-  { id: 'contacted',  label: 'Last Contacted (GMT)',     width: 220 },
-];
-const DEFAULT_VISIBLE = ['email', 'phone', 'job_title', 'owner', 'priority', 'lang', 'product', 'company', 'created_at', 'updated_at', 'contacted'];
+function storageKey(suffix: string, email: string) {
+  return `crm_cg_${suffix}_${email}`;
+}
 
-/* ── Filter options ───────────────────────────────────────── */
-const FILTER_PROPS = [
-  { id: 'lead_status',     label: 'Lead Status',     options: ['new','contacted','qualified','unqualified','converted'] },
-  { id: 'lifecycle_stage', label: 'Lifecycle Stage', options: ['lead','marketing_qualified','sales_qualified','opportunity','customer','evangelist'] },
-  { id: 'country',         label: 'Country',         options: [] },
-  { id: 'job_title',       label: 'Job Title',       options: [] },
-];
+/* ── ActivityTimeline ──────────────────────────────────────── */
+function ActivityTimeline({ contact }: { contact: Contact }) {
+  const bars = useMemo(() => {
+    const last = contact.last_contacted_at;
+    if (!last) return [false, false, false, false, false];
+    const days = (Date.now() - new Date(last).getTime()) / 86400000;
+    const count = days < 7 ? 5 : days < 30 ? 4 : days < 60 ? 3 : days < 90 ? 2 : 1;
+    return Array.from({ length: 5 }, (_, i) => i < count);
+  }, [contact.last_contacted_at]);
 
-interface ActiveFilter { prop: string; op: string; value: string }
-
-/* ── Filter Panel ─────────────────────────────────────────── */
-function FilterPanel({
-  filters, onAdd, onRemove, onClose,
-}: {
-  filters: ActiveFilter[];
-  onAdd: (f: ActiveFilter) => void;
-  onRemove: (i: number) => void;
-  onClose: () => void;
-}) {
-  const [prop, setProp] = useState(FILTER_PROPS[0].id);
-  const [value, setValue] = useState('');
-  const selected = FILTER_PROPS.find(p => p.id === prop);
-
+  const colors = ['#FF7A59', '#0091AE', '#00BDA5', '#8B5CF6', '#F59E0B'];
   return (
-    <div className="fixed right-0 top-0 h-full z-50 flex">
-      <div className="fixed inset-0 -z-10" onClick={onClose} />
-      <div className="bg-white border-l border-[#dfe3eb] shadow-2xl flex flex-col" style={{ width: 360 }}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#dfe3eb]">
-          <span className="text-sm font-bold text-[#2d3e50]">Advanced filters</span>
-          <button onClick={onClose} className="p-1 text-[#99acc2] hover:text-[#425b76]"><X size={16} /></button>
-        </div>
-
-        {/* Active filters */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          {filters.length > 0 && (
-            <div className="mb-4 space-y-2">
-              <p className="text-xs font-semibold text-[#7c98b6] uppercase tracking-wide mb-2">Active filters</p>
-              {filters.map((f, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-2 bg-[#f6f9fc] rounded-[3px] border border-[#dfe3eb]">
-                  <span className="flex-1 text-xs text-[#2d3e50]">
-                    <span className="font-semibold">{FILTER_PROPS.find(p => p.id === f.prop)?.label}</span>
-                    {' '}{f.op}{' '}
-                    <span className="font-semibold">{f.value}</span>
-                  </span>
-                  <button onClick={() => onRemove(i)} className="text-[#99acc2] hover:text-red-400"><X size={12} /></button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Add filter */}
-          <p className="text-xs font-semibold text-[#7c98b6] uppercase tracking-wide mb-3">Add filter</p>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-semibold text-[#425b76] mb-1">Property</label>
-              <select
-                value={prop}
-                onChange={e => { setProp(e.target.value); setValue(''); }}
-                className="h-9 w-full px-3 text-sm border border-[#cbd6e2] rounded-[3px] outline-none text-[#2d3e50] bg-white"
-              >
-                {FILTER_PROPS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-[#425b76] mb-1">Value</label>
-              {selected && selected.options.length > 0 ? (
-                <select
-                  value={value}
-                  onChange={e => setValue(e.target.value)}
-                  className="h-9 w-full px-3 text-sm border border-[#cbd6e2] rounded-[3px] outline-none text-[#2d3e50] bg-white"
-                >
-                  <option value="">Select…</option>
-                  {selected.options.map(o => <option key={o} value={o}>{o.replace(/_/g, ' ')}</option>)}
-                </select>
-              ) : (
-                <input
-                  value={value}
-                  onChange={e => setValue(e.target.value)}
-                  placeholder="Enter value…"
-                  className="h-9 w-full px-3 text-sm border border-[#cbd6e2] rounded-[3px] outline-none text-[#2d3e50]"
-                />
-              )}
-            </div>
-            <button
-              type="button"
-              disabled={!value.trim()}
-              onClick={() => { if (value.trim()) { onAdd({ prop, op: 'is', value }); setValue(''); } }}
-              className="w-full py-2 text-sm font-bold rounded-[3px] text-white disabled:opacity-40"
-              style={{ backgroundColor: '#ff7a59' }}
-            >
-              Apply filter
-            </button>
-          </div>
-        </div>
-
-        <div className="px-5 py-3 border-t border-[#dfe3eb]">
-          <button onClick={onClose} className="w-full py-2 text-sm font-semibold text-[#425b76] border border-[#dfe3eb] rounded-[3px] hover:bg-[#f6f9fc]">
-            Done
-          </button>
-        </div>
-      </div>
+    <div className="flex items-end gap-0.5">
+      {bars.map((active, i) => (
+        <div
+          key={i}
+          style={{
+            width: 4,
+            height: 14,
+            borderRadius: 2,
+            backgroundColor: active ? colors[i % colors.length] : '#DFE3EB',
+          }}
+        />
+      ))}
     </div>
   );
 }
 
-/* ── Edit Columns Panel ───────────────────────────────────── */
-function EditColumnsPanel({ visible, onChange, onClose }: {
-  visible: string[]; onChange: (v: string[]) => void; onClose: () => void;
-}) {
+/* ── PriorityBadge ─────────────────────────────────────────── */
+function PriorityBadge({ priority, onChange }: { priority: Priority; onChange?: (p: Priority) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  const cfg = priority ? PRIORITY_CONFIG[priority] : null;
+
   return (
-    <div className="absolute right-0 top-10 z-40 bg-white border border-[#dfe3eb] rounded-[3px] shadow-xl py-2" style={{ width: 240 }}>
-      <div className="px-4 py-2 border-b border-[#dfe3eb] flex items-center justify-between">
-        <span className="text-xs font-bold text-[#2d3e50]">Edit columns</span>
-        <button onClick={onClose} className="text-[#99acc2] hover:text-[#425b76]"><X size={14} /></button>
-      </div>
-      <div className="max-h-64 overflow-y-auto py-1">
-        {ALL_COLS.map(col => {
-          const isOn = visible.includes(col.id);
-          return (
-            <button
-              key={col.id}
-              type="button"
-              onClick={() => {
-                if (col.always) return;
-                onChange(isOn ? visible.filter(v => v !== col.id) : [...visible, col.id]);
-              }}
-              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-[#2d3e50] hover:bg-[#f6f9fc]"
-            >
-              <div className={`w-4 h-4 rounded-[3px] border flex items-center justify-center ${isOn ? 'border-[#ff7a59] bg-[#ff7a59]' : 'border-[#cbd6e2]'}`}>
-                {isOn && <Check size={10} className="text-white" strokeWidth={3} />}
-              </div>
-              {col.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ════════════════════════════
-   PAGE
-════════════════════════════ */
-const PAGE_SIZES = [25, 50, 100];
-
-export default function ContactsPage() {
-  const router = useRouter();
-  const { contacts, loading, createContact, updateContact, deleteContact } = useContacts();
-
-  // View tabs
-  const [activeTab, setActiveTab] = useState<'all' | 'mine'>('all');
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser()
-      .then(({ data: { user } }) => { if (user) setCurrentUserId(user.id); })
-      .catch(() => {});
-  }, []);
-
-  // Search & filter
-  const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState<ActiveFilter[]>([]);
-  const [filterOpen, setFilterOpen] = useState(false);
-
-  // Columns
-  const [visibleCols, setVisibleCols] = useState<string[]>(DEFAULT_VISIBLE);
-  const [colPanelOpen, setColPanelOpen] = useState(false);
-  const colBtnRef = useRef<HTMLDivElement>(null);
-
-  // Selection
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-
-  // Pagination
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
-  const [pageSizeOpen, setPageSizeOpen] = useState(false);
-
-  // Form
-  const [showForm, setShowForm] = useState(false);
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
-
-  // Sort
-  const [sortCol, setSortCol] = useState<string>('created_at');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-
-  // Inline cell editing
-  const [editingCell, setEditingCell] = useState<{ id: string; col: string } | null>(null);
-  const [editValue, setEditValue] = useState('');
-  const cellInputRef = useRef<HTMLInputElement>(null);
-  const EDITABLE_COLS = new Set(['email', 'phone', 'job_title', 'owner', 'priority', 'lang', 'product', 'company']);
-
-  // Close dropdowns on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (colBtnRef.current && !colBtnRef.current.contains(e.target as Node)) setColPanelOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  // Focus input when cell editing starts
-  useEffect(() => {
-    if (editingCell) cellInputRef.current?.focus();
-  }, [editingCell]);
-
-  const startEdit = useCallback((contact: Contact, col: string) => {
-    if (!EDITABLE_COLS.has(col)) return;
-    const raw: Record<string, string | undefined> = {
-      email: contact.email,
-      phone: contact.phone,
-      job_title: contact.job_title,
-      company: contact.company?.name,
-      owner: undefined,
-      priority: undefined,
-      lang: undefined,
-      product: undefined,
-    };
-    setEditValue(raw[col] || '');
-    setEditingCell({ id: contact.id, col });
-  }, []);
-
-  const commitEdit = useCallback(async (contact: Contact, col: string) => {
-    const fieldMap: Record<string, keyof Contact> = {
-      email: 'email',
-      phone: 'phone',
-      job_title: 'job_title',
-    };
-    const field = fieldMap[col];
-    if (field) {
-      await updateContact(contact.id, { [field]: editValue.trim() || undefined } as Partial<Contact>);
-    }
-    setEditingCell(null);
-  }, [editValue, updateContact]);
-
-  const cancelEdit = useCallback(() => setEditingCell(null), []);
-
-  /* Filtered + sorted contacts */
-  const filtered = useMemo(() => {
-    let result = [...contacts];
-
-    // Tab filter
-    if (activeTab === 'mine' && currentUserId) {
-      result = result.filter(c => c.created_by === currentUserId);
-    }
-
-    // Search
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(c =>
-        fullName(c).toLowerCase().includes(q) ||
-        (c.email || '').toLowerCase().includes(q) ||
-        (c.company?.name || '').toLowerCase().includes(q)
-      );
-    }
-
-    // Active filters
-    filters.forEach(f => {
-      result = result.filter(c => {
-        const val = (c as unknown as Record<string, unknown>)[f.prop];
-        return typeof val === 'string' && val === f.value;
-      });
-    });
-
-    // Sort
-    result.sort((a, b) => {
-      let av: string = '', bv: string = '';
-      if (sortCol === 'name') { av = fullName(a); bv = fullName(b); }
-      else if (sortCol === 'email') { av = a.email || ''; bv = b.email || ''; }
-      else if (sortCol === 'company') { av = a.company?.name || ''; bv = b.company?.name || ''; }
-      else if (sortCol === 'created_at') { av = a.created_at; bv = b.created_at; }
-      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
-    });
-
-    return result;
-  }, [contacts, search, filters, sortCol, sortDir, activeTab, currentUserId]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-  const allOnPageSelected = paginated.length > 0 && paginated.every(c => selected.has(c.id));
-  const someSelected = selected.size > 0;
-
-  const toggleAll = () => {
-    if (allOnPageSelected) {
-      const next = new Set(selected);
-      paginated.forEach(c => next.delete(c.id));
-      setSelected(next);
-    } else {
-      const next = new Set(selected);
-      paginated.forEach(c => next.add(c.id));
-      setSelected(next);
-    }
-  };
-
-  const toggleOne = (id: string) => {
-    const next = new Set(selected);
-    next.has(id) ? next.delete(id) : next.add(id);
-    setSelected(next);
-  };
-
-  const handleSort = (col: string) => {
-    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortCol(col); setSortDir('asc'); }
-  };
-
-  const handleDeleteSelected = async () => {
-    for (const id of selected) await deleteContact(id);
-    setSelected(new Set());
-  };
-
-  const handleFormSubmit = async (data: Partial<Contact>) => {
-    if (editingContact) {
-      await updateContact(editingContact.id, data);
-    } else {
-      const result = await createContact(data);
-      if (result.error) {
-        alert(result.error);
-        return;
-      }
-    }
-  };
-
-  const visibleColDefs = ALL_COLS.filter(c => visibleCols.includes(c.id));
-
-  /* Cell renderer */
-  const cellValue = (c: Contact, colId: string): string => {
-    switch (colId) {
-      case 'email':     return c.email || '--';
-      case 'phone':     return c.phone || '--';
-      case 'job_title': return c.job_title || '--';
-      case 'owner':     return 'No owner';
-      case 'priority':  return '--';
-      case 'lang':      return '--';
-      case 'product':   return '--';
-      case 'company':    return c.company?.name || '--';
-      case 'created_at': return fmtDate(c.created_at);
-      case 'updated_at': return fmtDate(c.updated_at);
-      case 'contacted':  return fmtDate(c.last_contacted_at);
-      default:           return '--';
-    }
-  };
-
-  const isContactedCol = (id: string) => id === 'contacted' || id === 'created_at' || id === 'updated_at';
-
-  /* ══ RENDER ══ */
-  return (
-    <div className="flex flex-col h-full bg-white">
-
-      <GmailConnectBanner />
-
-      {/* ── Page header ── */}
-      <div className="px-6 pt-5 pb-0 border-b border-[#dfe3eb] bg-white flex-shrink-0">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-[#2d3e50]">Contacts</h1>
-          <div className="flex items-center gap-2">
-            <a
-              href="/import"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-[#425b76] border border-[#dfe3eb] rounded-[3px] hover:bg-[#f6f9fc] transition-colors"
-            >
-              <Upload size={13} /> Import
-            </a>
-            <button
-              type="button"
-              onClick={() => { setEditingContact(null); setShowForm(true); }}
-              className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-bold text-white rounded-[3px] transition-colors"
-              style={{ backgroundColor: '#ff7a59' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#e8694a'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#ff7a59'; }}
-            >
-              <Plus size={14} /> Create contact
-            </button>
-          </div>
-        </div>
-
-        {/* View tabs */}
-        <div className="flex items-center gap-0">
-          {[{ id: 'all', label: 'All contacts' }, { id: 'mine', label: 'My contacts' }].map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id as 'all' | 'mine')}
-              className="px-4 py-2.5 text-sm font-medium border-b-2 transition-all"
-              style={{
-                borderColor: activeTab === tab.id ? '#ff7a59' : 'transparent',
-                color: activeTab === tab.id ? '#ff7a59' : '#516f90',
-              }}
-            >
-              {tab.label}
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => onChange && setOpen(v => !v)}
+        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold transition-colors"
+        style={cfg
+          ? { backgroundColor: cfg.bg, color: cfg.text }
+          : { backgroundColor: '#F6F9FC', color: '#99ACC2' }
+        }
+      >
+        {cfg ? cfg.label : '—'}
+      </button>
+      {open && onChange && (
+        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[120px]">
+          <button onClick={() => { onChange(''); setOpen(false); }} className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] text-[#99ACC2]">None</button>
+          {Object.entries(PRIORITY_CONFIG).map(([k, v]) => (
+            <button key={k} onClick={() => { onChange(k as Priority); setOpen(false); }}
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: v.text }} />
+              <span style={{ color: v.text, fontWeight: 600 }}>{v.label}</span>
             </button>
           ))}
-          <button type="button" className="px-3 py-2.5 text-sm text-[#7c98b6] hover:text-[#425b76] flex items-center gap-1">
-            <Plus size={13} /> Add view
-          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Pill badge ─────────────────────────────────────────────── */
+function Pill({ label, color = '#0091AE' }: { label: string; color?: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border"
+      style={{ borderColor: `${color}40`, color, backgroundColor: `${color}10` }}>
+      {label}
+    </span>
+  );
+}
+
+/* ── Three-dot dropdown ─────────────────────────────────────── */
+function ThreeDotMenu({
+  groupId, isFixed, onAction,
+}: {
+  groupId: string; isFixed: boolean;
+  onAction: (action: string, groupId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        ref={btnRef}
+        onClick={() => setOpen(v => !v)}
+        className="p-1 rounded hover:bg-black/10 transition-colors opacity-0 group-hover:opacity-100"
+      >
+        <MoreHorizontal className="w-4 h-4 text-white" />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[220px]">
+          {THREE_DOT_ITEMS.map((item, i) => {
+            if (!item) return <div key={i} className="my-1 border-t border-[#DFE3EB]" />;
+            const disabled = isFixed && ['rename','color','delete','archive','duplicate','move'].includes(item.id);
+            return (
+              <button
+                key={item.id}
+                disabled={disabled}
+                onClick={() => { setOpen(false); onAction(item.id, groupId); }}
+                className="w-full px-4 py-2 text-xs text-left hover:bg-[#F6F9FC] transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ color: item.danger ? '#EF4444' : '#2D3E50' }}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Color picker modal ─────────────────────────────────────── */
+function ColorPickerModal({ groupName, current, onSelect, onClose }: {
+  groupName: string; current: string;
+  onSelect: (color: string) => void; onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+      <div className="bg-white rounded-[3px] shadow-2xl w-80" style={{ border: '1px solid #DFE3EB' }}>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#DFE3EB]">
+          <span className="text-sm font-bold text-[#2D3E50]">Change group color</span>
+          <button onClick={onClose}><X className="w-4 h-4 text-[#99ACC2]" /></button>
+        </div>
+        <div className="px-5 py-4">
+          <p className="text-xs text-[#7C98B6] mb-3">{groupName}</p>
+          <div className="grid grid-cols-5 gap-2">
+            {GROUP_COLORS.map(c => (
+              <button key={c} onClick={() => { onSelect(c); onClose(); }}
+                className="w-10 h-10 rounded-full border-2 transition-transform hover:scale-110"
+                style={{ backgroundColor: c, borderColor: c === current ? '#2D3E50' : 'transparent' }}
+              />
+            ))}
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* ── Secondary toolbar ── */}
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[#dfe3eb] bg-[#f5f8fa] flex-shrink-0">
-        {/* Search */}
-        <div className="relative flex-shrink-0" style={{ width: 260 }}>
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#99acc2]" />
+/* ── Rename modal ───────────────────────────────────────────── */
+function RenameModal({ groupName, onSave, onClose }: {
+  groupName: string; onSave: (name: string) => void; onClose: () => void;
+}) {
+  const [val, setVal] = useState(groupName);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+      <div className="bg-white rounded-[3px] shadow-2xl w-96" style={{ border: '1px solid #DFE3EB' }}>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#DFE3EB]">
+          <span className="text-sm font-bold text-[#2D3E50]">Rename group</span>
+          <button onClick={onClose}><X className="w-4 h-4 text-[#99ACC2]" /></button>
+        </div>
+        <div className="px-5 py-4">
           <input
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search contacts…"
-            className="h-8 w-full pl-8 pr-3 text-sm border border-[#dfe3eb] rounded-[3px] outline-none text-[#2d3e50] bg-white placeholder:text-[#b0c1d4]"
-            onFocus={e => { e.currentTarget.style.borderColor = '#3b82f6'; }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#dfe3eb'; }}
+            autoFocus value={val} onChange={e => setVal(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { onSave(val); onClose(); } if (e.key === 'Escape') onClose(); }}
+            className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50]"
+            onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
+            onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }}
           />
         </div>
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#DFE3EB]">
+          <button onClick={onClose} className="px-4 py-1.5 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">Cancel</button>
+          <button onClick={() => { onSave(val); onClose(); }}
+            className="px-4 py-1.5 text-sm font-bold text-white rounded-[3px]"
+            style={{ backgroundColor: '#0091AE' }}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* Advanced filters */}
-        <button
-          type="button"
-          onClick={() => setFilterOpen(true)}
-          className="flex items-center gap-1.5 h-8 px-3 text-sm font-semibold text-[#425b76] border border-[#dfe3eb] rounded-[3px] bg-white hover:bg-[#f0f3f7] transition-colors"
-        >
-          <SlidersHorizontal size={13} />
-          Advanced filters
-          {filters.length > 0 && (
-            <span className="ml-1 w-4 h-4 rounded-full text-white text-[10px] flex items-center justify-center font-bold" style={{ backgroundColor: '#ff7a59' }}>
-              {filters.length}
-            </span>
-          )}
+/* ── Delete confirm modal ───────────────────────────────────── */
+function DeleteGroupModal({ groupName, onConfirm, onClose }: {
+  groupName: string; onConfirm: () => void; onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+      <div className="bg-white rounded-[3px] shadow-2xl w-96" style={{ border: '1px solid #DFE3EB' }}>
+        <div className="px-5 py-4 border-b border-[#DFE3EB]">
+          <p className="text-sm font-bold text-[#2D3E50]">Delete group</p>
+        </div>
+        <div className="px-5 py-4">
+          <p className="text-sm text-[#516F90]">
+            Are you sure you want to delete <strong>"{groupName}"</strong>? Contacts in this group will move to Active Contacts.
+          </p>
+        </div>
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#DFE3EB]">
+          <button onClick={onClose} className="px-4 py-1.5 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">Cancel</button>
+          <button onClick={() => { onConfirm(); onClose(); }}
+            className="px-4 py-1.5 text-sm font-bold text-white rounded-[3px] bg-red-500 hover:bg-red-600">Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Contact Row ────────────────────────────────────────────── */
+function ContactRow({
+  contact, selected, onSelect, priority, onPriorityChange,
+  onEdit, onDelete,
+}: {
+  contact: Contact;
+  selected: boolean;
+  onSelect: (id: string) => void;
+  priority: Priority;
+  onPriorityChange: (id: string, p: Priority) => void;
+  onEdit: (c: Contact) => void;
+  onDelete: (id: string) => void;
+}) {
+  const name = fullName(contact);
+  const company = (contact as { company?: { name?: string } }).company?.name;
+
+  return (
+    <tr className="border-b border-[#F0F3F7] hover:bg-[#F8FAFC] transition-colors group/row">
+      {/* Checkbox */}
+      <td className="w-10 px-3 py-2.5 sticky left-0 bg-inherit">
+        <input type="checkbox" checked={selected} onChange={() => onSelect(contact.id)}
+          className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
+      </td>
+
+      {/* Contact name */}
+      <td className="px-3 py-2.5 min-w-[180px] sticky left-10 bg-inherit">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+            style={{ backgroundColor: avatarColor(name || 'A') }}>
+            {initials(contact)}
+          </div>
+          <button onClick={() => onEdit(contact)}
+            className="text-xs font-semibold hover:underline text-left truncate max-w-[140px]"
+            style={{ color: '#0091AE' }}>
+            {name || '—'}
+          </button>
+          <div className="opacity-0 group-hover/row:opacity-100 flex items-center gap-1 flex-shrink-0">
+            <button onClick={() => onEdit(contact)} className="p-0.5 rounded hover:bg-[#E8F4FD]" title="Edit">
+              <Edit2 className="w-3 h-3 text-[#7C98B6]" />
+            </button>
+            <button onClick={() => onDelete(contact.id)} className="p-0.5 rounded hover:bg-red-50" title="Delete">
+              <Trash2 className="w-3 h-3 text-[#99ACC2] hover:text-red-400" />
+            </button>
+          </div>
+        </div>
+      </td>
+
+      {/* Email */}
+      <td className="px-3 py-2.5 min-w-[200px]">
+        {contact.email ? (
+          <a href={`mailto:${contact.email}`} className="text-xs hover:underline truncate block max-w-[180px]" style={{ color: '#0091AE' }}>
+            {contact.email}
+          </a>
+        ) : <span className="text-xs text-[#B0C1D4]">—</span>}
+      </td>
+
+      {/* Activities timeline */}
+      <td className="px-3 py-2.5 w-[100px]">
+        <ActivityTimeline contact={contact} />
+      </td>
+
+      {/* Accounts */}
+      <td className="px-3 py-2.5 min-w-[130px]">
+        {company ? <Pill label={company} color="#0091AE" /> : <span className="text-xs text-[#B0C1D4]">—</span>}
+      </td>
+
+      {/* Deals */}
+      <td className="px-3 py-2.5 w-[80px]">
+        <span className="text-xs text-[#B0C1D4]">—</span>
+      </td>
+
+      {/* Deals value */}
+      <td className="px-3 py-2.5 w-[100px]">
+        <span className="text-xs text-[#B0C1D4]">—</span>
+      </td>
+
+      {/* Phone */}
+      <td className="px-3 py-2.5 min-w-[150px]">
+        {contact.phone ? (
+          <span className="flex items-center gap-1.5 text-xs text-[#2D3E50]">
+            <span>{getPhoneFlag(contact.phone)}</span>
+            <span className="truncate">{contact.phone}</span>
+          </span>
+        ) : <span className="text-xs text-[#B0C1D4]">—</span>}
+      </td>
+
+      {/* Title */}
+      <td className="px-3 py-2.5 min-w-[120px]">
+        {contact.job_title ? <Pill label={contact.job_title} color="#8B5CF6" /> : <span className="text-xs text-[#B0C1D4]">—</span>}
+      </td>
+
+      {/* Priority */}
+      <td className="px-3 py-2.5 w-[100px]">
+        <PriorityBadge priority={priority} onChange={(p) => onPriorityChange(contact.id, p)} />
+      </td>
+    </tr>
+  );
+}
+
+/* ── Group Section ──────────────────────────────────────────── */
+function GroupSection({
+  group, contacts, collapsed, onToggleCollapse,
+  selectedIds, onSelect, onSelectAll,
+  priorities, onPriorityChange,
+  onEdit, onDelete,
+  onGroupAction,
+}: {
+  group: Group;
+  contacts: Contact[];
+  collapsed: boolean;
+  onToggleCollapse: (id: string) => void;
+  selectedIds: Set<string>;
+  onSelect: (id: string) => void;
+  onSelectAll: (groupId: string, contactIds: string[]) => void;
+  priorities: Record<string, Priority>;
+  onPriorityChange: (id: string, p: Priority) => void;
+  onEdit: (c: Contact) => void;
+  onDelete: (id: string) => void;
+  onGroupAction: (action: string, groupId: string) => void;
+}) {
+  const isFixed = group.id === 'active' || group.id === 'inactive';
+
+  return (
+    <div className="mb-2">
+      {/* Group header */}
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 group select-none"
+        style={{ backgroundColor: `${group.color}18` }}
+      >
+        {/* Color bar */}
+        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: group.color }} />
+
+        {/* Collapse arrow */}
+        <button onClick={() => onToggleCollapse(group.id)} className="flex-shrink-0">
+          {collapsed
+            ? <ChevronRight className="w-4 h-4" style={{ color: group.color }} />
+            : <ChevronDown className="w-4 h-4" style={{ color: group.color }} />}
         </button>
 
-        {/* Edit columns */}
-        <div className="relative" ref={colBtnRef}>
-          <button
-            type="button"
-            onClick={() => setColPanelOpen(v => !v)}
-            className="flex items-center gap-1.5 h-8 px-3 text-sm font-semibold text-[#425b76] border border-[#dfe3eb] rounded-[3px] bg-white hover:bg-[#f0f3f7] transition-colors"
-          >
-            <Columns size={13} /> Edit columns
-          </button>
-          {colPanelOpen && (
-            <EditColumnsPanel
-              visible={visibleCols}
-              onChange={v => setVisibleCols(v)}
-              onClose={() => setColPanelOpen(false)}
-            />
-          )}
-        </div>
+        {/* Group name + count */}
+        <span className="text-xs font-bold" style={{ color: group.color }}>{group.name}</span>
+        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: group.color }}>
+          {contacts.length}
+        </span>
 
         <div className="flex-1" />
 
-        {/* Count */}
-        <span className="text-xs text-[#7c98b6] flex-shrink-0">
-          {filtered.length.toLocaleString()} contact{filtered.length !== 1 ? 's' : ''}
-        </span>
+        {/* Three-dot menu */}
+        <ThreeDotMenu groupId={group.id} isFixed={isFixed} onAction={onGroupAction} />
       </div>
 
-      {/* ── Bulk action bar ── */}
-      {someSelected && (
-        <div className="flex items-center gap-3 px-4 py-2 border-b border-[#dfe3eb] bg-[#fff3f0] flex-shrink-0">
-          <span className="text-sm font-semibold text-[#ff7a59]">{selected.size} selected</span>
-          <div className="w-px h-4 bg-[#ffd0c4]" />
-          <button type="button" onClick={() => { /* edit selected */ }} className="flex items-center gap-1.5 text-sm text-[#425b76] hover:text-[#2d3e50] font-medium">
-            <Pencil size={13} /> Edit
-          </button>
-          <button type="button" onClick={() => { /* assign owner */ }} className="flex items-center gap-1.5 text-sm text-[#425b76] hover:text-[#2d3e50] font-medium">
-            <UserCheck size={13} /> Assign
-          </button>
-          <button type="button" onClick={() => { /* create tasks */ }} className="flex items-center gap-1.5 text-sm text-[#425b76] hover:text-[#2d3e50] font-medium">
-            <ClipboardList size={13} /> Create tasks
-          </button>
-          <button type="button" onClick={handleDeleteSelected} className="flex items-center gap-1.5 text-sm text-red-400 hover:text-red-600 font-medium">
-            <Trash2 size={13} /> Delete
-          </button>
-          <button type="button" onClick={() => setSelected(new Set())} className="ml-auto text-[#99acc2] hover:text-[#425b76]">
-            <X size={15} />
-          </button>
-        </div>
+      {/* Table */}
+      {!collapsed && (
+        <table className="w-full text-xs">
+          {/* Column headers */}
+          <thead>
+            <tr className="border-b border-[#DFE3EB] bg-white">
+              <th className="w-10 px-3 py-2 sticky left-0 bg-white z-10">
+                <input type="checkbox"
+                  checked={contacts.length > 0 && contacts.every(c => selectedIds.has(c.id))}
+                  onChange={() => onSelectAll(group.id, contacts.map(c => c.id))}
+                  className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]"
+                />
+              </th>
+              {['Contact','Email','Activities timeline','Accounts','Deals','Deals value','Phone','Title','Priority'].map(col => (
+                <th key={col} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap" style={{ fontSize: 10 }}>
+                  {col}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {contacts.map(contact => (
+              <ContactRow
+                key={contact.id}
+                contact={contact}
+                selected={selectedIds.has(contact.id)}
+                onSelect={onSelect}
+                priority={priorities[contact.id] || ''}
+                onPriorityChange={onPriorityChange}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))}
+            {/* Add contact row */}
+            <tr>
+              <td />
+              <td className="px-3 py-2.5" colSpan={9}>
+                <button className="flex items-center gap-1.5 text-xs font-medium hover:text-[#0091AE] transition-colors" style={{ color: '#7C98B6' }}>
+                  <Plus className="w-3.5 h-3.5" /> Add contact
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       )}
+    </div>
+  );
+}
 
-      {/* ── Table ── */}
-      <div className="flex-1 overflow-auto">
-        {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <div className="w-8 h-8 rounded-full border-2 border-[#ff7a59] border-t-transparent animate-spin" />
-          </div>
-        ) : filtered.length === 0 ? (
-          /* Empty state */
-          <div className="flex flex-col items-center justify-center py-24 px-4">
-            <svg width="120" height="80" viewBox="0 0 120 80" fill="none" className="mb-5 opacity-40">
-              <rect x="10" y="10" width="100" height="60" rx="4" fill="#dfe3eb" />
-              <rect x="20" y="22" width="60" height="8" rx="2" fill="#fff" />
-              <rect x="20" y="35" width="80" height="6" rx="2" fill="#fff" opacity="0.6" />
-              <rect x="20" y="46" width="70" height="6" rx="2" fill="#fff" opacity="0.4" />
-              <rect x="20" y="57" width="75" height="6" rx="2" fill="#fff" opacity="0.3" />
-            </svg>
-            <h3 className="text-base font-bold text-[#2d3e50] mb-1">
-              {search || filters.length > 0 ? 'No contacts match your filters' : 'No contacts yet'}
-            </h3>
-            <p className="text-sm text-[#7c98b6] mb-5 text-center max-w-xs">
-              {search || filters.length > 0
-                ? 'Try adjusting your search or clearing filters.'
-                : 'Import your existing contacts or create your first one.'}
-            </p>
-            {!(search || filters.length > 0) && (
-              <div className="flex gap-2">
-                <a href="/import" className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white rounded-[3px]" style={{ backgroundColor: '#ff7a59' }}>
-                  <Upload size={13} /> Import contacts
-                </a>
-                <button type="button" onClick={() => setShowForm(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#425b76] border border-[#dfe3eb] rounded-[3px] hover:bg-[#f6f9fc]">
-                  <Plus size={13} /> Create contact
+/* ══════════════════════════════════════════════════════════════
+   MAIN PAGE
+══════════════════════════════════════════════════════════════ */
+export default function ContactsPage() {
+  const { contacts, loading, createContact, updateContact, deleteContact } = useContacts();
+  const [userEmail, setUserEmail] = useState('');
+
+  // Groups state
+  const [customGroups, setCustomGroups] = useState<Group[]>([]);
+  const [groupMap, setGroupMap] = useState<Record<string, string>>({}); // contactId -> customGroupId
+  const [priorities, setPriorities] = useState<Record<string, Priority>>({});
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  // UI state
+  const [search, setSearch] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showForm, setShowForm] = useState(false);
+  const [editContact, setEditContact] = useState<Contact | null>(null);
+  const [showImport, setShowImport] = useState(false);
+  const [showNewDropdown, setShowNewDropdown] = useState(false);
+
+  // Modals for group actions
+  const [colorPickerGroup, setColorPickerGroup] = useState<string | null>(null);
+  const [renameGroup, setRenameGroup] = useState<string | null>(null);
+  const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
+
+  const newBtnRef = useRef<HTMLDivElement>(null);
+
+  /* ── Load user & persisted state ── */
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      const email = user.email || '';
+      setUserEmail(email);
+
+      try {
+        const g = JSON.parse(localStorage.getItem(storageKey('groups', email)) || '[]');
+        setCustomGroups(g);
+        const gm = JSON.parse(localStorage.getItem(storageKey('map', email)) || '{}');
+        setGroupMap(gm);
+        const p = JSON.parse(localStorage.getItem(storageKey('priorities', email)) || '{}');
+        setPriorities(p);
+        const col = JSON.parse(localStorage.getItem(storageKey('collapsed', email)) || '[]');
+        setCollapsedGroups(new Set(col));
+      } catch { /* ignore */ }
+    }).catch(() => {});
+  }, []);
+
+  /* ── Persist helpers ── */
+  const saveGroups = useCallback((g: Group[], email: string) => {
+    localStorage.setItem(storageKey('groups', email), JSON.stringify(g));
+  }, []);
+  const saveGroupMap = useCallback((m: Record<string, string>, email: string) => {
+    localStorage.setItem(storageKey('map', email), JSON.stringify(m));
+  }, []);
+  const savePriorities = useCallback((p: Record<string, Priority>, email: string) => {
+    localStorage.setItem(storageKey('priorities', email), JSON.stringify(p));
+  }, []);
+  const saveCollapsed = useCallback((s: Set<string>, email: string) => {
+    localStorage.setItem(storageKey('collapsed', email), JSON.stringify([...s]));
+  }, []);
+
+  /* ── All groups (fixed + custom, excluding archived) ── */
+  const allGroups = useMemo(() => [
+    ...FIXED_GROUPS,
+    ...customGroups.filter(g => !g.archived).sort((a, b) => a.order - b.order),
+  ], [customGroups]);
+
+  /* ── Contacts per group (with search) ── */
+  const getGroupContacts = useCallback((groupId: string): Contact[] => {
+    let base: Contact[];
+    if (groupId === 'active') {
+      base = contacts.filter(c => !groupMap[c.id] && c.is_active !== false);
+    } else if (groupId === 'inactive') {
+      base = contacts.filter(c => !groupMap[c.id] && c.is_active === false);
+    } else {
+      base = contacts.filter(c => groupMap[c.id] === groupId);
+    }
+    if (!search.trim()) return base;
+    const q = search.toLowerCase();
+    return base.filter(c =>
+      fullName(c).toLowerCase().includes(q) ||
+      (c.email || '').toLowerCase().includes(q) ||
+      ((c as { company?: { name?: string } }).company?.name || '').toLowerCase().includes(q)
+    );
+  }, [contacts, groupMap, search]);
+
+  /* ── Selection ── */
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = (groupId: string, contactIds: string[]) => {
+    const groupContacts = getGroupContacts(groupId);
+    const allSelected = groupContacts.every(c => selectedIds.has(c.id));
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (allSelected) groupContacts.forEach(c => next.delete(c.id));
+      else contactIds.forEach(id => next.add(id));
+      return next;
+    });
+  };
+
+  /* ── Priority change ── */
+  const handlePriorityChange = (contactId: string, p: Priority) => {
+    const next = { ...priorities, [contactId]: p };
+    setPriorities(next);
+    if (userEmail) savePriorities(next, userEmail);
+  };
+
+  /* ── Collapse ── */
+  const toggleCollapse = (groupId: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId); else next.add(groupId);
+      if (userEmail) saveCollapsed(next, userEmail);
+      return next;
+    });
+  };
+
+  /* ── Group actions ── */
+  const handleGroupAction = useCallback((action: string, groupId: string) => {
+    const group = allGroups.find(g => g.id === groupId);
+    if (!group) return;
+
+    switch (action) {
+      case 'collapse_this':
+        toggleCollapse(groupId);
+        break;
+
+      case 'collapse_all':
+        setCollapsedGroups(prev => {
+          const next = new Set([...allGroups.map(g => g.id)]);
+          if (userEmail) saveCollapsed(next, userEmail);
+          return next;
+        });
+        break;
+
+      case 'select_all': {
+        const ids = getGroupContacts(groupId).map(c => c.id);
+        setSelectedIds(prev => { const next = new Set(prev); ids.forEach(id => next.add(id)); return next; });
+        break;
+      }
+
+      case 'add_group': {
+        const newGroup: Group = {
+          id: crypto.randomUUID(),
+          name: 'New Group',
+          color: GROUP_COLORS[customGroups.length % GROUP_COLORS.length],
+          order: customGroups.length,
+        };
+        const next = [...customGroups, newGroup];
+        setCustomGroups(next);
+        if (userEmail) saveGroups(next, userEmail);
+        break;
+      }
+
+      case 'duplicate': {
+        const src = customGroups.find(g => g.id === groupId);
+        if (!src) break;
+        const dupeId = crypto.randomUUID();
+        const dupe: Group = { ...src, id: dupeId, name: `${src.name} (copy)`, order: src.order + 0.5 };
+        // Duplicate contact assignments
+        const nextMap = { ...groupMap };
+        Object.entries(groupMap).forEach(([cid, gid]) => {
+          if (gid === groupId) nextMap[cid] = dupeId;
+        });
+        const nextGroups = [...customGroups, dupe].sort((a, b) => a.order - b.order);
+        setCustomGroups(nextGroups);
+        setGroupMap(nextMap);
+        if (userEmail) { saveGroups(nextGroups, userEmail); saveGroupMap(nextMap, userEmail); }
+        break;
+      }
+
+      case 'rename':
+        setRenameGroup(groupId);
+        break;
+
+      case 'color':
+        setColorPickerGroup(groupId);
+        break;
+
+      case 'export': {
+        const groupContacts = getGroupContacts(groupId);
+        const data = groupContacts.map(c => ({
+          'First Name': c.first_name,
+          'Last Name': c.last_name,
+          Email: c.email || '',
+          Phone: c.phone || '',
+          'Job Title': c.job_title || '',
+          Company: (c as { company?: { name?: string } }).company?.name || '',
+          Priority: priorities[c.id] || '',
+        }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), group.name.slice(0, 31));
+        XLSX.writeFile(wb, `${group.name}.xlsx`);
+        break;
+      }
+
+      case 'apps':
+        alert('Apps & integrations — coming soon!');
+        break;
+
+      case 'delete':
+        setDeleteGroupId(groupId);
+        break;
+
+      case 'archive': {
+        const next = customGroups.map(g => g.id === groupId ? { ...g, archived: true } : g);
+        setCustomGroups(next);
+        if (userEmail) saveGroups(next, userEmail);
+        break;
+      }
+
+      case 'move': {
+        const idx = customGroups.findIndex(g => g.id === groupId);
+        if (idx <= 0) return;
+        const next = [...customGroups];
+        [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+        next.forEach((g, i) => { g.order = i; });
+        setCustomGroups([...next]);
+        if (userEmail) saveGroups(next, userEmail);
+        break;
+      }
+    }
+  }, [allGroups, customGroups, groupMap, priorities, userEmail, getGroupContacts, saveGroups, saveGroupMap, saveCollapsed, toggleCollapse]);
+
+  /* ── Import complete ── */
+  const handleImportComplete = useCallback((result: ImportResult) => {
+    const newGroup: Group = {
+      id: result.groupId,
+      name: result.groupName,
+      color: GROUP_COLORS[customGroups.length % GROUP_COLORS.length],
+      order: customGroups.length,
+    };
+    const nextGroups = [...customGroups, newGroup];
+    const nextMap = { ...groupMap };
+    result.contactIds.forEach(id => { nextMap[id] = result.groupId; });
+    setCustomGroups(nextGroups);
+    setGroupMap(nextMap);
+    if (userEmail) { saveGroups(nextGroups, userEmail); saveGroupMap(nextMap, userEmail); }
+    setShowImport(false);
+  }, [customGroups, groupMap, userEmail, saveGroups, saveGroupMap]);
+
+  /* ── Delete group ── */
+  const handleDeleteGroup = (groupId: string) => {
+    const next = customGroups.filter(g => g.id !== groupId);
+    const nextMap = { ...groupMap };
+    Object.keys(nextMap).forEach(cid => { if (nextMap[cid] === groupId) delete nextMap[cid]; });
+    setCustomGroups(next);
+    setGroupMap(nextMap);
+    if (userEmail) { saveGroups(next, userEmail); saveGroupMap(nextMap, userEmail); }
+  };
+
+  /* ── Add new group ── */
+  const handleAddGroup = () => {
+    handleGroupAction('add_group', 'active');
+    setShowNewDropdown(false);
+  };
+
+  /* ── Create contact ── */
+  const handleCreateContact = useCallback(async (data: Record<string, string>) => {
+    return await createContact(data as Parameters<typeof createContact>[0]);
+  }, [createContact]);
+
+  /* ── Close new dropdown on outside click ── */
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (newBtnRef.current && !newBtnRef.current.contains(e.target as Node)) setShowNewDropdown(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  /* ── Delete contact ── */
+  const handleDeleteContact = async (id: string) => {
+    if (!confirm('Delete this contact?')) return;
+    await deleteContact(id);
+    const nextMap = { ...groupMap };
+    delete nextMap[id];
+    setGroupMap(nextMap);
+    if (userEmail) saveGroupMap(nextMap, userEmail);
+  };
+
+  const totalContacts = contacts.length;
+
+  /* ── Rename group commit ── */
+  const commitRename = (groupId: string, name: string) => {
+    const next = customGroups.map(g => g.id === groupId ? { ...g, name } : g);
+    setCustomGroups(next);
+    if (userEmail) saveGroups(next, userEmail);
+  };
+
+  /* ── Color change commit ── */
+  const commitColor = (groupId: string, color: string) => {
+    const next = customGroups.map(g => g.id === groupId ? { ...g, color } : g);
+    setCustomGroups(next);
+    if (userEmail) saveGroups(next, userEmail);
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-white">
+
+      {/* ── Top bar ── */}
+      <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#DFE3EB] flex-shrink-0">
+        <div className="flex items-center gap-2">
+          {/* New contact dropdown */}
+          <div ref={newBtnRef} className="relative">
+            <div className="flex items-center border border-[#FF7A59] rounded-[3px] overflow-hidden">
+              <button
+                onClick={() => { setEditContact(null); setShowForm(true); }}
+                className="px-4 py-1.5 text-sm font-bold text-white transition-colors"
+                style={{ backgroundColor: '#FF7A59' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}
+              >
+                New contact
+              </button>
+              <button
+                onClick={() => setShowNewDropdown(v => !v)}
+                className="px-2 py-1.5 text-white border-l border-white/30 transition-colors"
+                style={{ backgroundColor: '#FF7A59' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}
+              >
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {showNewDropdown && (
+              <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
+                <button
+                  onClick={() => { setEditContact(null); setShowForm(true); setShowNewDropdown(false); }}
+                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]"
+                >
+                  <Users className="w-4 h-4 text-[#7C98B6]" /> New contact
+                </button>
+                <button
+                  onClick={handleAddGroup}
+                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]"
+                >
+                  <FolderPlus className="w-4 h-4 text-[#7C98B6]" /> New group of contacts
+                </button>
+                <button
+                  onClick={() => { setShowImport(true); setShowNewDropdown(false); }}
+                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]"
+                >
+                  <Download className="w-4 h-4 text-[#7C98B6]" /> Import contacts
                 </button>
               </div>
             )}
           </div>
-        ) : (
-          <table className="w-full text-sm border-collapse" style={{ minWidth: 900 }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f5f8fa', borderBottom: '1px solid #dfe3eb' }}>
-                {/* Checkbox */}
-                <th className="sticky left-0 z-20 w-10 px-3 py-2.5 text-left" style={{ backgroundColor: '#f5f8fa', borderRight: '1px solid #dfe3eb' }}>
-                  <button type="button" onClick={toggleAll} className="w-4 h-4 border rounded-[3px] flex items-center justify-center transition-all" style={{ borderColor: allOnPageSelected ? '#ff7a59' : '#cbd6e2', backgroundColor: allOnPageSelected ? '#ff7a59' : '#fff' }}>
-                    {allOnPageSelected && <Check size={10} className="text-white" strokeWidth={3} />}
-                    {!allOnPageSelected && selected.size > 0 && paginated.some(c => selected.has(c.id)) && (
-                      <div className="w-2 h-0.5 bg-[#ff7a59] rounded" />
-                    )}
-                  </button>
-                </th>
-                {/* Name — sticky */}
-                <th
-                  className="sticky left-10 z-20 px-4 py-2.5 text-left text-xs font-semibold text-[#425b76] cursor-pointer select-none whitespace-nowrap"
-                  style={{ backgroundColor: '#f5f8fa', borderRight: '1px solid #dfe3eb', minWidth: 200 }}
-                  onClick={() => handleSort('name')}
-                >
-                  Name {sortCol === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-                </th>
-                {/* Dynamic columns */}
-                {visibleColDefs.map(col => (
-                  <th
-                    key={col.id}
-                    className="px-4 py-2.5 text-left text-xs font-semibold text-[#425b76] cursor-pointer select-none whitespace-nowrap"
-                    style={{ minWidth: col.width, borderRight: '1px solid #dfe3eb' }}
-                    onClick={() => handleSort(col.id)}
-                  >
-                    {col.label} {sortCol === col.id ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.map((contact, idx) => {
-                const isSelected = selected.has(contact.id);
-                return (
-                  <tr
-                    key={contact.id}
-                    className="group transition-colors"
-                    style={{
-                      borderBottom: '1px solid #dfe3eb',
-                      backgroundColor: isSelected ? '#fff3f0' : undefined,
-                    }}
-                    onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = '#f5f8fa'; }}
-                    onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = ''; }}
-                  >
-                    {/* Checkbox */}
-                    <td className="sticky left-0 z-10 w-10 px-3 py-2.5" style={{ backgroundColor: isSelected ? '#fff3f0' : '#fff', borderRight: '1px solid #dfe3eb' }}>
-                      <button
-                        type="button"
-                        onClick={e => { e.stopPropagation(); toggleOne(contact.id); }}
-                        className="w-4 h-4 border rounded-[3px] flex items-center justify-center transition-all"
-                        style={{ borderColor: isSelected ? '#ff7a59' : '#cbd6e2', backgroundColor: isSelected ? '#ff7a59' : '#fff' }}
-                      >
-                        {isSelected && <Check size={10} className="text-white" strokeWidth={3} />}
-                      </button>
-                    </td>
 
-                    {/* Name — sticky */}
-                    <td
-                      className="sticky left-10 z-10 px-4 py-2.5 whitespace-nowrap"
-                      style={{ backgroundColor: isSelected ? '#fff3f0' : '#fff', borderRight: '1px solid #dfe3eb', minWidth: 200 }}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        {/* Avatar */}
-                        {(() => {
-                          const domain = getContactDomain(contact);
-                          return domain ? (
-                            <img
-                              src={faviconUrl(domain)}
-                              alt={domain}
-                              className="w-7 h-7 rounded-full flex-shrink-0 object-cover bg-gray-100"
-                              onError={(e) => {
-                                const el = e.currentTarget;
-                                el.style.display = 'none';
-                                el.nextElementSibling?.removeAttribute('style');
-                              }}
-                            />
-                          ) : null;
-                        })()}
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                          style={{ backgroundColor: avatarColor(fullName(contact)), display: getContactDomain(contact) ? 'none' : 'flex' }}
-                        >
-                          {initials(contact)}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => router.push(`/contacts/${contact.id}`)}
-                          className="text-sm font-medium truncate max-w-[160px] text-left hover:underline"
-                          style={{ color: '#00a38d' }}
-                        >
-                          {fullName(contact)}
-                        </button>
-                      </div>
-                    </td>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#99ACC2]" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search"
+              className="h-8 pl-8 pr-3 text-sm border border-[#DFE3EB] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] w-56"
+              onFocus={e => { e.currentTarget.style.borderColor = '#99ACC2'; }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2">
+                <X className="w-3.5 h-3.5 text-[#99ACC2]" />
+              </button>
+            )}
+          </div>
 
-                    {/* Dynamic columns */}
-                    {visibleColDefs.map(col => {
-                      const val = cellValue(contact, col.id);
-                      const isTeal = isContactedCol(col.id) && val !== '--';
-                      const isEditable = EDITABLE_COLS.has(col.id);
-                      const isActive = editingCell?.id === contact.id && editingCell?.col === col.id;
-                      return (
-                        <td
-                          key={col.id}
-                          className="whitespace-nowrap text-sm relative"
-                          style={{
-                            borderRight: '1px solid #dfe3eb',
-                            minWidth: col.width,
-                            padding: isActive ? 0 : undefined,
-                            outline: isActive ? '2px solid #3b82f6' : undefined,
-                            outlineOffset: isActive ? '-2px' : undefined,
-                          }}
-                          onClick={() => { if (isEditable && !isActive) startEdit(contact, col.id); }}
-                        >
-                          {isActive ? (
-                            <input
-                              ref={cellInputRef}
-                              value={editValue}
-                              onChange={e => setEditValue(e.target.value)}
-                              onBlur={() => commitEdit(contact, col.id)}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') commitEdit(contact, col.id);
-                                if (e.key === 'Escape') cancelEdit();
-                              }}
-                              className="w-full h-full px-4 py-2.5 text-sm outline-none bg-white"
-                              style={{ color: '#2d3e50', minWidth: col.width }}
-                            />
-                          ) : (
-                            <span
-                              className={`block px-4 py-2.5 ${isEditable ? 'cursor-text hover:bg-[#f0f7ff]' : ''}`}
-                              style={{ color: isTeal ? '#00a38d' : val === '--' ? '#99acc2' : '#2d3e50' }}
-                            >
-                              {val}
-                            </span>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <span className="text-xs text-[#7C98B6]">{totalContacts} contacts</span>
+        </div>
+
+        {/* Selected actions */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#516F90]">{selectedIds.size} selected</span>
+            <button
+              onClick={async () => {
+                if (!confirm(`Delete ${selectedIds.size} contacts?`)) return;
+                for (const id of selectedIds) await deleteContact(id);
+                setSelectedIds(new Set());
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-red-200 text-red-500 rounded-[3px] hover:bg-red-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Delete
+            </button>
+            <button onClick={() => setSelectedIds(new Set())} className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2]">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         )}
       </div>
 
-      {/* ── Pagination ── */}
-      {!loading && filtered.length > 0 && (
-        <div className="flex items-center justify-center gap-3 px-6 py-3 border-t border-[#dfe3eb] bg-white flex-shrink-0">
-          <button
-            type="button"
-            disabled={page === 1}
-            onClick={() => setPage(p => p - 1)}
-            className="flex items-center gap-1 px-2 py-1 text-sm text-[#425b76] disabled:opacity-30 hover:text-[#2d3e50]"
-          >
-            <ChevronLeft size={14} /> Prev
-          </button>
+      {/* ── Groups ── */}
+      <div className="flex-1 overflow-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-sm text-[#7C98B6]">Loading contacts…</div>
+        ) : (
+          allGroups.map(group => (
+            <GroupSection
+              key={group.id}
+              group={group}
+              contacts={getGroupContacts(group.id)}
+              collapsed={collapsedGroups.has(group.id)}
+              onToggleCollapse={toggleCollapse}
+              selectedIds={selectedIds}
+              onSelect={toggleSelect}
+              onSelectAll={handleSelectAll}
+              priorities={priorities}
+              onPriorityChange={handlePriorityChange}
+              onEdit={(c) => { setEditContact(c); setShowForm(true); }}
+              onDelete={handleDeleteContact}
+              onGroupAction={handleGroupAction}
+            />
+          ))
+        )}
+      </div>
 
-          <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-              let p = i + 1;
-              if (totalPages > 7) {
-                if (page <= 4) p = i + 1;
-                else if (page >= totalPages - 3) p = totalPages - 6 + i;
-                else p = page - 3 + i;
-              }
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPage(p)}
-                  className="w-7 h-7 text-sm rounded flex items-center justify-center font-medium transition-all"
-                  style={{
-                    backgroundColor: page === p ? '#2d3e50' : 'transparent',
-                    color: page === p ? '#fff' : '#425b76',
-                  }}
-                >
-                  {p}
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            type="button"
-            disabled={page === totalPages}
-            onClick={() => setPage(p => p + 1)}
-            className="flex items-center gap-1 px-2 py-1 text-sm text-[#425b76] disabled:opacity-30 hover:text-[#2d3e50]"
-          >
-            Next <ChevronRight size={14} />
-          </button>
-
-          {/* Page size */}
-          <div className="relative ml-2">
-            <button
-              type="button"
-              onClick={() => setPageSizeOpen(v => !v)}
-              className="flex items-center gap-1 px-2 py-1 text-sm text-[#425b76] border border-[#dfe3eb] rounded-[3px] hover:bg-[#f6f9fc]"
-            >
-              {pageSize} per page <ChevronDown size={12} />
-            </button>
-            {pageSizeOpen && (
-              <div className="absolute bottom-9 right-0 bg-white border border-[#dfe3eb] rounded-[3px] shadow-lg py-1 z-20">
-                {PAGE_SIZES.map(s => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => { setPageSize(s); setPage(1); setPageSizeOpen(false); }}
-                    className="flex items-center gap-2 w-full px-4 py-1.5 text-sm text-[#2d3e50] hover:bg-[#f6f9fc]"
-                  >
-                    {pageSize === s && <Check size={12} className="text-[#ff7a59]" />}
-                    {pageSize !== s && <span className="w-3" />}
-                    {s} per page
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <span className="text-xs text-[#7c98b6] ml-1">
-            {((page - 1) * pageSize) + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length.toLocaleString()}
-          </span>
-        </div>
-      )}
-
-      {/* ── Filter panel ── */}
-      {filterOpen && (
-        <FilterPanel
-          filters={filters}
-          onAdd={f => { setFilters(prev => [...prev, f]); setPage(1); }}
-          onRemove={i => setFilters(prev => prev.filter((_, idx) => idx !== i))}
-          onClose={() => setFilterOpen(false)}
+      {/* ── Modals ── */}
+      {showForm && (
+        <ContactForm
+          open={showForm}
+          initialData={editContact || undefined}
+          onClose={() => { setShowForm(false); setEditContact(null); }}
+          onSubmit={async (data: Partial<Contact>) => {
+            if (editContact) {
+              await updateContact(editContact.id, data);
+            } else {
+              await createContact(data);
+            }
+            setShowForm(false);
+            setEditContact(null);
+          }}
         />
       )}
 
-      {/* ── Contact form ── */}
-      <ContactForm
-        open={showForm}
-        onClose={() => { setShowForm(false); setEditingContact(null); }}
-        onSubmit={handleFormSubmit}
-        initialData={editingContact || undefined}
-      />
+      {showImport && (
+        <ImportWizard
+          onClose={() => setShowImport(false)}
+          onImportComplete={handleImportComplete}
+          createContact={handleCreateContact}
+        />
+      )}
+
+      {colorPickerGroup && (() => {
+        const g = customGroups.find(g => g.id === colorPickerGroup);
+        if (!g) return null;
+        return (
+          <ColorPickerModal
+            groupName={g.name}
+            current={g.color}
+            onSelect={(color) => commitColor(colorPickerGroup, color)}
+            onClose={() => setColorPickerGroup(null)}
+          />
+        );
+      })()}
+
+      {renameGroup && (() => {
+        const g = customGroups.find(g => g.id === renameGroup);
+        if (!g) return null;
+        return (
+          <RenameModal
+            groupName={g.name}
+            onSave={(name) => commitRename(renameGroup, name)}
+            onClose={() => setRenameGroup(null)}
+          />
+        );
+      })()}
+
+      {deleteGroupId && (() => {
+        const g = customGroups.find(g => g.id === deleteGroupId);
+        if (!g) return null;
+        return (
+          <DeleteGroupModal
+            groupName={g.name}
+            onConfirm={() => handleDeleteGroup(deleteGroupId)}
+            onClose={() => setDeleteGroupId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

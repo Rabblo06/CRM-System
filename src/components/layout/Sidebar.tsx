@@ -289,12 +289,13 @@ export function Sidebar() {
     });
   }, []);
 
-  const handleSignOut = async () => {
+  const doSignOut = async () => {
     await supabase.auth.signOut();
     window.location.href = '/login';
   };
 
   const { badges, markInboxRead, markTasksRead, markMeetingsRead } = useNotificationBadges();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const badgeFor = (id: string) => {
     if (id === 'inbox') return badges.inbox;
@@ -398,7 +399,7 @@ export function Sidebar() {
               <p className="text-xs font-medium text-white truncate">{userName || 'Loading…'}</p>
               <p className="text-xs truncate" style={{ color: '#7C98B6' }}>{userEmail}</p>
             </div>
-            <button onClick={handleSignOut} title="Sign out" className="flex-shrink-0 p-1 rounded transition-colors hover:bg-white/10">
+            <button onClick={() => setShowLogoutConfirm(true)} title="Sign out" className="flex-shrink-0 p-1 rounded transition-colors hover:bg-white/10">
               <LogOut size={14} style={{ color: '#7C98B6' }} />
             </button>
           </div>
@@ -421,6 +422,39 @@ export function Sidebar() {
           onClose={() => setManageOpen(false)}
           onSave={savePins}
         />
+      )}
+
+      {/* Logout confirmation modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+          <div className="bg-white rounded-[3px] shadow-2xl w-[400px]" style={{ border: '1px solid #dfe3eb' }}>
+            <div className="px-6 py-5 border-b border-[#dfe3eb]">
+              <h2 className="text-base font-bold text-[#2d3e50]">Confirm logout</h2>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-[#516f90]">
+                Are you sure you want to log out? You will be signed out of your CRM session.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[#dfe3eb]">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="px-4 py-2 text-sm font-semibold text-[#425b76] border border-[#dfe3eb] rounded-[3px] hover:bg-[#f6f9fc] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={doSignOut}
+                className="px-5 py-2 text-sm font-bold text-white rounded-[3px] transition-colors"
+                style={{ backgroundColor: '#ff7a59' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ff8f73')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#ff7a59')}
+              >
+                Log out
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

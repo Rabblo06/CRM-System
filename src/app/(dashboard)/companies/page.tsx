@@ -1,785 +1,681 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
-  Plus,
-  Search,
-  Building2,
-  Globe,
-  Users,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-  ArrowUpDown,
-  X,
-  SlidersHorizontal,
-  Upload,
-  Phone,
-  UserCircle,
-  ListPlus,
-  ArrowRight,
-  Link2,
-  CheckSquare,
+  ChevronDown, ChevronRight, Plus, MoreHorizontal, Search, X,
+  Trash2, Edit2, FolderPlus, Download, Building2,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import * as XLSX from 'xlsx';
+import CompanyImportWizard from '@/components/contacts/CompanyImportWizard';
+import type { CompanyImportResult } from '@/components/contacts/CompanyImportWizard';
 import { useCompanies } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
-import { formatCurrency } from '@/lib/utils';
-import { INDUSTRIES, COMPANY_SIZES } from '@/lib/constants';
 import type { Company } from '@/types';
 
-const VIEW_TABS = [
-  { id: 'all', label: 'All companies' },
-  { id: 'my', label: 'My companies' },
-  { id: 'customers', label: 'Customers' },
+/* ── Types ─────────────────────────────────────────────────── */
+interface Group {
+  id: string;
+  name: string;
+  color: string;
+  order: number;
+  sourceFile?: string;
+  archived?: boolean;
+}
+
+type Status = 'active' | 'prospect' | 'customer' | 'churned' | '';
+
+/* ── Constants ─────────────────────────────────────────────── */
+const DEFAULT_GROUP: Group = { id: 'all', name: 'All Companies', color: '#0091AE', order: 0 };
+
+const GROUP_COLORS = [
+  '#0091AE','#00A38D','#8B5CF6','#F59E0B','#EF4444',
+  '#3B82F6','#10B981','#F97316','#EC4899','#6366F1',
 ];
 
-type SortKey = 'name' | 'industry' | 'size' | 'city' | 'annual_revenue' | 'created_at' | 'phone';
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
+  active:   { label: 'Active',   bg: '#ECFDF5', text: '#10B981' },
+  prospect: { label: 'Prospect', bg: '#EFF6FF', text: '#3B82F6' },
+  customer: { label: 'Customer', bg: '#F0FDFA', text: '#0091AE' },
+  churned:  { label: 'Churned',  bg: '#FFF7ED', text: '#F97316' },
+};
 
-function formatDate(iso: string) {
-  if (!iso) return '-';
-  const d = new Date(iso);
-  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' });
-  return `${date} ${time} GMT`;
+const THREE_DOT_ITEMS = [
+  { id: 'collapse_this',  label: 'Collapse this group' },
+  { id: 'collapse_all',   label: 'Collapse all groups' },
+  { id: 'select_all',     label: 'Select all Companies in group' },
+  null,
+  { id: 'add_group',      label: 'Add group' },
+  { id: 'duplicate',      label: 'Duplicate this group' },
+  { id: 'move',           label: 'Move group' },
+  { id: 'rename',         label: 'Rename group' },
+  { id: 'color',          label: 'Change group color' },
+  null,
+  { id: 'export',         label: 'Export to Excel' },
+  { id: 'apps',           label: 'Apps' },
+  null,
+  { id: 'delete',         label: 'Delete group', danger: true },
+  { id: 'archive',        label: 'Archive group' },
+];
+
+const AVATAR_COLORS = ['#ff7a59','#0091AE','#00a38d','#3b82f6','#8b5cf6','#f59e0b','#10b981','#6366f1'];
+function avatarColor(name: string) { return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]; }
+function companyInitials(name: string) { return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
+function storageKey(suffix: string, email: string) { return `crm_co_${suffix}_${email}`; }
+
+function getPhoneFlag(phone: string): string {
+  const p = (phone || '').replace(/\s/g, '');
+  if (p.startsWith('+1')) return '🇺🇸';
+  if (p.startsWith('+44')) return '🇬🇧';
+  if (p.startsWith('+33')) return '🇫🇷';
+  if (p.startsWith('+49')) return '🇩🇪';
+  if (p.startsWith('+61')) return '🇦🇺';
+  if (p.startsWith('+91')) return '🇮🇳';
+  return '';
 }
-type SortDir = 'asc' | 'desc';
 
-function CompanyForm({
-  open,
-  onClose,
-  onSubmit,
-  initialData,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (data: Partial<Company>) => Promise<void>;
-  initialData?: Partial<Company>;
-}) {
-  const [form, setForm] = useState({
-    name: initialData?.name || '',
-    industry: initialData?.industry || '',
-    size: initialData?.size || '',
-    website: initialData?.website || '',
-    phone: initialData?.phone || '',
-    city: initialData?.city || '',
-    country: initialData?.country || '',
-  });
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    await onSubmit(form);
-    setLoading(false);
-    onClose();
-  };
-
+/* ── StatusBadge ────────────────────────────────────────────── */
+function StatusBadge({ status, onChange }: { status: Status; onChange?: (s: Status) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+  const cfg = status ? STATUS_CONFIG[status] : null;
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{initialData?.id ? 'Edit company' : 'Create company'}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-[#516F90]">Company name <span className="text-red-400">*</span></Label>
-            <Input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Acme Inc."
-              required
-              className="h-9 text-sm"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-[#516F90]">Industry</Label>
-              <Select value={form.industry} onValueChange={(v) => setForm({ ...form, industry: v })}>
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Select industry" />
-                </SelectTrigger>
-                <SelectContent>
-                  {INDUSTRIES.map((i) => (
-                    <SelectItem key={i} value={i}>{i}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-[#516F90]">Company size</Label>
-              <Select value={form.size} onValueChange={(v) => setForm({ ...form, size: v })}>
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Select size" />
-                </SelectTrigger>
-                <SelectContent>
-                  {COMPANY_SIZES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-[#516F90]">Website</Label>
-              <Input
-                value={form.website}
-                onChange={(e) => setForm({ ...form, website: e.target.value })}
-                placeholder="https://example.com"
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-[#516F90]">Phone</Label>
-              <Input
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="+1 (555) 000-0000"
-                className="h-9 text-sm"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-[#516F90]">City</Label>
-              <Input
-                value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
-                placeholder="San Francisco"
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-[#516F90]">Country</Label>
-              <Input
-                value={form.country}
-                onChange={(e) => setForm({ ...form, country: e.target.value })}
-                placeholder="USA"
-                className="h-9 text-sm"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-            <Button type="submit" size="sm" disabled={loading}>
-              {loading ? 'Saving...' : initialData?.id ? 'Save changes' : 'Create company'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <div ref={ref} className="relative">
+      <button onClick={() => onChange && setOpen(v => !v)}
+        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+        style={cfg ? { backgroundColor: cfg.bg, color: cfg.text } : { backgroundColor: '#F6F9FC', color: '#99ACC2' }}>
+        {cfg ? cfg.label : '—'}
+      </button>
+      {open && onChange && (
+        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[120px]">
+          <button onClick={() => { onChange(''); setOpen(false); }} className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] text-[#99ACC2]">None</button>
+          {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+            <button key={k} onClick={() => { onChange(k as Status); setOpen(false); }}
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: v.text }} />
+              <span style={{ color: v.text, fontWeight: 600 }}>{v.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
-export default function CompaniesPage() {
-  const { companies, loading, createCompany, updateCompany, deleteCompany } = useCompanies();
-  const [activeTab, setActiveTab] = useState('all');
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [sortKey, setSortKey] = useState<SortKey>('name');
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
-  const [filterIndustry, setFilterIndustry] = useState('');
-  const [filterSize, setFilterSize] = useState('');
-  const [perPage, setPerPage] = useState(25);
-  const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    supabase.auth.getUser()
-      .then(({ data: { user } }) => { if (user) setCurrentUserId(user.id); })
-      .catch(() => {});
-  }, []);
-
-  const filtered = companies
-    .filter((c) => {
-      const matchesTab =
-        activeTab === 'all' ||
-        (activeTab === 'my' && currentUserId && c.created_by === currentUserId);
-
-      const matchesSearch =
-        !searchQuery ||
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.industry?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.city?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesIndustry = !filterIndustry || c.industry === filterIndustry;
-      const matchesSize = !filterSize || c.size === filterSize;
-
-      return matchesTab && matchesSearch && matchesIndustry && matchesSize;
-    })
-    .sort((a, b) => {
-      if (sortKey === 'annual_revenue') {
-        return sortDir === 'asc'
-          ? (a.annual_revenue || 0) - (b.annual_revenue || 0)
-          : (b.annual_revenue || 0) - (a.annual_revenue || 0);
-      }
-      const aVal = (a[sortKey as keyof Company] as string) || '';
-      const bVal = (b[sortKey as keyof Company] as string) || '';
-      const cmp = aVal.localeCompare(bVal);
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
-
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
-
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
-    else { setSortKey(key); setSortDir('asc'); }
-  };
-
-  const toggleAll = () => {
-    if (selectedIds.size === paginated.length) setSelectedIds(new Set());
-    else setSelectedIds(new Set(paginated.map((c) => c.id)));
-  };
-
-  const toggleOne = (id: string) => {
-    const next = new Set(selectedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelectedIds(next);
-  };
-
-  const hasFilters = filterIndustry || filterSize;
-
-  // Inline cell editing
-  const [editingCell, setEditingCell] = useState<{ id: string; col: string } | null>(null);
-  const [editValue, setEditValue] = useState('');
-  const cellInputRef = useRef<HTMLInputElement>(null);
-  // Owner names stored locally per company (must be before callbacks that use it)
-  const [ownerNames, setOwnerNames] = useState<Record<string, string>>({});
-  const EDITABLE_COLS = new Set(['phone', 'city', 'country', 'industry', 'owner']);
-
-  useEffect(() => {
-    if (editingCell) cellInputRef.current?.focus();
-  }, [editingCell]);
-
-  const startCellEdit = useCallback((company: Company, col: string) => {
-    if (!EDITABLE_COLS.has(col)) return;
-    const raw: Record<string, string | undefined> = {
-      phone: company.phone,
-      city: company.city,
-      country: company.country,
-      industry: company.industry,
-      owner: ownerNames[company.id] || 'Account Owner',
-    };
-    setEditValue(raw[col] || '');
-    setEditingCell({ id: company.id, col });
-  }, [ownerNames]);
-
-  const commitCellEdit = useCallback(async (company: Company, col: string) => {
-    if (col === 'owner') {
-      setOwnerNames(prev => ({ ...prev, [company.id]: editValue.trim() || 'Account Owner' }));
-    } else {
-      const fieldMap: Record<string, keyof Company> = {
-        phone: 'phone', city: 'city', country: 'country', industry: 'industry',
-      };
-      const field = fieldMap[col];
-      if (field) await updateCompany(company.id, { [field]: editValue.trim() || undefined } as Partial<Company>);
-    }
-    setEditingCell(null);
-  }, [editValue, updateCompany]);
-
-  const cancelCellEdit = useCallback(() => setEditingCell(null), []);
-
-  const SortIcon = ({ col }: { col: SortKey }) =>
-    sortKey === col ? (
-      sortDir === 'asc' ? (
-        <ChevronUp className="w-3.5 h-3.5 text-[#FF7A59]" />
-      ) : (
-        <ChevronDown className="w-3.5 h-3.5 text-[#FF7A59]" />
-      )
-    ) : (
-      <ArrowUpDown className="w-3.5 h-3.5 text-[#99ACC2] opacity-0 group-hover:opacity-100" />
-    );
-
+/* ── Pill ───────────────────────────────────────────────────── */
+function Pill({ label, color = '#0091AE' }: { label: string; color?: string }) {
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h1 className="text-xl font-bold text-[#2D3E50]">Companies</h1>
-          <p className="text-sm text-[#516F90] mt-0.5">{companies.length} total companies</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
-                Actions <ChevronDown className="w-3.5 h-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Export companies</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-400 focus:text-red-400">Delete selected</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border"
+      style={{ borderColor: `${color}40`, color, backgroundColor: `${color}10` }}>
+      {label}
+    </span>
+  );
+}
 
-          <Button variant="outline" size="sm" className="gap-1.5" asChild>
-            <a href="/import"><Upload className="w-3.5 h-3.5" /> Import</a>
-          </Button>
-
-          <Button size="sm" onClick={() => setShowForm(true)} className="gap-1.5">
-            <Plus className="w-4 h-4" /> Create company
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex gap-0">
-        {/* Main */}
-        <div className="flex-1 min-w-0">
-          {/* Tabs */}
-          <div className="flex items-center gap-0 border-b border-[#DFE3EB] overflow-x-auto">
-            {VIEW_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => { setActiveTab(tab.id); setPage(1); }}
-                className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-[#FF7A59] text-[#2D3E50]'
-                    : 'border-transparent text-[#516F90] hover:text-[#2D3E50] hover:border-[#DFE3EB]'
-                }`}
-              >
-                {tab.label}
+/* ── ThreeDotMenu ───────────────────────────────────────────── */
+function ThreeDotMenu({ groupId, isFixed, onAction }: {
+  groupId: string; isFixed: boolean;
+  onAction: (action: string, groupId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+  return (
+    <div ref={ref} className="relative">
+      <button onClick={() => setOpen(v => !v)} className="p-1 rounded hover:bg-black/10 opacity-0 group-hover:opacity-100">
+        <MoreHorizontal className="w-4 h-4 text-white" />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[220px]">
+          {THREE_DOT_ITEMS.map((item, i) => {
+            if (!item) return <div key={i} className="my-1 border-t border-[#DFE3EB]" />;
+            const disabled = isFixed && ['rename','color','delete','archive','duplicate','move'].includes(item.id);
+            return (
+              <button key={item.id} disabled={disabled}
+                onClick={() => { setOpen(false); onAction(item.id, groupId); }}
+                className="w-full px-4 py-2 text-xs text-left hover:bg-[#F6F9FC] disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ color: item.danger ? '#EF4444' : '#2D3E50' }}>
+                {item.label}
               </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Color picker modal ─────────────────────────────────────── */
+function ColorPickerModal({ groupName, current, onSelect, onClose }: {
+  groupName: string; current: string; onSelect: (c: string) => void; onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+      <div className="bg-white rounded-[3px] shadow-2xl w-80" style={{ border: '1px solid #DFE3EB' }}>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#DFE3EB]">
+          <span className="text-sm font-bold text-[#2D3E50]">Change group color</span>
+          <button onClick={onClose}><X className="w-4 h-4 text-[#99ACC2]" /></button>
+        </div>
+        <div className="px-5 py-4">
+          <p className="text-xs text-[#7C98B6] mb-3">{groupName}</p>
+          <div className="grid grid-cols-5 gap-2">
+            {GROUP_COLORS.map(c => (
+              <button key={c} onClick={() => { onSelect(c); onClose(); }}
+                className="w-10 h-10 rounded-full border-2 hover:scale-110 transition-transform"
+                style={{ backgroundColor: c, borderColor: c === current ? '#2D3E50' : 'transparent' }} />
             ))}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-          {/* Bulk action bar - shown when rows selected */}
-          {selectedIds.size > 0 && (
-            <div className="flex items-center border-b border-[#DFE3EB] bg-white px-3 py-2 text-xs overflow-x-auto">
-              <span className="font-semibold text-[#2D3E50] mr-3 whitespace-nowrap">
-                {selectedIds.size} {selectedIds.size === 1 ? 'company' : 'companies'} selected
-              </span>
-              <div className="w-px h-4 bg-[#DFE3EB] mr-3 flex-shrink-0" />
-              {([
-                { icon: ArrowRight, label: 'Assign' },
-                { icon: Edit, label: 'Edit' },
-                { icon: Link2, label: 'Review Associations' },
-                { icon: CheckSquare, label: 'Create tasks' },
-                { icon: ListPlus, label: 'Add to static segment' },
-              ] as const).map(({ icon: Icon, label }) => (
-                <button key={label} className="flex items-center gap-1 px-2.5 py-1.5 rounded hover:bg-[#F0F3F7] text-[#516F90] hover:text-[#2D3E50] transition-colors whitespace-nowrap mr-0.5">
-                  <Icon className="w-3.5 h-3.5" />{label}
-                </button>
+/* ── Rename modal ───────────────────────────────────────────── */
+function RenameModal({ groupName, onSave, onClose }: {
+  groupName: string; onSave: (n: string) => void; onClose: () => void;
+}) {
+  const [val, setVal] = useState(groupName);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+      <div className="bg-white rounded-[3px] shadow-2xl w-96" style={{ border: '1px solid #DFE3EB' }}>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#DFE3EB]">
+          <span className="text-sm font-bold text-[#2D3E50]">Rename group</span>
+          <button onClick={onClose}><X className="w-4 h-4 text-[#99ACC2]" /></button>
+        </div>
+        <div className="px-5 py-4">
+          <input autoFocus value={val} onChange={e => setVal(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { onSave(val); onClose(); } if (e.key === 'Escape') onClose(); }}
+            className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50]"
+            onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
+            onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
+        </div>
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#DFE3EB]">
+          <button onClick={onClose} className="px-4 py-1.5 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">Cancel</button>
+          <button onClick={() => { onSave(val); onClose(); }} className="px-4 py-1.5 text-sm font-bold text-white rounded-[3px]" style={{ backgroundColor: '#0091AE' }}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Company Row ────────────────────────────────────────────── */
+function CompanyRow({ company, selected, onSelect, status, onStatusChange, onEdit, onDelete }: {
+  company: Company; selected: boolean; onSelect: (id: string) => void;
+  status: Status; onStatusChange: (id: string, s: Status) => void;
+  onEdit: (c: Company) => void; onDelete: (id: string) => void;
+}) {
+  return (
+    <tr className="border-b border-[#F0F3F7] hover:bg-[#F8FAFC] transition-colors group/row">
+      <td className="w-10 px-3 py-2.5">
+        <input type="checkbox" checked={selected} onChange={() => onSelect(company.id)}
+          className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
+      </td>
+
+      {/* Company name */}
+      <td className="px-3 py-2.5 min-w-[200px]">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+            style={{ backgroundColor: avatarColor(company.name || 'A') }}>
+            {companyInitials(company.name || '?')}
+          </div>
+          <Link href={`/companies/${company.id}`}
+            className="text-xs font-semibold hover:underline truncate max-w-[150px]"
+            style={{ color: '#0091AE' }}>
+            {company.name}
+          </Link>
+          <div className="opacity-0 group-hover/row:opacity-100 flex items-center gap-1 flex-shrink-0">
+            <button onClick={() => onEdit(company)} className="p-0.5 rounded hover:bg-[#E8F4FD]" title="Edit">
+              <Edit2 className="w-3 h-3 text-[#7C98B6]" />
+            </button>
+            <button onClick={() => onDelete(company.id)} className="p-0.5 rounded hover:bg-red-50" title="Delete">
+              <Trash2 className="w-3 h-3 text-[#99ACC2] hover:text-red-400" />
+            </button>
+          </div>
+        </div>
+      </td>
+
+      {/* Domain/Email */}
+      <td className="px-3 py-2.5 min-w-[160px]">
+        {company.domain ? (
+          <a href={`https://${company.domain}`} target="_blank" rel="noopener noreferrer"
+            className="text-xs hover:underline" style={{ color: '#0091AE' }}>{company.domain}</a>
+        ) : <span className="text-xs text-[#B0C1D4]">—</span>}
+      </td>
+
+      {/* Phone */}
+      <td className="px-3 py-2.5 min-w-[140px]">
+        {company.phone ? (
+          <span className="flex items-center gap-1.5 text-xs text-[#2D3E50]">
+            {getPhoneFlag(company.phone) && <span>{getPhoneFlag(company.phone)}</span>}
+            <span className="truncate">{company.phone}</span>
+          </span>
+        ) : <span className="text-xs text-[#B0C1D4]">—</span>}
+      </td>
+
+      {/* Owner */}
+      <td className="px-3 py-2.5 w-[120px]">
+        <span className="text-xs text-[#2D3E50]">—</span>
+      </td>
+
+      {/* Industry */}
+      <td className="px-3 py-2.5 min-w-[120px]">
+        {company.industry ? <Pill label={company.industry} color="#8B5CF6" /> : <span className="text-xs text-[#B0C1D4]">—</span>}
+      </td>
+
+      {/* Deals */}
+      <td className="px-3 py-2.5 w-[80px]">
+        <span className="text-xs text-[#B0C1D4]">—</span>
+      </td>
+
+      {/* Deals value */}
+      <td className="px-3 py-2.5 w-[100px]">
+        <span className="text-xs text-[#B0C1D4]">—</span>
+      </td>
+
+      {/* Status */}
+      <td className="px-3 py-2.5 w-[110px]">
+        <StatusBadge status={status} onChange={(s) => onStatusChange(company.id, s)} />
+      </td>
+    </tr>
+  );
+}
+
+/* ── Group Section ──────────────────────────────────────────── */
+function GroupSection({ group, companies, collapsed, onToggleCollapse, selectedIds, onSelect, onSelectAll,
+  statuses, onStatusChange, onEdit, onDelete, onGroupAction }: {
+  group: Group; companies: Company[]; collapsed: boolean;
+  onToggleCollapse: (id: string) => void;
+  selectedIds: Set<string>; onSelect: (id: string) => void;
+  onSelectAll: (gId: string, ids: string[]) => void;
+  statuses: Record<string, Status>; onStatusChange: (id: string, s: Status) => void;
+  onEdit: (c: Company) => void; onDelete: (id: string) => void;
+  onGroupAction: (action: string, groupId: string) => void;
+}) {
+  const isFixed = group.id === 'all';
+  return (
+    <div className="mb-2">
+      <div className="flex items-center gap-2 px-3 py-1.5 group select-none" style={{ backgroundColor: `${group.color}18` }}>
+        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: group.color }} />
+        <button onClick={() => onToggleCollapse(group.id)} className="flex-shrink-0">
+          {collapsed
+            ? <ChevronRight className="w-4 h-4" style={{ color: group.color }} />
+            : <ChevronDown className="w-4 h-4" style={{ color: group.color }} />}
+        </button>
+        <span className="text-xs font-bold" style={{ color: group.color }}>{group.name}</span>
+        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: group.color }}>
+          {companies.length}
+        </span>
+        <div className="flex-1" />
+        <ThreeDotMenu groupId={group.id} isFixed={isFixed} onAction={onGroupAction} />
+      </div>
+
+      {!collapsed && (
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-[#DFE3EB] bg-white">
+              <th className="w-10 px-3 py-2">
+                <input type="checkbox"
+                  checked={companies.length > 0 && companies.every(c => selectedIds.has(c.id))}
+                  onChange={() => onSelectAll(group.id, companies.map(c => c.id))}
+                  className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
+              </th>
+              {['Company','Domain','Phone','Owner','Industry','Deals','Deals value','Status'].map(col => (
+                <th key={col} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap" style={{ fontSize: 10 }}>
+                  {col}
+                </th>
               ))}
-              <button
-                onClick={() => { selectedIds.forEach((id) => deleteCompany(id)); setSelectedIds(new Set()); }}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded hover:bg-[#FFF3F0] text-[#516F90] hover:text-red-500 transition-colors whitespace-nowrap mr-0.5"
-              >
-                <Trash2 className="w-3.5 h-3.5" />Delete
-              </button>
-              <div className="flex-1" />
-              <button onClick={() => setSelectedIds(new Set())} className="p-1 rounded hover:bg-[#F0F3F7] text-[#7C98B6]">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+            </tr>
+          </thead>
+          <tbody>
+            {companies.map(company => (
+              <CompanyRow key={company.id} company={company}
+                selected={selectedIds.has(company.id)} onSelect={onSelect}
+                status={statuses[company.id] || ''} onStatusChange={onStatusChange}
+                onEdit={onEdit} onDelete={onDelete} />
+            ))}
+            <tr>
+              <td />
+              <td className="px-3 py-2.5" colSpan={8}>
+                <button className="flex items-center gap-1.5 text-xs font-medium hover:text-[#0091AE] transition-colors" style={{ color: '#7C98B6' }}>
+                  <Plus className="w-3.5 h-3.5" /> Add company
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
 
-          {/* Toolbar */}
-          <div className={`flex items-center gap-2 py-3 ${selectedIds.size > 0 ? 'hidden' : ''}`}>
-            <div className="relative flex-1 max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C98B6]" />
-              <Input
-                placeholder="Search companies..."
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-                className="pl-9 h-8 text-sm"
-              />
+/* ══════════════════════════════════════════════════════════════
+   MAIN PAGE
+══════════════════════════════════════════════════════════════ */
+export default function CompaniesPage() {
+  const { companies, loading, createCompany, updateCompany, deleteCompany } = useCompanies();
+  const [userEmail, setUserEmail] = useState('');
+
+  const [customGroups, setCustomGroups] = useState<Group[]>([]);
+  const [groupMap, setGroupMap] = useState<Record<string, string>>({});
+  const [statuses, setStatuses] = useState<Record<string, Status>>({});
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const [search, setSearch] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showImport, setShowImport] = useState(false);
+  const [showNewDropdown, setShowNewDropdown] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editCompany, setEditCompany] = useState<Company | null>(null);
+  const [editName, setEditName] = useState('');
+
+  const [colorPickerGroup, setColorPickerGroup] = useState<string | null>(null);
+  const [renameGroup, setRenameGroup] = useState<string | null>(null);
+
+  const newBtnRef = useRef<HTMLDivElement>(null);
+
+  /* ── Load persisted state ── */
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      const email = user.email || '';
+      setUserEmail(email);
+      try {
+        setCustomGroups(JSON.parse(localStorage.getItem(storageKey('groups', email)) || '[]'));
+        setGroupMap(JSON.parse(localStorage.getItem(storageKey('map', email)) || '{}'));
+        setStatuses(JSON.parse(localStorage.getItem(storageKey('statuses', email)) || '{}'));
+        setCollapsedGroups(new Set(JSON.parse(localStorage.getItem(storageKey('collapsed', email)) || '[]')));
+      } catch { /* ignore */ }
+    }).catch(() => {});
+  }, []);
+
+  const saveGroups   = (g: Group[])                => { if (userEmail) localStorage.setItem(storageKey('groups',    userEmail), JSON.stringify(g)); };
+  const saveMap      = (m: Record<string, string>) => { if (userEmail) localStorage.setItem(storageKey('map',       userEmail), JSON.stringify(m)); };
+  const saveStatuses = (s: Record<string, Status>) => { if (userEmail) localStorage.setItem(storageKey('statuses',  userEmail), JSON.stringify(s)); };
+  const saveCollapsed= (s: Set<string>)            => { if (userEmail) localStorage.setItem(storageKey('collapsed', userEmail), JSON.stringify([...s])); };
+
+  const allGroups = useMemo(() => [
+    DEFAULT_GROUP,
+    ...customGroups.filter(g => !g.archived).sort((a, b) => a.order - b.order),
+  ], [customGroups]);
+
+  const getGroupCompanies = useCallback((groupId: string): Company[] => {
+    let base: Company[];
+    if (groupId === 'all') base = companies.filter(c => !groupMap[c.id]);
+    else base = companies.filter(c => groupMap[c.id] === groupId);
+    if (!search.trim()) return base;
+    const q = search.toLowerCase();
+    return base.filter(c => c.name.toLowerCase().includes(q) || (c.industry || '').toLowerCase().includes(q) || (c.city || '').toLowerCase().includes(q));
+  }, [companies, groupMap, search]);
+
+  const toggleSelect = (id: string) => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const handleSelectAll = (groupId: string, ids: string[]) => {
+    const gc = getGroupCompanies(groupId);
+    const allSel = gc.every(c => selectedIds.has(c.id));
+    setSelectedIds(prev => { const n = new Set(prev); allSel ? gc.forEach(c => n.delete(c.id)) : ids.forEach(id => n.add(id)); return n; });
+  };
+
+  const handleStatusChange = (id: string, s: Status) => {
+    const next = { ...statuses, [id]: s };
+    setStatuses(next); saveStatuses(next);
+  };
+
+  const toggleCollapse = (groupId: string) => {
+    setCollapsedGroups(prev => {
+      const n = new Set(prev); n.has(groupId) ? n.delete(groupId) : n.add(groupId);
+      saveCollapsed(n); return n;
+    });
+  };
+
+  /* ── Group actions ── */
+  const handleGroupAction = useCallback((action: string, groupId: string) => {
+    const group = allGroups.find(g => g.id === groupId);
+    if (!group) return;
+
+    switch (action) {
+      case 'collapse_this': toggleCollapse(groupId); break;
+
+      case 'collapse_all':
+        setCollapsedGroups(() => { const n = new Set(allGroups.map(g => g.id)); saveCollapsed(n); return n; });
+        break;
+
+      case 'select_all': {
+        const ids = getGroupCompanies(groupId).map(c => c.id);
+        setSelectedIds(prev => { const n = new Set(prev); ids.forEach(id => n.add(id)); return n; });
+        break;
+      }
+
+      case 'add_group': {
+        const ng: Group = { id: crypto.randomUUID(), name: 'New Group', color: GROUP_COLORS[customGroups.length % GROUP_COLORS.length], order: customGroups.length };
+        const next = [...customGroups, ng]; setCustomGroups(next); saveGroups(next);
+        break;
+      }
+
+      case 'duplicate': {
+        const src = customGroups.find(g => g.id === groupId); if (!src) break;
+        const dupeId = crypto.randomUUID();
+        const dupe: Group = { ...src, id: dupeId, name: `${src.name} (copy)`, order: src.order + 0.5 };
+        const nextMap = { ...groupMap };
+        Object.entries(groupMap).forEach(([cid, gid]) => { if (gid === groupId) nextMap[cid] = dupeId; });
+        const nextGroups = [...customGroups, dupe].sort((a, b) => a.order - b.order);
+        setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveMap(nextMap);
+        break;
+      }
+
+      case 'rename': setRenameGroup(groupId); break;
+      case 'color':  setColorPickerGroup(groupId); break;
+
+      case 'export': {
+        const data = getGroupCompanies(groupId).map(c => ({
+          Company: c.name, Domain: c.domain || '', Phone: c.phone || '',
+          Industry: c.industry || '', City: c.city || '', Country: c.country || '',
+          Status: statuses[c.id] || '',
+        }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), group.name.slice(0, 31));
+        XLSX.writeFile(wb, `${group.name}.xlsx`);
+        break;
+      }
+
+      case 'apps': alert('Apps & integrations — coming soon!'); break;
+
+      case 'delete': {
+        if (!confirm(`Delete group "${group.name}"? Companies will move to All Companies.`)) break;
+        const nextGroups = customGroups.filter(g => g.id !== groupId);
+        const nextMap = { ...groupMap }; Object.keys(nextMap).forEach(cid => { if (nextMap[cid] === groupId) delete nextMap[cid]; });
+        setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveMap(nextMap);
+        break;
+      }
+
+      case 'archive': {
+        const next = customGroups.map(g => g.id === groupId ? { ...g, archived: true } : g);
+        setCustomGroups(next); saveGroups(next);
+        break;
+      }
+
+      case 'move': {
+        const idx = customGroups.findIndex(g => g.id === groupId); if (idx <= 0) break;
+        const next = [...customGroups]; [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+        next.forEach((g, i) => { g.order = i; }); setCustomGroups([...next]); saveGroups(next);
+        break;
+      }
+    }
+  }, [allGroups, customGroups, groupMap, statuses, getGroupCompanies, toggleCollapse]);
+
+  /* ── Import complete ── */
+  const handleImportComplete = useCallback((result: CompanyImportResult) => {
+    const ng: Group = { id: result.groupId, name: result.groupName, color: GROUP_COLORS[customGroups.length % GROUP_COLORS.length], order: customGroups.length };
+    const nextGroups = [...customGroups, ng];
+    const nextMap = { ...groupMap }; result.companyIds.forEach(id => { nextMap[id] = result.groupId; });
+    setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveMap(nextMap);
+    setShowImport(false);
+  }, [customGroups, groupMap]);
+
+  /* ── Create company via import ── */
+  const handleCreateCompany = useCallback(async (data: Record<string, string>) => {
+    return await createCompany(data as Parameters<typeof createCompany>[0]);
+  }, [createCompany]);
+
+  /* ── Quick edit modal ── */
+  const openEdit = (c: Company) => { setEditCompany(c); setEditName(c.name); setShowEditModal(true); };
+  const saveEdit = async () => {
+    if (!editCompany) return;
+    await updateCompany(editCompany.id, { name: editName });
+    setShowEditModal(false); setEditCompany(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this company?')) return;
+    await deleteCompany(id);
+    const nextMap = { ...groupMap }; delete nextMap[id]; setGroupMap(nextMap); saveMap(nextMap);
+  };
+
+  /* ── Close new dropdown ── */
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (newBtnRef.current && !newBtnRef.current.contains(e.target as Node)) setShowNewDropdown(false); };
+    document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* ── Top bar ── */}
+      <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#DFE3EB] flex-shrink-0">
+        <div className="flex items-center gap-2">
+          {/* New company dropdown */}
+          <div ref={newBtnRef} className="relative">
+            <div className="flex items-center border border-[#FF7A59] rounded-[3px] overflow-hidden">
+              <button
+                onClick={() => { setEditCompany(null); setEditName(''); setShowEditModal(true); }}
+                className="px-4 py-1.5 text-sm font-bold text-white"
+                style={{ backgroundColor: '#FF7A59' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}
+              >New company</button>
+              <button onClick={() => setShowNewDropdown(v => !v)}
+                className="px-2 py-1.5 text-white border-l border-white/30"
+                style={{ backgroundColor: '#FF7A59' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className={`gap-1.5 h-8 text-xs ${showFilters ? 'bg-[#FFF3F0] border-[#FF7A59] text-[#FF7A59]' : ''}`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              Filters
-              {hasFilters && (
-                <span className="bg-[#FF7A59] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                  {[filterIndustry, filterSize].filter(Boolean).length}
-                </span>
-              )}
-            </Button>
-            {selectedIds.size > 0 && (
-              <div className="flex items-center gap-2 ml-2 pl-2 border-l border-[#DFE3EB]">
-                <span className="text-xs text-[#516F90]">{selectedIds.size} selected</span>
-                <button onClick={() => setSelectedIds(new Set())} className="text-[#7C98B6] hover:text-[#2D3E50]">
-                  <X className="w-3.5 h-3.5" />
+            {showNewDropdown && (
+              <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
+                <button onClick={() => { setEditCompany(null); setEditName(''); setShowEditModal(true); setShowNewDropdown(false); }}
+                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
+                  <Building2 className="w-4 h-4 text-[#7C98B6]" /> New company
+                </button>
+                <button onClick={() => { handleGroupAction('add_group', 'all'); setShowNewDropdown(false); }}
+                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
+                  <FolderPlus className="w-4 h-4 text-[#7C98B6]" /> New group of companies
+                </button>
+                <button onClick={() => { setShowImport(true); setShowNewDropdown(false); }}
+                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
+                  <Download className="w-4 h-4 text-[#7C98B6]" /> Import companies
                 </button>
               </div>
             )}
-            <div className="ml-auto text-xs text-[#7C98B6]">{filtered.length} companies</div>
           </div>
 
-          {/* Table */}
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent" />
-            </div>
-          ) : (
-            <div className="rounded-lg border border-[#DFE3EB] overflow-hidden">
-              <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[#DFE3EB] bg-[#F0F3F7]">
-                    <th className="w-10 px-3 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.size === paginated.length && paginated.length > 0}
-                        onChange={toggleAll}
-                        className="rounded border-[#CBD6E2] bg-[#F0F3F7] text-[#FF7A59]"
-                      />
-                    </th>
-                    <th className="text-left px-3 py-3 text-[#516F90] font-medium text-xs cursor-pointer group whitespace-nowrap" onClick={() => toggleSort('name')}>
-                      <div className="flex items-center gap-1">Company name <SortIcon col="name" /></div>
-                    </th>
-                    <th className="text-left px-3 py-3 text-[#516F90] font-medium text-xs whitespace-nowrap">
-                      <div className="flex items-center gap-1"><UserCircle className="w-3.5 h-3.5" /> Company owner</div>
-                    </th>
-                    <th className="text-left px-3 py-3 text-[#516F90] font-medium text-xs cursor-pointer group whitespace-nowrap" onClick={() => toggleSort('created_at')}>
-                      <div className="flex items-center gap-1">Create Date (GMT) <SortIcon col="created_at" /></div>
-                    </th>
-                    <th className="text-left px-3 py-3 text-[#516F90] font-medium text-xs cursor-pointer group whitespace-nowrap" onClick={() => toggleSort('phone')}>
-                      <div className="flex items-center gap-1"><Phone className="w-3 h-3" /> Phone Number <SortIcon col="phone" /></div>
-                    </th>
-                    <th className="text-left px-3 py-3 text-[#516F90] font-medium text-xs cursor-pointer group whitespace-nowrap" onClick={() => toggleSort('updated_at' as SortKey)}>
-                      <div className="flex items-center gap-1">Last Activity Date (GMT) <SortIcon col={'updated_at' as SortKey} /></div>
-                    </th>
-                    <th className="text-left px-3 py-3 text-[#516F90] font-medium text-xs cursor-pointer group whitespace-nowrap hidden md:table-cell" onClick={() => toggleSort('city')}>
-                      <div className="flex items-center gap-1">City <SortIcon col="city" /></div>
-                    </th>
-                    <th className="text-left px-3 py-3 text-[#516F90] font-medium text-xs whitespace-nowrap hidden md:table-cell">
-                      Country/Region
-                    </th>
-                    <th className="text-left px-3 py-3 text-[#516F90] font-medium text-xs cursor-pointer group whitespace-nowrap hidden lg:table-cell" onClick={() => toggleSort('industry')}>
-                      <div className="flex items-center gap-1">Industry <SortIcon col="industry" /></div>
-                    </th>
-                    <th className="w-10 px-3 py-3" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#DFE3EB]">
-                  {paginated.map((company) => (
-                    <tr
-                      key={company.id}
-                      className={`hover:bg-[#F0F3F7] transition-colors group ${
-                        selectedIds.has(company.id) ? 'bg-[#FFF3F0]' : ''
-                      }`}
-                    >
-                      <td className="px-3 py-3.5">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(company.id)}
-                          onChange={() => toggleOne(company.id)}
-                          className="rounded border-[#CBD6E2] bg-[#F0F3F7] text-[#FF7A59]"
-                        />
-                      </td>
-                      {/* Company name */}
-                      <td className="px-3 py-3.5 min-w-[180px]">
-                        <div className="flex items-center gap-2.5">
-                          {company.domain ? (
-                            <img
-                              src={`https://www.google.com/s2/favicons?domain=${company.domain}&sz=64`}
-                              alt={company.name}
-                              className="w-8 h-8 rounded-lg object-contain bg-gray-50 flex-shrink-0"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                (e.currentTarget.nextElementSibling as HTMLElement | null)?.style.removeProperty('display');
-                              }}
-                            />
-                          ) : null}
-                          <div
-                            className="w-8 h-8 bg-[#FFF3F0] rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ display: company.domain ? 'none' : 'flex' }}
-                          >
-                            <Building2 className="w-4 h-4 text-[#FF7A59]" />
-                          </div>
-                          <div>
-                            <Link
-                              href={`/companies/${company.id}`}
-                              className="font-medium text-[#2D3E50] hover:text-[#FF7A59] transition-colors text-sm"
-                            >
-                              {company.name}
-                            </Link>
-                            {company.domain && (
-                              <p className="text-xs text-[#7C98B6]">{company.domain}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      {/* Company owner */}
-                      {(() => {
-                        const isActive = editingCell?.id === company.id && editingCell?.col === 'owner';
-                        const ownerName = ownerNames[company.id] || 'Account Owner';
-                        return (
-                          <td
-                            className="min-w-[150px] relative"
-                            style={{ padding: isActive ? 0 : undefined, outline: isActive ? '2px solid #3b82f6' : undefined, outlineOffset: isActive ? '-2px' : undefined }}
-                            onClick={() => { if (!isActive) startCellEdit(company, 'owner'); }}
-                          >
-                            {isActive ? (
-                              <input ref={cellInputRef} value={editValue} onChange={e => setEditValue(e.target.value)}
-                                onBlur={() => commitCellEdit(company, 'owner')}
-                                onKeyDown={e => { if (e.key === 'Enter') commitCellEdit(company, 'owner'); if (e.key === 'Escape') cancelCellEdit(); }}
-                                className="w-full px-3 py-3.5 text-xs outline-none bg-white" />
-                            ) : (
-                              <span className="flex items-center gap-1.5 px-3 py-3.5 cursor-text hover:bg-[#f0f7ff]">
-                                <div className="w-5 h-5 rounded-full bg-[#FF7A59] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                  {ownerName[0]?.toUpperCase() || 'A'}
-                                </div>
-                                <span className="text-xs text-[#516F90]">{ownerName}</span>
-                              </span>
-                            )}
-                          </td>
-                        );
-                      })()}
-                      {/* Create date */}
-                      <td className="px-3 py-3.5 min-w-[130px]">
-                        <span className="text-xs text-[#516F90]">{formatDate(company.created_at)}</span>
-                      </td>
-                      {/* Phone */}
-                      {(() => {
-                        const isActive = editingCell?.id === company.id && editingCell?.col === 'phone';
-                        return (
-                          <td
-                            className="min-w-[150px] relative"
-                            style={{ padding: isActive ? 0 : undefined, outline: isActive ? '2px solid #3b82f6' : undefined, outlineOffset: isActive ? '-2px' : undefined }}
-                            onClick={() => { if (!isActive) startCellEdit(company, 'phone'); }}
-                          >
-                            {isActive ? (
-                              <input ref={cellInputRef} value={editValue} onChange={e => setEditValue(e.target.value)}
-                                onBlur={() => commitCellEdit(company, 'phone')}
-                                onKeyDown={e => { if (e.key === 'Enter') commitCellEdit(company, 'phone'); if (e.key === 'Escape') cancelCellEdit(); }}
-                                className="w-full px-3 py-3.5 text-xs outline-none bg-white" />
-                            ) : (
-                              <span className="block px-3 py-3.5 cursor-text hover:bg-[#f0f7ff]">
-                                {company.phone ? (
-                                  <span className="text-xs text-[#0091AE] flex items-center gap-1"><Phone className="w-3 h-3" />{company.phone}</span>
-                                ) : <span className="text-xs text-[#99ACC2]">-</span>}
-                              </span>
-                            )}
-                          </td>
-                        );
-                      })()}
-                      {/* Last Activity Date */}
-                      <td className="px-3 py-3.5 min-w-[160px]">
-                        <span className="text-xs text-[#516F90]">{formatDate(company.updated_at)}</span>
-                      </td>
-                      {/* City */}
-                      {(() => {
-                        const isActive = editingCell?.id === company.id && editingCell?.col === 'city';
-                        return (
-                          <td
-                            className="hidden md:table-cell min-w-[110px] relative"
-                            style={{ padding: isActive ? 0 : undefined, outline: isActive ? '2px solid #3b82f6' : undefined, outlineOffset: isActive ? '-2px' : undefined }}
-                            onClick={() => { if (!isActive) startCellEdit(company, 'city'); }}
-                          >
-                            {isActive ? (
-                              <input ref={cellInputRef} value={editValue} onChange={e => setEditValue(e.target.value)}
-                                onBlur={() => commitCellEdit(company, 'city')}
-                                onKeyDown={e => { if (e.key === 'Enter') commitCellEdit(company, 'city'); if (e.key === 'Escape') cancelCellEdit(); }}
-                                className="w-full px-3 py-3.5 text-xs outline-none bg-white" />
-                            ) : (
-                              <span className="block px-3 py-3.5 text-xs text-[#516F90] cursor-text hover:bg-[#f0f7ff]">{company.city || '-'}</span>
-                            )}
-                          </td>
-                        );
-                      })()}
-                      {/* Country/Region */}
-                      {(() => {
-                        const isActive = editingCell?.id === company.id && editingCell?.col === 'country';
-                        return (
-                          <td
-                            className="hidden md:table-cell min-w-[130px] relative"
-                            style={{ padding: isActive ? 0 : undefined, outline: isActive ? '2px solid #3b82f6' : undefined, outlineOffset: isActive ? '-2px' : undefined }}
-                            onClick={() => { if (!isActive) startCellEdit(company, 'country'); }}
-                          >
-                            {isActive ? (
-                              <input ref={cellInputRef} value={editValue} onChange={e => setEditValue(e.target.value)}
-                                onBlur={() => commitCellEdit(company, 'country')}
-                                onKeyDown={e => { if (e.key === 'Enter') commitCellEdit(company, 'country'); if (e.key === 'Escape') cancelCellEdit(); }}
-                                className="w-full px-3 py-3.5 text-xs outline-none bg-white" />
-                            ) : (
-                              <span className="block px-3 py-3.5 text-xs text-[#516F90] cursor-text hover:bg-[#f0f7ff]">{company.country || '-'}</span>
-                            )}
-                          </td>
-                        );
-                      })()}
-                      {/* Industry */}
-                      {(() => {
-                        const isActive = editingCell?.id === company.id && editingCell?.col === 'industry';
-                        return (
-                          <td
-                            className="hidden lg:table-cell min-w-[130px] relative"
-                            style={{ padding: isActive ? 0 : undefined, outline: isActive ? '2px solid #3b82f6' : undefined, outlineOffset: isActive ? '-2px' : undefined }}
-                            onClick={() => { if (!isActive) startCellEdit(company, 'industry'); }}
-                          >
-                            {isActive ? (
-                              <input ref={cellInputRef} value={editValue} onChange={e => setEditValue(e.target.value)}
-                                onBlur={() => commitCellEdit(company, 'industry')}
-                                onKeyDown={e => { if (e.key === 'Enter') commitCellEdit(company, 'industry'); if (e.key === 'Escape') cancelCellEdit(); }}
-                                className="w-full px-3 py-3.5 text-xs outline-none bg-white" />
-                            ) : (
-                              <span className="block px-3 py-3.5 cursor-text hover:bg-[#f0f7ff]">
-                                {company.industry
-                                  ? <span className="text-xs px-2 py-0.5 rounded-full bg-[#EBF0F5] text-[#425B76]">{company.industry}</span>
-                                  : <span className="text-xs text-[#99ACC2]">-</span>}
-                              </span>
-                            )}
-                          </td>
-                        );
-                      })()}
-                      <td className="px-3 py-3.5">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/companies/${company.id}`}>View details</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setEditingCompany(company); setShowForm(true); }}>
-                              <Edit className="w-3.5 h-3.5 mr-2" /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => deleteCompany(company.id)} className="text-red-400 focus:text-red-400">
-                              <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              </div>
-              {paginated.length === 0 && (
-                <div className="text-center py-16 text-[#7C98B6]">
-                  <Building2 className="w-8 h-8 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">No companies found</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Pagination */}
-          <div className="flex items-center justify-between mt-4 text-xs text-[#7C98B6]">
-            <div className="flex items-center gap-2">
-              <span>Rows per page:</span>
-              <Select value={String(perPage)} onValueChange={(v) => { setPerPage(Number(v)); setPage(1); }}>
-                <SelectTrigger className="h-7 w-16 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 25, 50].map((n) => (
-                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-3">
-              <span>
-                {filtered.length === 0
-                  ? '0 of 0'
-                  : `${(page - 1) * perPage + 1}-${Math.min(page * perPage, filtered.length)} of ${filtered.length}`}
-              </span>
-              <div className="flex gap-1">
-                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page === 1} onClick={() => setPage(page - 1)}>
-                  <ChevronDown className="w-3.5 h-3.5 rotate-90" />
-                </Button>
-                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
-                  <ChevronDown className="w-3.5 h-3.5 -rotate-90" />
-                </Button>
-              </div>
-            </div>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#99ACC2]" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search"
+              className="h-8 pl-8 pr-3 text-sm border border-[#DFE3EB] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] w-56"
+              onFocus={e => { e.currentTarget.style.borderColor = '#99ACC2'; }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }} />
+            {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-[#99ACC2]" /></button>}
           </div>
+          <span className="text-xs text-[#7C98B6]">{companies.length} companies</span>
         </div>
 
-        {/* Filters */}
-        {showFilters && (
-          <div className="w-64 ml-4 flex-shrink-0 bg-white border border-[#DFE3EB] rounded-lg p-4 h-fit sticky top-0">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-[#2D3E50]">Filters</h3>
-              <div className="flex items-center gap-2">
-                {hasFilters && (
-                  <button onClick={() => { setFilterIndustry(''); setFilterSize(''); }} className="text-xs text-[#FF7A59]">
-                    Clear all
-                  </button>
-                )}
-                <button onClick={() => setShowFilters(false)} className="text-[#516F90] hover:text-[#2D3E50]">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-medium text-[#516F90] mb-1.5 block">Industry</label>
-                <Select value={filterIndustry || 'all'} onValueChange={(v) => setFilterIndustry(v === 'all' ? '' : v)}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Any industry" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Any industry</SelectItem>
-                    {INDUSTRIES.map((i) => (
-                      <SelectItem key={i} value={i}>{i}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-[#516F90] mb-1.5 block">Company size</label>
-                <Select value={filterSize || 'all'} onValueChange={(v) => setFilterSize(v === 'all' ? '' : v)}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Any size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Any size</SelectItem>
-                    {COMPANY_SIZES.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#516F90]">{selectedIds.size} selected</span>
+            <button onClick={async () => { if (!confirm(`Delete ${selectedIds.size} companies?`)) return; for (const id of selectedIds) await deleteCompany(id); setSelectedIds(new Set()); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-red-200 text-red-500 rounded-[3px] hover:bg-red-50">
+              <Trash2 className="w-3.5 h-3.5" /> Delete
+            </button>
+            <button onClick={() => setSelectedIds(new Set())} className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2]"><X className="w-4 h-4" /></button>
           </div>
         )}
       </div>
 
-      <CompanyForm
-        open={showForm}
-        onClose={() => { setShowForm(false); setEditingCompany(null); }}
-        onSubmit={async (data) => {
-          if (editingCompany) await updateCompany(editingCompany.id, data);
-          else await createCompany(data);
-        }}
-        initialData={editingCompany || undefined}
-      />
+      {/* ── Groups ── */}
+      <div className="flex-1 overflow-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-sm text-[#7C98B6]">Loading companies…</div>
+        ) : allGroups.map(group => (
+          <GroupSection key={group.id} group={group}
+            companies={getGroupCompanies(group.id)}
+            collapsed={collapsedGroups.has(group.id)}
+            onToggleCollapse={toggleCollapse}
+            selectedIds={selectedIds} onSelect={toggleSelect} onSelectAll={handleSelectAll}
+            statuses={statuses} onStatusChange={handleStatusChange}
+            onEdit={openEdit} onDelete={handleDelete}
+            onGroupAction={handleGroupAction} />
+        ))}
+      </div>
+
+      {/* ── Modals ── */}
+      {showImport && (
+        <CompanyImportWizard onClose={() => setShowImport(false)}
+          onImportComplete={handleImportComplete} createCompany={handleCreateCompany} />
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+          <div className="bg-white rounded-[3px] shadow-2xl w-96" style={{ border: '1px solid #DFE3EB' }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#DFE3EB]">
+              <h2 className="text-sm font-bold text-[#2D3E50]">{editCompany ? 'Edit company' : 'New company'}</h2>
+              <button onClick={() => { setShowEditModal(false); setEditCompany(null); }}><X className="w-4 h-4 text-[#99ACC2]" /></button>
+            </div>
+            <div className="px-5 py-4">
+              <label className="block text-xs font-semibold text-[#425B76] uppercase tracking-wide mb-1.5">Company name <span className="text-[#FF7A59]">*</span></label>
+              <input autoFocus value={editName} onChange={e => setEditName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setShowEditModal(false); }}
+                placeholder="Enter company name"
+                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50]"
+                onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
+            </div>
+            <div className="flex justify-end gap-2 px-5 py-4 border-t border-[#DFE3EB]">
+              <button onClick={() => { setShowEditModal(false); setEditCompany(null); }}
+                className="px-4 py-2 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">Cancel</button>
+              <button onClick={saveEdit} disabled={!editName.trim()}
+                className="px-5 py-2 text-sm font-bold text-white rounded-[3px] disabled:opacity-40"
+                style={{ backgroundColor: '#FF7A59' }}
+                onMouseEnter={e => { if (editName.trim()) (e.currentTarget as HTMLElement).style.backgroundColor = '#FF8F73'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FF7A59'; }}>
+                {editCompany ? 'Save' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {colorPickerGroup && (() => {
+        const g = customGroups.find(g => g.id === colorPickerGroup); if (!g) return null;
+        return <ColorPickerModal groupName={g.name} current={g.color}
+          onSelect={color => { const next = customGroups.map(g => g.id === colorPickerGroup ? { ...g, color } : g); setCustomGroups(next); saveGroups(next); }}
+          onClose={() => setColorPickerGroup(null)} />;
+      })()}
+
+      {renameGroup && (() => {
+        const g = customGroups.find(g => g.id === renameGroup); if (!g) return null;
+        return <RenameModal groupName={g.name}
+          onSave={name => { const next = customGroups.map(g => g.id === renameGroup ? { ...g, name } : g); setCustomGroups(next); saveGroups(next); }}
+          onClose={() => setRenameGroup(null)} />;
+      })()}
     </div>
   );
 }

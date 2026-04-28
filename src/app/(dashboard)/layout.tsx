@@ -66,12 +66,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useInactivityLogout((reason) => {
     if (reason === 'inactivity') {
       toast.warning(
-        'You were logged out due to 15 minutes of inactivity.',
+        'You were logged out due to 4 hours of inactivity.',
         { title: 'Session expired' },
       );
     } else {
       toast.info(
-        'Your 1-hour session has expired. Please sign in again.',
+        'Your 4-hour session has expired. Please sign in again.',
         { title: 'Session expired' },
       );
     }
