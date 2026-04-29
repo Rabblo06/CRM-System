@@ -134,7 +134,7 @@ function ThreeDotMenu({ groupId, isFixed, onAction }: {
         <MoreHorizontal className="w-4 h-4 text-white" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[230px]">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[230px]">
           {THREE_DOT_ITEMS.map((item, i) => {
             if (!item) return <div key={i} className="my-1 border-t border-[#DFE3EB]" />;
             const disabled = isFixed && ['rename','color','delete','archive','duplicate','move'].includes(item.id);
@@ -213,33 +213,6 @@ function ColorPickerModal({ groupName, current, onSelect, onClose }: {
   );
 }
 
-/* ── Rename modal ───────────────────────────────────────────── */
-function RenameModal({ groupName, onSave, onClose }: {
-  groupName: string; onSave: (n: string) => void; onClose: () => void;
-}) {
-  const [val, setVal] = useState(groupName);
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-      <div className="bg-white rounded-[3px] shadow-2xl w-96" style={{ border: '1px solid #DFE3EB' }}>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[#DFE3EB]">
-          <span className="text-sm font-bold text-[#2D3E50]">Rename group</span>
-          <button onClick={onClose}><X className="w-4 h-4 text-[#99ACC2]" /></button>
-        </div>
-        <div className="px-5 py-4">
-          <input autoFocus value={val} onChange={e => setVal(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { onSave(val); onClose(); } if (e.key === 'Escape') onClose(); }}
-            className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50]"
-            onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
-        </div>
-        <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#DFE3EB]">
-          <button onClick={onClose} className="px-4 py-1.5 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">Cancel</button>
-          <button onClick={() => { onSave(val); onClose(); }} className="px-4 py-1.5 text-sm font-bold text-white rounded-[3px]" style={{ backgroundColor: '#0091AE' }}>Save</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ── Inline add row ─────────────────────────────────────────── */
 function InlineAddRow({ onSave, onCancel }: {
@@ -409,6 +382,7 @@ function GroupSection({
   group, companies, collapsed, onToggleCollapse, selectedIds, onSelect, onSelectAll,
   statuses, onStatusChange, onEdit, onDelete, onGroupAction,
   onMoveToGroup, allGroups, addingToGroup, onStartAdd, onSaveAdd, onCancelAdd,
+  triggerRename, onRenameComplete,
 }: {
   group: Group; companies: Company[]; collapsed: boolean;
   onToggleCollapse: (id: string) => void;
@@ -422,8 +396,27 @@ function GroupSection({
   onStartAdd: (groupId: string) => void;
   onSaveAdd: (data: { name: string; domain: string; phone: string; industry: string }, groupId: string) => Promise<void>;
   onCancelAdd: () => void;
+  triggerRename?: string | null;
+  onRenameComplete: (id: string, name: string) => void;
 }) {
   const isFixed = group.id === 'all';
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameVal, setEditNameVal] = useState(group.name);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (triggerRename === group.id) { setEditNameVal(group.name); setIsEditingName(true); }
+  }, [triggerRename, group.id, group.name]);
+
+  useEffect(() => {
+    if (isEditingName) nameInputRef.current?.focus();
+  }, [isEditingName]);
+
+  const commitNameEdit = () => {
+    if (editNameVal.trim()) onRenameComplete(group.id, editNameVal.trim());
+    setIsEditingName(false);
+  };
+
   return (
     <div className="mb-2">
       <div className="flex items-center gap-2 px-3 py-1.5 group select-none" style={{ backgroundColor: `${group.color}18` }}>
@@ -433,7 +426,23 @@ function GroupSection({
             ? <ChevronRight className="w-4 h-4" style={{ color: group.color }} />
             : <ChevronDown className="w-4 h-4" style={{ color: group.color }} />}
         </button>
-        <span className="text-xs font-bold" style={{ color: group.color }}>{group.name}</span>
+        {isEditingName && !isFixed ? (
+          <input
+            ref={nameInputRef}
+            value={editNameVal}
+            onChange={e => setEditNameVal(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') commitNameEdit(); if (e.key === 'Escape') setIsEditingName(false); }}
+            onBlur={commitNameEdit}
+            className="text-xs font-bold px-1 rounded border outline-none"
+            style={{ color: group.color, borderColor: group.color, minWidth: 80, background: 'white' }}
+          />
+        ) : (
+          <span
+            className="text-xs font-bold cursor-default"
+            style={{ color: group.color }}
+            onDoubleClick={() => { if (!isFixed) { setEditNameVal(group.name); setIsEditingName(true); } }}
+          >{group.name}</span>
+        )}
         <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: group.color }}>
           {companies.length}
         </span>
@@ -515,8 +524,8 @@ export default function CompaniesPage() {
   const [editName,        setEditName]        = useState('');
   const [addingToGroup,   setAddingToGroup]   = useState<string | null>(null);
 
-  const [colorPickerGroup, setColorPickerGroup] = useState<string | null>(null);
-  const [renameGroupId,    setRenameGroupId]    = useState<string | null>(null);
+  const [colorPickerGroup,   setColorPickerGroup]   = useState<string | null>(null);
+  const [triggerRenameGroup, setTriggerRenameGroup] = useState<string | null>(null);
 
   const newBtnRef = useRef<HTMLDivElement>(null);
 
@@ -635,7 +644,7 @@ export default function CompaniesPage() {
         break;
       }
 
-      case 'rename': setRenameGroupId(groupId); break;
+      case 'rename': setTriggerRenameGroup(groupId); break;
       case 'color':  setColorPickerGroup(groupId); break;
 
       case 'export': {
@@ -802,6 +811,11 @@ export default function CompaniesPage() {
             onStartAdd={setAddingToGroup}
             onSaveAdd={handleSaveAdd}
             onCancelAdd={() => setAddingToGroup(null)}
+            triggerRename={triggerRenameGroup}
+            onRenameComplete={(id, name) => {
+              const next = customGroups.map(g => g.id === id ? { ...g, name } : g);
+              setCustomGroups(next); saveGroups(next); setTriggerRenameGroup(null);
+            }}
           />
         ))}
       </div>
@@ -855,12 +869,6 @@ export default function CompaniesPage() {
           onClose={() => setColorPickerGroup(null)} />;
       })()}
 
-      {renameGroupId && (() => {
-        const g = customGroups.find(g => g.id === renameGroupId); if (!g) return null;
-        return <RenameModal groupName={g.name}
-          onSave={name => { const next = customGroups.map(g => g.id === renameGroupId ? { ...g, name } : g); setCustomGroups(next); saveGroups(next); }}
-          onClose={() => setRenameGroupId(null)} />;
-      })()}
     </div>
   );
 }

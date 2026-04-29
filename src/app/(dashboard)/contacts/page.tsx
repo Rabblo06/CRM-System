@@ -42,6 +42,20 @@ const PRIORITY_CONFIG: Record<string, { label: string; bg: string; text: string;
   low:    { label: 'Low',    bg: '#ECFDF5', text: '#10B981', badge: '#10B981' },
 };
 
+const ALL_COLUMNS = [
+  { id: 'contact',     label: 'Contact' },
+  { id: 'email',       label: 'Email' },
+  { id: 'activities',  label: 'Activities timeline' },
+  { id: 'accounts',    label: 'Accounts' },
+  { id: 'deals',       label: 'Deals' },
+  { id: 'deals_value', label: 'Deals value' },
+  { id: 'phone',       label: 'Phone' },
+  { id: 'title',       label: 'Title' },
+  { id: 'priority',    label: 'Priority' },
+] as const;
+
+type ColumnId = (typeof ALL_COLUMNS)[number]['id'];
+
 const THREE_DOT_ITEMS = [
   { id: 'collapse_this', label: 'Collapse this group' },
   { id: 'collapse_all',  label: 'Collapse all groups' },
@@ -232,7 +246,7 @@ function ThreeDotMenu({ groupId, isFixed, onAction }: {
         <MoreHorizontal className="w-4 h-4 text-white" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[230px]">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[230px]">
           {THREE_DOT_ITEMS.map((item, i) => {
             if (!item) return <div key={i} className="my-1 border-t border-[#DFE3EB]" />;
             const disabled = isFixed && ['rename','color','delete','archive','duplicate','move'].includes(item.id);
@@ -317,34 +331,6 @@ function ColorPickerModal({ groupName, current, onSelect, onClose }: {
   );
 }
 
-/* ── Rename modal ───────────────────────────────────────────── */
-function RenameModal({ groupName, onSave, onClose }: {
-  groupName: string; onSave: (n: string) => void; onClose: () => void;
-}) {
-  const [val, setVal] = useState(groupName);
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-      <div className="bg-white rounded-[3px] shadow-2xl w-96" style={{ border: '1px solid #DFE3EB' }}>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[#DFE3EB]">
-          <span className="text-sm font-bold text-[#2D3E50]">Rename group</span>
-          <button onClick={onClose}><X className="w-4 h-4 text-[#99ACC2]" /></button>
-        </div>
-        <div className="px-5 py-4">
-          <input autoFocus value={val} onChange={e => setVal(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { onSave(val); onClose(); } if (e.key === 'Escape') onClose(); }}
-            className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50]"
-            onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
-        </div>
-        <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#DFE3EB]">
-          <button onClick={onClose} className="px-4 py-1.5 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">Cancel</button>
-          <button onClick={() => { onSave(val); onClose(); }}
-            className="px-4 py-1.5 text-sm font-bold text-white rounded-[3px]" style={{ backgroundColor: '#0091AE' }}>Save</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ── Delete confirm modal ───────────────────────────────────── */
 function DeleteGroupModal({ groupName, onConfirm, onClose }: {
@@ -463,7 +449,7 @@ function InlineAddRow({ onSave, onCancel }: {
 /* ── Contact Row ────────────────────────────────────────────── */
 function ContactRow({
   contact, selected, onSelect, priority, onPriorityChange,
-  onEdit, onDelete, onEmailSave, onMoveToGroup, allGroups, currentGroupId,
+  onEdit, onDelete, onEmailSave, onMoveToGroup, allGroups, currentGroupId, visibleColumns,
 }: {
   contact: Contact;
   selected: boolean;
@@ -476,11 +462,13 @@ function ContactRow({
   onMoveToGroup: (contactId: string, targetGroupId: string) => void;
   allGroups: Group[];
   currentGroupId: string;
+  visibleColumns: Set<ColumnId>;
 }) {
   const [emailEditing, setEmailEditing] = useState(false);
   const name = fullName(contact);
   const company = (contact as { company?: { name?: string } }).company?.name;
 
+  const vc = visibleColumns;
   return (
     <tr className="border-b border-[#F0F3F7] hover:bg-[#F8FAFC] transition-colors group/row">
       {/* Checkbox */}
@@ -489,7 +477,7 @@ function ContactRow({
           className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
       </td>
 
-      {/* Contact name */}
+      {/* Contact name — always visible */}
       <td className="px-3 py-2.5 min-w-[180px] sticky left-10 bg-inherit">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
@@ -508,76 +496,57 @@ function ContactRow({
             <button onClick={() => onDelete(contact.id)} title="Delete" className="p-0.5 rounded hover:bg-red-50">
               <Trash2 className="w-3 h-3 text-[#99ACC2] hover:text-red-400" />
             </button>
-            <MoveToGroupDropdown
-              contactId={contact.id}
-              currentGroupId={currentGroupId}
-              groups={allGroups}
-              onMove={onMoveToGroup}
-            />
+            <MoveToGroupDropdown contactId={contact.id} currentGroupId={currentGroupId} groups={allGroups} onMove={onMoveToGroup} />
           </div>
         </div>
       </td>
 
-      {/* Email — clickable popover editor */}
-      <td className="px-3 py-2.5 min-w-[200px] relative">
-        {emailEditing ? (
-          <EmailCellPopover
-            email={contact.email || ''}
-            onSave={async (email) => { await onEmailSave(contact.id, email); }}
-            onClose={() => setEmailEditing(false)}
-          />
-        ) : (
-          <button onClick={() => setEmailEditing(true)}
-            className="flex items-center gap-1 text-xs hover:underline text-left truncate max-w-[180px] group/email"
-            style={{ color: contact.email ? '#0091AE' : '#B0C1D4' }}>
-            {contact.email || (
-              <span className="flex items-center gap-1 opacity-0 group-hover/row:opacity-60">
-                <Mail className="w-3 h-3" /> Add email
-              </span>
-            )}
-          </button>
-        )}
-      </td>
-
-      {/* Activities */}
-      <td className="px-3 py-2.5 w-[100px]">
-        <ActivityTimeline contact={contact} />
-      </td>
-
-      {/* Accounts */}
-      <td className="px-3 py-2.5 min-w-[130px]">
-        {company ? <Pill label={company} color="#0091AE" /> : <span className="text-xs text-[#B0C1D4]">—</span>}
-      </td>
-
-      {/* Deals */}
-      <td className="px-3 py-2.5 w-[80px]">
-        <span className="text-xs text-[#B0C1D4]">—</span>
-      </td>
-
-      {/* Deals value */}
-      <td className="px-3 py-2.5 w-[100px]">
-        <span className="text-xs text-[#B0C1D4]">—</span>
-      </td>
-
-      {/* Phone */}
-      <td className="px-3 py-2.5 min-w-[150px]">
-        {contact.phone ? (
-          <span className="flex items-center gap-1.5 text-xs text-[#2D3E50]">
-            <span>{getPhoneFlag(contact.phone)}</span>
-            <span className="truncate">{contact.phone}</span>
-          </span>
-        ) : <span className="text-xs text-[#B0C1D4]">—</span>}
-      </td>
-
-      {/* Title */}
-      <td className="px-3 py-2.5 min-w-[120px]">
-        {contact.job_title ? <Pill label={contact.job_title} color="#8B5CF6" /> : <span className="text-xs text-[#B0C1D4]">—</span>}
-      </td>
-
-      {/* Priority */}
-      <td className="px-3 py-2.5 w-[110px]">
-        <PriorityBadge priority={priority} onChange={(p) => onPriorityChange(contact.id, p)} />
-      </td>
+      {vc.has('email') && (
+        <td className="px-3 py-2.5 min-w-[200px] relative">
+          {emailEditing ? (
+            <EmailCellPopover email={contact.email || ''} onSave={async (e) => { await onEmailSave(contact.id, e); }} onClose={() => setEmailEditing(false)} />
+          ) : (
+            <button onClick={() => setEmailEditing(true)} className="flex items-center gap-1 text-xs hover:underline text-left truncate max-w-[180px]"
+              style={{ color: contact.email ? '#0091AE' : '#B0C1D4' }}>
+              {contact.email || <span className="flex items-center gap-1 opacity-0 group-hover/row:opacity-60"><Mail className="w-3 h-3" /> Add email</span>}
+            </button>
+          )}
+        </td>
+      )}
+      {vc.has('activities') && (
+        <td className="px-3 py-2.5 w-[100px]"><ActivityTimeline contact={contact} /></td>
+      )}
+      {vc.has('accounts') && (
+        <td className="px-3 py-2.5 min-w-[130px]">
+          {company ? <Pill label={company} color="#0091AE" /> : <span className="text-xs text-[#B0C1D4]">—</span>}
+        </td>
+      )}
+      {vc.has('deals') && (
+        <td className="px-3 py-2.5 w-[80px]"><span className="text-xs text-[#B0C1D4]">—</span></td>
+      )}
+      {vc.has('deals_value') && (
+        <td className="px-3 py-2.5 w-[100px]"><span className="text-xs text-[#B0C1D4]">—</span></td>
+      )}
+      {vc.has('phone') && (
+        <td className="px-3 py-2.5 min-w-[150px]">
+          {contact.phone ? (
+            <span className="flex items-center gap-1.5 text-xs text-[#2D3E50]">
+              <span>{getPhoneFlag(contact.phone)}</span>
+              <span className="truncate">{contact.phone}</span>
+            </span>
+          ) : <span className="text-xs text-[#B0C1D4]">—</span>}
+        </td>
+      )}
+      {vc.has('title') && (
+        <td className="px-3 py-2.5 min-w-[120px]">
+          {contact.job_title ? <Pill label={contact.job_title} color="#8B5CF6" /> : <span className="text-xs text-[#B0C1D4]">—</span>}
+        </td>
+      )}
+      {vc.has('priority') && (
+        <td className="px-3 py-2.5 w-[110px]">
+          <PriorityBadge priority={priority} onChange={(p) => onPriorityChange(contact.id, p)} />
+        </td>
+      )}
     </tr>
   );
 }
@@ -590,6 +559,8 @@ function GroupSection({
   onEdit, onDelete, onGroupAction,
   onEmailSave, onMoveToGroup, allGroups,
   addingToGroup, onStartAdd, onSaveAdd, onCancelAdd,
+  triggerRename, onRenameComplete,
+  visibleColumns, onToggleColumn,
 }: {
   group: Group;
   contacts: Contact[];
@@ -610,8 +581,36 @@ function GroupSection({
   onStartAdd: (groupId: string) => void;
   onSaveAdd: (data: { first_name: string; last_name: string; email: string; phone: string; job_title: string }, groupId: string) => Promise<void>;
   onCancelAdd: () => void;
+  triggerRename?: string | null;
+  onRenameComplete: (id: string, name: string) => void;
+  visibleColumns: Set<ColumnId>;
+  onToggleColumn: (id: ColumnId) => void;
 }) {
   const isFixed = group.id === 'active' || group.id === 'inactive';
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameVal, setEditNameVal] = useState(group.name);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const [showColPicker, setShowColPicker] = useState(false);
+  const colPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (colPickerRef.current && !colPickerRef.current.contains(e.target as Node)) setShowColPicker(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  useEffect(() => {
+    if (triggerRename === group.id) { setEditNameVal(group.name); setIsEditingName(true); }
+  }, [triggerRename, group.id, group.name]);
+
+  useEffect(() => {
+    if (isEditingName) nameInputRef.current?.focus();
+  }, [isEditingName]);
+
+  const commitNameEdit = () => {
+    if (editNameVal.trim()) onRenameComplete(group.id, editNameVal.trim());
+    setIsEditingName(false);
+  };
 
   return (
     <div className="mb-2">
@@ -623,7 +622,23 @@ function GroupSection({
             ? <ChevronRight className="w-4 h-4" style={{ color: group.color }} />
             : <ChevronDown className="w-4 h-4" style={{ color: group.color }} />}
         </button>
-        <span className="text-xs font-bold" style={{ color: group.color }}>{group.name}</span>
+        {isEditingName && !isFixed ? (
+          <input
+            ref={nameInputRef}
+            value={editNameVal}
+            onChange={e => setEditNameVal(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') commitNameEdit(); if (e.key === 'Escape') setIsEditingName(false); }}
+            onBlur={commitNameEdit}
+            className="text-xs font-bold px-1 rounded border outline-none"
+            style={{ color: group.color, borderColor: group.color, minWidth: 80, background: 'white' }}
+          />
+        ) : (
+          <span
+            className="text-xs font-bold cursor-default"
+            style={{ color: group.color }}
+            onDoubleClick={() => { if (!isFixed) { setEditNameVal(group.name); setIsEditingName(true); } }}
+          >{group.name}</span>
+        )}
         <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: group.color }}>
           {contacts.length}
         </span>
@@ -641,11 +656,35 @@ function GroupSection({
                   onChange={() => onSelectAll(group.id, contacts.map(c => c.id))}
                   className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
               </th>
-              {['Contact','Email','Activities timeline','Accounts','Deals','Deals value','Phone','Title','Priority'].map(col => (
-                <th key={col} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap" style={{ fontSize: 10 }}>
-                  {col}
+              {/* Contact column header — always shown */}
+              <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap" style={{ fontSize: 10 }}>Contact</th>
+              {ALL_COLUMNS.filter(c => c.id !== 'contact' && visibleColumns.has(c.id)).map(col => (
+                <th key={col.id} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap" style={{ fontSize: 10 }}>
+                  {col.label}
                 </th>
               ))}
+              {/* Column picker "+" button */}
+              <th className="px-2 py-2 w-8">
+                <div ref={colPickerRef} className="relative">
+                  <button onClick={() => setShowColPicker(v => !v)}
+                    className="w-6 h-6 flex items-center justify-center rounded border border-dashed border-[#CBD6E2] hover:border-[#0091AE] hover:bg-[#E8F4FD] transition-colors"
+                    title="Show/hide columns">
+                    <Plus className="w-3 h-3 text-[#99ACC2]" />
+                  </button>
+                  {showColPicker && (
+                    <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-2 min-w-[190px]">
+                      <p className="px-3 pb-1.5 text-[10px] font-semibold text-[#516F90] uppercase tracking-wide">Show / hide columns</p>
+                      {ALL_COLUMNS.filter(c => c.id !== 'contact').map(col => (
+                        <label key={col.id} className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-[#F6F9FC] cursor-pointer">
+                          <input type="checkbox" checked={visibleColumns.has(col.id)} onChange={() => onToggleColumn(col.id)}
+                            className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
+                          <span className="text-xs text-[#2D3E50]">{col.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -663,6 +702,7 @@ function GroupSection({
                 onMoveToGroup={onMoveToGroup}
                 allGroups={allGroups}
                 currentGroupId={group.id}
+                visibleColumns={visibleColumns}
               />
             ))}
 
@@ -712,11 +752,19 @@ export default function ContactsPage() {
   const [showNewDropdown,  setShowNewDropdown]  = useState(false);
   const [addingToGroup,    setAddingToGroup]    = useState<string | null>(null);
 
-  const [colorPickerGroup, setColorPickerGroup] = useState<string | null>(null);
-  const [renameGroupId,    setRenameGroupId]    = useState<string | null>(null);
-  const [deleteGroupId,    setDeleteGroupId]    = useState<string | null>(null);
+  const [colorPickerGroup,    setColorPickerGroup]    = useState<string | null>(null);
+  const [triggerRenameGroup,  setTriggerRenameGroup]  = useState<string | null>(null);
+  const [deleteGroupId,       setDeleteGroupId]       = useState<string | null>(null);
+
+  const [showFilter,       setShowFilter]       = useState(false);
+  const [filterPriorities, setFilterPriorities] = useState<Set<string>>(new Set());
+  const [filterCompany,    setFilterCompany]    = useState('');
+  const [visibleColumns,   setVisibleColumns]   = useState<Set<ColumnId>>(
+    new Set(ALL_COLUMNS.map(c => c.id))
+  );
 
   const newBtnRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   /* ── Load persisted state ── */
   useEffect(() => {
@@ -729,6 +777,8 @@ export default function ContactsPage() {
         setGroupMap(JSON.parse(localStorage.getItem(storageKey('map', email)) || '{}'));
         setPriorities(JSON.parse(localStorage.getItem(storageKey('priorities', email)) || '{}'));
         setCollapsedGroups(new Set(JSON.parse(localStorage.getItem(storageKey('collapsed', email)) || '[]')));
+        const savedCols = localStorage.getItem(storageKey('columns', email));
+        if (savedCols) setVisibleColumns(new Set(JSON.parse(savedCols) as ColumnId[]));
       } catch { /* ignore */ }
     }).catch(() => {});
   }, []);
@@ -738,6 +788,16 @@ export default function ContactsPage() {
   const saveGroupMap  = useCallback((m: Record<string, string>) => { if (userEmail) localStorage.setItem(storageKey('map',       userEmail), JSON.stringify(m)); }, [userEmail]);
   const savePriorities= useCallback((p: Record<string, Priority>) => { if (userEmail) localStorage.setItem(storageKey('priorities', userEmail), JSON.stringify(p)); }, [userEmail]);
   const saveCollapsed = useCallback((s: Set<string>)            => { if (userEmail) localStorage.setItem(storageKey('collapsed', userEmail), JSON.stringify([...s])); }, [userEmail]);
+  const saveColumns   = useCallback((s: Set<ColumnId>)          => { if (userEmail) localStorage.setItem(storageKey('columns',   userEmail), JSON.stringify([...s])); }, [userEmail]);
+
+  const handleToggleColumn = useCallback((id: ColumnId) => {
+    setVisibleColumns(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      saveColumns(next);
+      return next;
+    });
+  }, [saveColumns]);
 
   /* ── All groups ── */
   const allGroups = useMemo(() => [
@@ -752,14 +812,26 @@ export default function ContactsPage() {
     else if (groupId === 'inactive') base = contacts.filter(c => !groupMap[c.id] && c.is_active === false);
     else base = contacts.filter(c => groupMap[c.id] === groupId);
 
-    if (!search.trim()) return base;
-    const q = search.toLowerCase();
-    return base.filter(c =>
-      fullName(c).toLowerCase().includes(q) ||
-      (c.email || '').toLowerCase().includes(q) ||
-      ((c as { company?: { name?: string } }).company?.name || '').toLowerCase().includes(q)
-    );
-  }, [contacts, groupMap, search]);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      base = base.filter(c =>
+        fullName(c).toLowerCase().includes(q) ||
+        (c.email || '').toLowerCase().includes(q) ||
+        (c.phone || '').toLowerCase().includes(q) ||
+        (c.job_title || '').toLowerCase().includes(q) ||
+        ((c as { company?: { name?: string } }).company?.name || '').toLowerCase().includes(q) ||
+        (priorities[c.id] || '').toLowerCase().includes(q)
+      );
+    }
+    if (filterPriorities.size > 0) {
+      base = base.filter(c => filterPriorities.has(priorities[c.id] || ''));
+    }
+    if (filterCompany.trim()) {
+      const fc = filterCompany.toLowerCase();
+      base = base.filter(c => ((c as { company?: { name?: string } }).company?.name || '').toLowerCase().includes(fc));
+    }
+    return base;
+  }, [contacts, groupMap, search, priorities, filterPriorities, filterCompany]);
 
   /* ── Selection ── */
   const toggleSelect = (id: string) => {
@@ -815,6 +887,7 @@ export default function ContactsPage() {
     const payload: Partial<Contact> = {
       first_name: data.first_name,
       last_name: data.last_name,
+      is_active: groupId !== 'inactive',
       ...(data.email && { email: data.email }),
       ...(data.phone && { phone: data.phone }),
       ...(data.job_title && { job_title: data.job_title }),
@@ -863,7 +936,7 @@ export default function ContactsPage() {
         break;
       }
 
-      case 'rename': setRenameGroupId(groupId); break;
+      case 'rename': setTriggerRenameGroup(groupId); break;
       case 'color':  setColorPickerGroup(groupId); break;
 
       case 'export': {
@@ -959,69 +1032,163 @@ export default function ContactsPage() {
   return (
     <div className="flex flex-col h-full bg-white">
 
-      {/* ── Top bar ── */}
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#DFE3EB] flex-shrink-0">
-        <div className="flex items-center gap-2">
-          {/* New contact dropdown */}
-          <div ref={newBtnRef} className="relative">
-            <div className="flex items-center border border-[#FF7A59] rounded-[3px] overflow-hidden">
-              <button
-                onClick={() => { setEditContact(null); setShowForm(true); }}
-                className="px-4 py-1.5 text-sm font-bold text-white"
-                style={{ backgroundColor: '#FF7A59' }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}>
-                New contact
-              </button>
-              <button onClick={() => setShowNewDropdown(v => !v)}
-                className="px-2 py-1.5 text-white border-l border-white/30"
-                style={{ backgroundColor: '#FF7A59' }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            {showNewDropdown && (
-              <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
-                <button onClick={() => { setEditContact(null); setShowForm(true); setShowNewDropdown(false); }}
-                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
-                  <Users className="w-4 h-4 text-[#7C98B6]" /> New contact
-                </button>
-                <button onClick={() => { handleGroupAction('add_group', 'active'); setShowNewDropdown(false); }}
-                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
-                  <FolderPlus className="w-4 h-4 text-[#7C98B6]" /> New group of contacts
-                </button>
-                <button onClick={() => { setShowImport(true); setShowNewDropdown(false); }}
-                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
-                  <Download className="w-4 h-4 text-[#7C98B6]" /> Import contacts
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#99ACC2]" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search"
-              className="h-8 pl-8 pr-3 text-sm border border-[#DFE3EB] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] w-56"
-              onFocus={e => { e.currentTarget.style.borderColor = '#99ACC2'; }}
-              onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }} />
-            {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-[#99ACC2]" /></button>}
-          </div>
-          <span className="text-xs text-[#7C98B6]">{contacts.length} contacts</span>
+      {/* ── Row 1: Title + right actions ── */}
+      <div className="flex items-center justify-between px-5 py-2 border-b border-[#DFE3EB] flex-shrink-0">
+        <div className="flex items-center gap-1">
+          <h1 className="text-xl font-bold text-[#2D3E50]">Contacts</h1>
+          <ChevronDown className="w-4 h-4 text-[#99ACC2]" />
         </div>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => setShowImport(true)}
+            className="px-3 py-1.5 text-xs font-semibold text-[#516F90] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC] flex items-center gap-1.5">
+            <Download className="w-3.5 h-3.5" /> Import
+          </button>
+          {['Integrate','Automate','Invite'].map(label => (
+            <button key={label} className="px-3 py-1.5 text-xs font-semibold text-[#516F90] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">{label}</button>
+          ))}
+          <button className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2]"><MoreHorizontal className="w-4 h-4" /></button>
+        </div>
+      </div>
 
+      {/* ── Row 2: Tabs ── */}
+      <div className="flex items-center px-5 border-b border-[#DFE3EB] flex-shrink-0">
+        <button className="px-3 py-2 text-sm font-semibold border-b-2 -mb-px" style={{ color: '#0091AE', borderColor: '#0091AE' }}>
+          Main table
+        </button>
+        <button className="px-2 py-2 text-[#99ACC2] hover:text-[#516F90]"><MoreHorizontal className="w-4 h-4" /></button>
+        <button className="px-2 py-2 text-[#99ACC2] hover:text-[#516F90]"><Plus className="w-4 h-4" /></button>
         {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2 py-1">
             <span className="text-xs text-[#516F90]">{selectedIds.size} selected</span>
             <button onClick={async () => { if (!confirm(`Delete ${selectedIds.size} contacts?`)) return; for (const id of selectedIds) await deleteContact(id); setSelectedIds(new Set()); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-red-200 text-red-500 rounded-[3px] hover:bg-red-50">
+              className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold border border-red-200 text-red-500 rounded-[3px] hover:bg-red-50">
               <Trash2 className="w-3.5 h-3.5" /> Delete
             </button>
-            <button onClick={() => setSelectedIds(new Set())} className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2]"><X className="w-4 h-4" /></button>
+            <button onClick={() => setSelectedIds(new Set())} className="p-1 rounded hover:bg-[#F0F3F7] text-[#99ACC2]"><X className="w-4 h-4" /></button>
           </div>
         )}
       </div>
+
+      {/* ── Row 3: Toolbar ── */}
+      <div className="flex items-center gap-2 px-5 py-2 border-b border-[#DFE3EB] flex-shrink-0">
+        {/* New contact dropdown */}
+        <div ref={newBtnRef} className="relative">
+          <div className="flex items-center border border-[#FF7A59] rounded-[3px] overflow-hidden">
+            <button onClick={() => { setEditContact(null); setShowForm(true); }}
+              className="px-4 py-1.5 text-sm font-bold text-white"
+              style={{ backgroundColor: '#FF7A59' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}>
+              New contact
+            </button>
+            <button onClick={() => setShowNewDropdown(v => !v)}
+              className="px-2 py-1.5 text-white border-l border-white/30"
+              style={{ backgroundColor: '#FF7A59' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          {showNewDropdown && (
+            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
+              <button onClick={() => { setEditContact(null); setShowForm(true); setShowNewDropdown(false); }}
+                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
+                <Users className="w-4 h-4 text-[#7C98B6]" /> New contact
+              </button>
+              <button onClick={() => { handleGroupAction('add_group', 'active'); setShowNewDropdown(false); }}
+                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
+                <FolderPlus className="w-4 h-4 text-[#7C98B6]" /> New group of contacts
+              </button>
+              <button onClick={() => { setShowImport(true); setShowNewDropdown(false); }}
+                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
+                <Download className="w-4 h-4 text-[#7C98B6]" /> Import contacts
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="w-px h-5 bg-[#DFE3EB]" />
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#99ACC2]" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search"
+            className="h-8 pl-8 pr-3 text-sm border border-[#DFE3EB] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] w-48"
+            onFocus={e => { e.currentTarget.style.borderColor = '#99ACC2'; }}
+            onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }} />
+          {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-[#99ACC2]" /></button>}
+        </div>
+
+        <button className="px-3 py-1.5 text-xs font-semibold text-[#516F90] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC] flex items-center gap-1.5">
+          <Users className="w-3.5 h-3.5" /> Person
+        </button>
+
+        <div ref={filterRef} className="relative">
+          <button
+            onClick={() => setShowFilter(v => !v)}
+            className="px-3 py-1.5 text-xs font-semibold rounded-[3px] border flex items-center gap-1.5 transition-colors"
+            style={showFilter || filterPriorities.size > 0 || filterCompany
+              ? { color: '#0091AE', borderColor: '#0091AE', backgroundColor: '#E8F4FD' }
+              : { color: '#516F90', borderColor: '#DFE3EB', backgroundColor: 'transparent' }}>
+            <Search className="w-3.5 h-3.5" /> Filter
+            {(filterPriorities.size > 0 || filterCompany) && (
+              <span className="ml-0.5 px-1 py-0.5 rounded text-[10px] font-bold text-white" style={{ backgroundColor: '#0091AE' }}>
+                {filterPriorities.size + (filterCompany ? 1 : 0)}
+              </span>
+            )}
+          </button>
+        </div>
+
+        <button className="px-3 py-1.5 text-xs font-semibold text-[#516F90] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC] flex items-center gap-1.5">
+          <ChevronDown className="w-3.5 h-3.5" /> Group by
+        </button>
+
+        <span className="text-xs text-[#99ACC2] ml-auto">{contacts.length} contacts</span>
+        <button className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2]"><MoreHorizontal className="w-4 h-4" /></button>
+      </div>
+
+      {/* ── Filter panel ── */}
+      {showFilter && (
+        <div className="flex items-start gap-6 px-5 py-3 border-b border-[#DFE3EB] bg-[#F6F9FC] flex-shrink-0">
+          <div>
+            <p className="text-[10px] font-semibold text-[#516F90] uppercase tracking-wide mb-2">Priority</p>
+            <div className="flex flex-col gap-1">
+              {(['high','medium','low'] as const).map(p => {
+                const cfg = PRIORITY_CONFIG[p];
+                return (
+                  <label key={p} className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={filterPriorities.has(p)}
+                      onChange={() => setFilterPriorities(prev => { const n = new Set(prev); n.has(p) ? n.delete(p) : n.add(p); return n; })}
+                      className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
+                    <span className="text-xs font-bold px-2 py-0.5 rounded text-white" style={{ backgroundColor: cfg.badge }}>{cfg.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-semibold text-[#516F90] uppercase tracking-wide mb-2">Company</p>
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#99ACC2]" />
+              <input value={filterCompany} onChange={e => setFilterCompany(e.target.value)} placeholder="Filter by company…"
+                className="h-7 pl-6 pr-3 text-xs border border-[#DFE3EB] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] w-44"
+                onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }} />
+              {filterCompany && <button onClick={() => setFilterCompany('')} className="absolute right-1.5 top-1/2 -translate-y-1/2"><X className="w-3 h-3 text-[#99ACC2]" /></button>}
+            </div>
+          </div>
+
+          {(filterPriorities.size > 0 || filterCompany) && (
+            <div className="flex items-end pb-0.5 ml-auto self-end">
+              <button onClick={() => { setFilterPriorities(new Set()); setFilterCompany(''); }}
+                className="px-3 py-1.5 text-xs font-semibold text-[#516F90] border border-[#DFE3EB] rounded-[3px] hover:bg-white flex items-center gap-1.5">
+                <X className="w-3 h-3" /> Clear filters
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Groups ── */}
       <div className="flex-1 overflow-auto">
@@ -1050,6 +1217,10 @@ export default function ContactsPage() {
               onStartAdd={setAddingToGroup}
               onSaveAdd={handleSaveAdd}
               onCancelAdd={() => setAddingToGroup(null)}
+              triggerRename={triggerRenameGroup}
+              onRenameComplete={(id, name) => { commitRename(id, name); setTriggerRenameGroup(null); }}
+              visibleColumns={visibleColumns}
+              onToggleColumn={handleToggleColumn}
             />
           ))
         )}
@@ -1086,12 +1257,6 @@ export default function ContactsPage() {
           onClose={() => setColorPickerGroup(null)} />;
       })()}
 
-      {renameGroupId && (() => {
-        const g = customGroups.find(g => g.id === renameGroupId); if (!g) return null;
-        return <RenameModal groupName={g.name}
-          onSave={(name) => commitRename(renameGroupId, name)}
-          onClose={() => setRenameGroupId(null)} />;
-      })()}
 
       {deleteGroupId && (() => {
         const g = customGroups.find(g => g.id === deleteGroupId); if (!g) return null;

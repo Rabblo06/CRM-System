@@ -24,23 +24,101 @@ type Step = 1 | 2 | 3 | 4;
 const COMPANY_FIELDS = [
   { value: '__skip__',  label: "Don't import" },
   { value: 'name',      label: 'Company Name' },
-  { value: 'industry',  label: 'Industry' },
-  { value: 'size',      label: 'Company Size' },
-  { value: 'website',   label: 'Website' },
-  { value: 'phone',     label: 'Phone' },
+  { value: 'domain',    label: 'Domain / Website' },
+  { value: 'phone',     label: 'Phone / Mobile' },
+  { value: 'industry',  label: 'Industry / Sector' },
+  { value: 'size',      label: 'Company Size / Employees' },
   { value: 'city',      label: 'City' },
   { value: 'country',   label: 'Country' },
-  { value: 'domain',    label: 'Domain' },
+  { value: 'address',   label: 'Address' },
+  { value: 'website',   label: 'Website URL' },
+  { value: 'description', label: 'Description / Notes / Comments' },
 ];
 
-const AUTO_MAP: Record<string, string> = {
-  'company name': 'name', name: 'name', company: 'name', account: 'name', organization: 'name',
-  industry: 'industry', sector: 'industry',
-  size: 'size', 'company size': 'size', employees: 'size',
-  website: 'website', url: 'website', 'website url': 'website',
-  phone: 'phone', 'phone number': 'phone', telephone: 'phone',
-  city: 'city', country: 'country',
-  domain: 'domain', 'email domain': 'domain',
+function normalizeKey(s: string): string {
+  return s.toLowerCase()
+    .replace(/[\s_\-\.\/\(\)#]/g, '')
+    .replace(/numbers?$/g, 'no')
+    .trim();
+}
+
+const AUTO_MAP_NORM: Record<string, string> = {
+  // Company name
+  company: 'name',
+  companyname: 'name',
+  nameofcompany: 'name',
+  name: 'name',
+  account: 'name',
+  accounts: 'name',
+  organization: 'name',
+  organisation: 'name',
+  firm: 'name',
+  business: 'name',
+  businessname: 'name',
+
+  // Domain
+  domain: 'domain',
+  emaildomain: 'domain',
+  companydomain: 'domain',
+  website: 'website',
+  websiteurl: 'website',
+  url: 'website',
+  web: 'website',
+  siteurl: 'website',
+
+  // Phone
+  phone: 'phone',
+  phoneno: 'phone',
+  phonenumber: 'phone',
+  telephone: 'phone',
+  telno: 'phone',
+  mobile: 'phone',
+  mobileno: 'phone',
+  mobilenumber: 'phone',
+  contactno: 'phone',
+  contactnumber: 'phone',
+
+  // Industry
+  industry: 'industry',
+  sector: 'industry',
+  businesstype: 'industry',
+  vertical: 'industry',
+
+  // Size
+  size: 'size',
+  companysize: 'size',
+  employees: 'size',
+  headcount: 'size',
+  teamsize: 'size',
+  noofemployees: 'size',
+
+  // Location
+  city: 'city',
+  town: 'city',
+  country: 'country',
+  nation: 'country',
+  address: 'address',
+  streetaddress: 'address',
+  location: 'address',
+
+  // Notes / description
+  notes: 'description',
+  note: 'description',
+  comments: 'description',
+  comment: 'description',
+  description: 'description',
+  nextstep: 'description',
+  nextaction: 'description',
+
+  // Skip-worthy fields
+  owner: '__skip__',
+  nameofmanager: '__skip__',
+  manager: '__skip__',
+  deals: '__skip__',
+  dealsvalue: '__skip__',
+  status: '__skip__',
+  priority: '__skip__',
+  type: '__skip__',
 };
 
 const STEP_LABELS = ['Upload', 'Map columns', 'Handle matches', 'Import'];
@@ -98,7 +176,10 @@ export default function CompanyImportWizard({ onClose, onImportComplete, createC
         setHeaders(hdrs);
         setRows(json);
         const autoMap: Record<string, string> = {};
-        hdrs.forEach(h => { autoMap[h] = AUTO_MAP[h.toLowerCase().trim()] || '__skip__'; });
+        hdrs.forEach(h => {
+          const key = normalizeKey(h);
+          autoMap[h] = AUTO_MAP_NORM[key] ?? '__skip__';
+        });
         setMapping(autoMap);
         setFile(f);
         setStep(2);
@@ -109,8 +190,6 @@ export default function CompanyImportWizard({ onClose, onImportComplete, createC
 
   const doImport = async () => {
     if (!file) return;
-
-    // Switch to import page immediately so spinner is visible
     setImporting(true);
     setProgress(0);
     setStep(4);
@@ -129,7 +208,6 @@ export default function CompanyImportWizard({ onClose, onImportComplete, createC
       }
       if (!company.name) { failed++; continue; }
 
-      // Duplicate detection by name or domain
       const nameKey = company.name.toLowerCase();
       const domainKey = company.domain?.toLowerCase();
       const existingId = nameIndex.get(nameKey) ?? (domainKey ? domainIndex.get(domainKey) : undefined);
@@ -137,11 +215,8 @@ export default function CompanyImportWizard({ onClose, onImportComplete, createC
       if (existingId) {
         if (matchMode === 'skip') { skipped++; continue; }
         if (matchMode === 'update' && updateCompany) {
-          try {
-            await updateCompany(existingId, company);
-            ids.push(existingId);
-            success++;
-          } catch { failed++; }
+          try { await updateCompany(existingId, company); ids.push(existingId); success++; }
+          catch { failed++; }
           if (mountedRef.current) setProgress(Math.round(((i + 1) / rows.length) * 100));
           continue;
         }
@@ -149,18 +224,14 @@ export default function CompanyImportWizard({ onClose, onImportComplete, createC
 
       try {
         const res = await createCompany(company);
-        if (res?.data?.id) {
-          ids.push(res.data.id);
-          nameIndex.set(nameKey, res.data.id);
-          success++;
-        } else { failed++; }
+        if (res?.data?.id) { ids.push(res.data.id); nameIndex.set(nameKey, res.data.id); success++; }
+        else { failed++; }
       } catch { failed++; }
 
       if (mountedRef.current) setProgress(Math.round(((i + 1) / rows.length) * 100));
     }
 
     if (!mountedRef.current) return;
-
     setResult({ success, failed, skipped });
     setImporting(false);
 
@@ -168,7 +239,6 @@ export default function CompanyImportWizard({ onClose, onImportComplete, createC
       const groupId = crypto.randomUUID();
       onImportComplete({ groupId, groupName: file.name, companyIds: ids, count: success });
     }
-
     setTimeout(() => { if (mountedRef.current) onClose(); }, 5000);
   };
 
@@ -203,18 +273,19 @@ export default function CompanyImportWizard({ onClose, onImportComplete, createC
 
           {step === 2 && (
             <div className="px-6 py-5">
-              <p className="text-base font-bold text-[#2D3E50] text-center mb-1">Preview of columns to import</p>
-              <p className="text-xs text-[#7C98B6] text-center mb-5">Map or exclude columns before importing</p>
+              <p className="text-base font-bold text-[#2D3E50] text-center mb-1">Map your columns</p>
+              <p className="text-xs text-[#7C98B6] text-center mb-5">Columns are auto-mapped. Review and change any before importing.</p>
               <div className="overflow-auto rounded border border-[#DFE3EB]" style={{ maxHeight: 380 }}>
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-[#F6F9FC] border-b border-[#DFE3EB]">
                       <th className="px-3 py-2 text-left w-8 text-[#99ACC2]">#</th>
                       {headers.map(h => (
-                        <th key={h} className="px-3 py-2 text-left min-w-[140px]">
+                        <th key={h} className="px-3 py-2 text-left min-w-[160px]">
                           <div className="flex flex-col gap-1">
                             <select value={mapping[h] || '__skip__'} onChange={e => setMapping(m => ({ ...m, [h]: e.target.value }))}
-                              className="w-full text-xs border border-[#DFE3EB] rounded px-1.5 py-1 bg-white text-[#2D3E50] outline-none">
+                              className="w-full text-xs border rounded px-1.5 py-1 bg-white text-[#2D3E50] outline-none"
+                              style={{ borderColor: mapping[h] && mapping[h] !== '__skip__' ? '#0091AE' : '#DFE3EB' }}>
                               {COMPANY_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                             </select>
                             <span className="text-[10px] text-[#99ACC2] truncate">{h}</span>
@@ -227,13 +298,16 @@ export default function CompanyImportWizard({ onClose, onImportComplete, createC
                     {rows.slice(0, 8).map((row, i) => (
                       <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F8FAFC]'}>
                         <td className="px-3 py-2 text-[#99ACC2]">{i + 1}</td>
-                        {headers.map(h => <td key={h} className="px-3 py-2 text-[#2D3E50] truncate max-w-[160px]">{row[h] || ''}</td>)}
+                        {headers.map(h => <td key={h} className="px-3 py-2 text-[#2D3E50] truncate max-w-[180px]">{row[h] || ''}</td>)}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="mt-2 text-xs text-[#7C98B6] text-right">{rows.length} total rows</p>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-[#7C98B6]">{Object.values(mapping).filter(v => v && v !== '__skip__').length} of {headers.length} columns mapped</p>
+                <p className="text-xs text-[#7C98B6]">{rows.length} total rows</p>
+              </div>
             </div>
           )}
 
@@ -269,7 +343,6 @@ export default function CompanyImportWizard({ onClose, onImportComplete, createC
                   <div className="w-64 h-2 bg-[#DFE3EB] rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: '#0091AE' }} />
                   </div>
-                  <p className="text-xs text-[#99ACC2] mt-3">Please don't close this window</p>
                 </>
               ) : result && (
                 <>
@@ -278,13 +351,11 @@ export default function CompanyImportWizard({ onClose, onImportComplete, createC
                   </div>
                   <p className="text-lg font-bold text-[#2D3E50] mb-3">Import complete!</p>
                   <div className="flex flex-col gap-1 items-center">
-                    <p className="text-sm text-[#516F90]">
-                      <span className="font-bold text-[#00BDA5]">{result.success}</span> companies imported successfully
-                    </p>
-                    {result.skipped > 0 && <p className="text-sm text-[#7C98B6]"><span className="font-semibold">{result.skipped}</span> rows skipped (duplicates)</p>}
-                    {result.failed > 0 && <p className="text-sm text-[#FF7A59]"><span className="font-semibold">{result.failed}</span> rows failed (missing name)</p>}
+                    <p className="text-sm text-[#516F90]"><span className="font-bold text-[#00BDA5]">{result.success}</span> companies imported</p>
+                    {result.skipped > 0 && <p className="text-sm text-[#7C98B6]"><span className="font-semibold">{result.skipped}</span> skipped (duplicates)</p>}
+                    {result.failed > 0 && <p className="text-sm text-[#FF7A59]"><span className="font-semibold">{result.failed}</span> failed (missing name)</p>}
                   </div>
-                  <p className="text-xs text-[#7C98B6] mt-4">A new group was created. Closing automatically in 5 seconds…</p>
+                  <p className="text-xs text-[#7C98B6] mt-4">A new group was created. Closing in 5 s…</p>
                 </>
               )}
             </div>

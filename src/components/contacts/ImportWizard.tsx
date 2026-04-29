@@ -21,36 +21,162 @@ interface ImportWizardProps {
 
 type Step = 1 | 2 | 3 | 4;
 
+/* ── Field definitions shown in the mapping dropdown ── */
 const CONTACT_FIELDS = [
-  { value: '__skip__',        label: "Don't import" },
-  { value: 'first_name',     label: 'First Name' },
-  { value: 'last_name',      label: 'Last Name' },
-  { value: 'email',          label: 'Email' },
-  { value: 'phone',          label: 'Phone' },
-  { value: 'job_title',      label: 'Job Title / Title' },
-  { value: 'department',     label: 'Department' },
-  { value: 'company',        label: 'Company Name' },
-  { value: 'lead_status',    label: 'Lead Status' },
-  { value: 'lifecycle_stage',label: 'Lifecycle Stage' },
-  { value: 'source',         label: 'Lead Source' },
-  { value: 'city',           label: 'City' },
-  { value: 'country',        label: 'Country' },
-  { value: 'notes',          label: 'Notes' },
+  { value: '__skip__',         label: "Don't import" },
+  { value: 'full_name',        label: 'Contact / Full Name (will split)' },
+  { value: 'first_name',       label: 'First Name' },
+  { value: 'last_name',        label: 'Last Name' },
+  { value: 'email',            label: 'Email' },
+  { value: 'phone',            label: 'Phone / Mobile' },
+  { value: 'job_title',        label: 'Title / Position / Role' },
+  { value: 'department',       label: 'Department' },
+  { value: 'company',          label: 'Company / Account' },
+  { value: 'address',          label: 'Address' },
+  { value: 'city',             label: 'City' },
+  { value: 'country',          label: 'Country' },
+  { value: 'lead_status',      label: 'Lead Status / Status' },
+  { value: 'lifecycle_stage',  label: 'Lifecycle Stage' },
+  { value: 'source',           label: 'Lead Source' },
+  { value: 'notes',            label: 'Notes / Comments / Next step' },
+  { value: 'linkedin_url',     label: 'LinkedIn URL' },
 ];
 
-const AUTO_MAP: Record<string, string> = {
-  'first name': 'first_name', firstname: 'first_name', first_name: 'first_name',
-  'last name':  'last_name',  lastname: 'last_name',   last_name: 'last_name',
-  name: 'first_name', 'full name': 'first_name', fullname: 'first_name',
-  email: 'email', 'email address': 'email',
-  phone: 'phone', 'phone number': 'phone', mobile: 'phone', telephone: 'phone',
-  'job title': 'job_title', title: 'job_title', position: 'job_title', role: 'job_title',
+/* ── Normalize a header string for lookup ── */
+function normalizeKey(s: string): string {
+  return s.toLowerCase()
+    .replace(/[\s_\-\.\/\(\)#]/g, '')  // strip separators
+    .replace(/numbers?$/g, 'no')        // "number" → "no"
+    .replace(/emails?$/g, 'email')      // handle trailing s
+    .trim();
+}
+
+/* ── Comprehensive header → field mapping (keys are normalized) ── */
+const AUTO_MAP_NORM: Record<string, string> = {
+  // Contact / Full name
+  contact: 'full_name',
+  contactname: 'full_name',
+  name: 'full_name',
+  fullname: 'full_name',
+  leadname: 'full_name',
+  clientname: 'full_name',
+
+  // First name
+  firstname: 'first_name',
+  fname: 'first_name',
+  givenname: 'first_name',
+
+  // Last name
+  lastname: 'last_name',
+  lname: 'last_name',
+  surname: 'last_name',
+  familyname: 'last_name',
+
+  // Email
+  email: 'email',
+  emailaddress: 'email',
+  primaryemail: 'email',
+  workemail: 'email',
+  emailnote: 'email',
+  emailid: 'email',
+
+  // Phone
+  phone: 'phone',
+  phoneno: 'phone',
+  phonenumber: 'phone',
+  telephone: 'phone',
+  telno: 'phone',
+  telnumber: 'phone',
+  mobile: 'phone',
+  mobileno: 'phone',
+  mobilenumber: 'phone',
+  cellphone: 'phone',
+  cell: 'phone',
+  workphone: 'phone',
+  contactno: 'phone',
+  contactnumber: 'phone',
+
+  // Company / Account
+  company: 'company',
+  companyname: 'company',
+  nameofcompany: 'company',
+  account: 'company',
+  accounts: 'company',
+  organization: 'company',
+  organisation: 'company',
+  employer: 'company',
+  firm: 'company',
+
+  // Job title / Position
+  title: 'job_title',
+  jobtitle: 'job_title',
+  position: 'job_title',
+  role: 'job_title',
+  jobposition: 'job_title',
+  designation: 'job_title',
+  occupation: 'job_title',
+
+  // Department
   department: 'department',
-  company: 'company', 'company name': 'company', account: 'company', organization: 'company',
-  'lead status': 'lead_status',
-  'lifecycle stage': 'lifecycle_stage',
-  source: 'source', 'lead source': 'source',
-  city: 'city', country: 'country', notes: 'notes',
+  dept: 'department',
+  division: 'department',
+
+  // Address
+  address: 'address',
+  streetaddress: 'address',
+  street: 'address',
+  addr: 'address',
+  location: 'address',
+
+  // City
+  city: 'city',
+  town: 'city',
+
+  // Country
+  country: 'country',
+  nation: 'country',
+
+  // Notes / comments / next step
+  notes: 'notes',
+  note: 'notes',
+  comments: 'notes',
+  comment: 'notes',
+  description: 'notes',
+  nextstep: 'notes',
+  nextaction: 'notes',
+  nameofmanager: 'notes',
+  manager: 'notes',
+  managername: 'notes',
+
+  // Source
+  source: 'source',
+  leadsource: 'source',
+  referral: 'source',
+  channel: 'source',
+
+  // Status
+  leadstatus: 'lead_status',
+  status: 'lead_status',
+
+  // Lifecycle
+  lifecyclestage: 'lifecycle_stage',
+  stage: 'lifecycle_stage',
+
+  // LinkedIn
+  linkedin: 'linkedin_url',
+  linkedinurl: 'linkedin_url',
+  linkedinprofile: 'linkedin_url',
+
+  // Marketing fields → notes (closest available)
+  marketingsubscription: 'notes',
+  enrolledsequences: 'notes',
+  enrolledsequence: 'notes',
+  activitiestimeline: '__skip__',  // timeline is computed
+  priority: '__skip__',            // stored in localStorage
+  type: 'notes',
+  deals: '__skip__',
+  dealsvalue: '__skip__',
+  deal: '__skip__',
 };
 
 const STEP_LABELS = ['Upload', 'Map columns', 'Handle matches', 'Import'];
@@ -72,9 +198,7 @@ function StepBar({ current }: { current: Step }) {
               </div>
               <span className="text-xs font-medium" style={{ color: active ? '#2D3E50' : '#99ACC2' }}>{label}</span>
             </div>
-            {i < STEP_LABELS.length - 1 && (
-              <div className="w-8 h-px mx-3" style={{ backgroundColor: done ? '#00BDA5' : '#DFE3EB' }} />
-            )}
+            {i < STEP_LABELS.length - 1 && <div className="w-8 h-px mx-3" style={{ backgroundColor: done ? '#00BDA5' : '#DFE3EB' }} />}
           </div>
         );
       })}
@@ -112,8 +236,12 @@ export default function ImportWizard({
         const hdrs = Object.keys(json[0]);
         setHeaders(hdrs);
         setRows(json);
+        // Auto-map using normalized keys
         const autoMap: Record<string, string> = {};
-        hdrs.forEach(h => { autoMap[h] = AUTO_MAP[h.toLowerCase().trim()] || '__skip__'; });
+        hdrs.forEach(h => {
+          const key = normalizeKey(h);
+          autoMap[h] = AUTO_MAP_NORM[key] ?? '__skip__';
+        });
         setMapping(autoMap);
         setFile(f);
         setStep(2);
@@ -124,8 +252,6 @@ export default function ImportWizard({
 
   const doImport = async () => {
     if (!file) return;
-
-    // Switch to import page immediately so the spinner is visible
     setImporting(true);
     setProgress(0);
     setStep(4);
@@ -137,14 +263,28 @@ export default function ImportWizard({
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const contact: Record<string, string> = {};
+
       for (const [header, field] of Object.entries(mapping)) {
         if (field === '__skip__' || !field) continue;
         contact[field] = String(row[header] || '').trim();
       }
 
-      // Handle "name" → split into first/last if only first_name mapped
+      // Handle full_name → split into first/last
+      if (contact.full_name) {
+        const parts = contact.full_name.trim().split(/\s+/);
+        if (parts.length >= 2) {
+          contact.first_name = parts.slice(0, -1).join(' ');
+          contact.last_name = parts[parts.length - 1];
+        } else {
+          contact.first_name = contact.full_name;
+          contact.last_name = '';
+        }
+        delete contact.full_name;
+      }
+
+      // Split first_name if it looks like a full name and last_name is missing
       if (!contact.last_name && contact.first_name && contact.first_name.includes(' ')) {
-        const parts = contact.first_name.split(' ');
+        const parts = contact.first_name.split(/\s+/);
         contact.first_name = parts.slice(0, -1).join(' ');
         contact.last_name = parts[parts.length - 1];
       }
@@ -153,18 +293,15 @@ export default function ImportWizard({
       if (!contact.first_name) contact.first_name = '';
       if (!contact.last_name) contact.last_name = '';
 
-      // Duplicate detection
+      // Duplicate detection by email
       const emailKey = contact.email?.toLowerCase();
       const existingId = emailKey ? emailIndex.get(emailKey) : undefined;
 
       if (existingId) {
         if (matchMode === 'skip') { skipped++; continue; }
         if (matchMode === 'update' && updateContact) {
-          try {
-            await updateContact(existingId, contact);
-            importedIds.push(existingId);
-            success++;
-          } catch { failed++; }
+          try { await updateContact(existingId, contact); importedIds.push(existingId); success++; }
+          catch { failed++; }
           if (mountedRef.current) setProgress(Math.round(((i + 1) / rows.length) * 100));
           continue;
         }
@@ -183,40 +320,31 @@ export default function ImportWizard({
     }
 
     if (!mountedRef.current) return;
-
     setResult({ success, failed, skipped });
     setImporting(false);
 
-    const groupId = crypto.randomUUID();
-    const groupName = file.name;
     if (success > 0) {
-      const color = GROUP_COLORS[Math.floor(Math.random() * GROUP_COLORS.length)];
-      onImportComplete({ groupId, groupName, contactIds: importedIds, count: success });
+      const groupId = crypto.randomUUID();
+      onImportComplete({ groupId, groupName: file.name, contactIds: importedIds, count: success });
       try {
         const stored = JSON.parse(localStorage.getItem('crm_import_groups') || '[]');
-        stored.push({ id: groupId, name: groupName, color, contactIds: importedIds });
+        stored.push({ id: groupId, name: file.name, contactIds: importedIds });
         localStorage.setItem('crm_import_groups', JSON.stringify(stored));
       } catch { /* ignore */ }
     }
-
-    // Auto-close after 5 seconds
     setTimeout(() => { if (mountedRef.current) onClose(); }, 5000);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
       <div className="bg-white rounded-lg shadow-2xl flex flex-col" style={{ width: 860, maxHeight: '90vh', border: '1px solid #CBD6E2' }}>
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#DFE3EB] flex-shrink-0">
           <span className="text-base font-bold text-[#2D3E50]">Import to Contacts</span>
           <div className="flex-1 flex justify-center"><StepBar current={step} /></div>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2]"><X className="w-4 h-4" /></button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto">
-
-          {/* Step 1: Upload */}
           {step === 1 && (
             <div className="flex flex-col items-center justify-center py-16 px-8">
               <div className="w-full max-w-lg border-2 border-dashed rounded-lg flex flex-col items-center justify-center py-16 px-8 cursor-pointer transition-colors"
@@ -227,9 +355,7 @@ export default function ImportWizard({
                 onClick={() => fileRef.current?.click()}>
                 <Upload className="w-10 h-10 mb-4" style={{ color: '#CBD6E2' }} />
                 <button className="px-5 py-2 rounded text-sm font-bold text-white mb-3" style={{ backgroundColor: '#0091AE' }}
-                  onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}>
-                  Browse
-                </button>
+                  onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}>Browse</button>
                 <p className="text-sm font-semibold text-[#2D3E50]">or drag and drop a CSV file</p>
                 <p className="text-xs text-[#7C98B6] mt-1">(.csv, .xlsx, and .xls file types are supported)</p>
                 {error && <p className="mt-3 text-xs text-red-500 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> {error}</p>}
@@ -238,21 +364,23 @@ export default function ImportWizard({
             </div>
           )}
 
-          {/* Step 2: Map columns */}
           {step === 2 && (
             <div className="px-6 py-5">
-              <p className="text-base font-bold text-[#2D3E50] text-center mb-1">Preview of columns to import</p>
-              <p className="text-xs text-[#7C98B6] text-center mb-5">Map or exclude columns before importing</p>
+              <p className="text-base font-bold text-[#2D3E50] text-center mb-1">Map your columns</p>
+              <p className="text-xs text-[#7C98B6] text-center mb-5">
+                Columns are auto-mapped. Review and change any before importing.
+              </p>
               <div className="overflow-auto rounded border border-[#DFE3EB]" style={{ maxHeight: 380 }}>
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-[#F6F9FC] border-b border-[#DFE3EB]">
                       <th className="px-3 py-2 text-left w-8 text-[#99ACC2]">#</th>
                       {headers.map(h => (
-                        <th key={h} className="px-3 py-2 text-left min-w-[140px]">
+                        <th key={h} className="px-3 py-2 text-left min-w-[160px]">
                           <div className="flex flex-col gap-1">
                             <select value={mapping[h] || '__skip__'} onChange={e => setMapping(m => ({ ...m, [h]: e.target.value }))}
-                              className="w-full text-xs border border-[#DFE3EB] rounded px-1.5 py-1 bg-white text-[#2D3E50] outline-none">
+                              className="w-full text-xs border rounded px-1.5 py-1 bg-white text-[#2D3E50] outline-none"
+                              style={{ borderColor: mapping[h] && mapping[h] !== '__skip__' ? '#0091AE' : '#DFE3EB' }}>
                               {CONTACT_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                             </select>
                             <span className="text-[10px] text-[#99ACC2] truncate">{h}</span>
@@ -265,17 +393,21 @@ export default function ImportWizard({
                     {rows.slice(0, 8).map((row, i) => (
                       <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F8FAFC]'}>
                         <td className="px-3 py-2 text-[#99ACC2]">{i + 1}</td>
-                        {headers.map(h => <td key={h} className="px-3 py-2 text-[#2D3E50] truncate max-w-[160px]">{row[h] || ''}</td>)}
+                        {headers.map(h => <td key={h} className="px-3 py-2 text-[#2D3E50] truncate max-w-[180px]">{row[h] || ''}</td>)}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="mt-2 text-xs text-[#7C98B6] text-right">{rows.length} total rows</p>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-[#7C98B6]">
+                  {Object.values(mapping).filter(v => v && v !== '__skip__').length} of {headers.length} columns mapped
+                </p>
+                <p className="text-xs text-[#7C98B6]">{rows.length} total rows</p>
+              </div>
             </div>
           )}
 
-          {/* Step 3: Handle matches */}
           {step === 3 && (
             <div className="flex flex-col items-center py-12 px-8">
               <p className="text-xl font-bold text-[#2D3E50] mb-2">Choose how to handle matches</p>
@@ -298,7 +430,6 @@ export default function ImportWizard({
             </div>
           )}
 
-          {/* Step 4: Import progress / result */}
           {step === 4 && (
             <div className="flex flex-col items-center py-16 px-8">
               {importing ? (
@@ -318,40 +449,27 @@ export default function ImportWizard({
                   </div>
                   <p className="text-lg font-bold text-[#2D3E50] mb-3">Import complete!</p>
                   <div className="flex flex-col gap-1 items-center">
-                    <p className="text-sm text-[#516F90]">
-                      <span className="font-bold text-[#00BDA5]">{result.success}</span> contacts imported successfully
-                    </p>
-                    {result.skipped > 0 && (
-                      <p className="text-sm text-[#7C98B6]">
-                        <span className="font-semibold">{result.skipped}</span> rows skipped (duplicates)
-                      </p>
-                    )}
-                    {result.failed > 0 && (
-                      <p className="text-sm text-[#FF7A59]">
-                        <span className="font-semibold">{result.failed}</span> rows failed (missing name)
-                      </p>
-                    )}
+                    <p className="text-sm text-[#516F90]"><span className="font-bold text-[#00BDA5]">{result.success}</span> contacts imported</p>
+                    {result.skipped > 0 && <p className="text-sm text-[#7C98B6]"><span className="font-semibold">{result.skipped}</span> skipped (duplicates)</p>}
+                    {result.failed > 0 && <p className="text-sm text-[#FF7A59]"><span className="font-semibold">{result.failed}</span> failed (missing name)</p>}
                   </div>
-                  <p className="text-xs text-[#7C98B6] mt-4">A new group was created. Closing automatically in 5 seconds…</p>
+                  <p className="text-xs text-[#7C98B6] mt-4">A new group was created. Closing in 5 s…</p>
                 </>
               )}
             </div>
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-[#DFE3EB] flex-shrink-0">
-          <button
-            onClick={() => step > 1 && step < 4 ? setStep(s => (s - 1) as Step) : onClose}
+          <button onClick={() => step > 1 && step < 4 ? setStep(s => (s - 1) as Step) : onClose}
             disabled={importing}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC] disabled:opacity-40 transition-colors">
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC] disabled:opacity-40">
             {step === 4 ? 'Close' : step === 1 ? 'Cancel' : <><ArrowLeft className="w-3.5 h-3.5" /> Back</>}
           </button>
           {step < 4 && (
-            <button
-              onClick={() => { if (step === 3) doImport(); else if (step < 3) setStep(s => (s + 1) as Step); }}
+            <button onClick={() => { if (step === 3) doImport(); else if (step < 3) setStep(s => (s + 1) as Step); }}
               disabled={step === 1}
-              className="flex items-center gap-1.5 px-5 py-2 text-sm font-bold text-white rounded-[3px] disabled:opacity-40 transition-colors"
+              className="flex items-center gap-1.5 px-5 py-2 text-sm font-bold text-white rounded-[3px] disabled:opacity-40"
               style={{ backgroundColor: '#0091AE' }}>
               {step === 3 ? 'Start import' : <>Continue <ChevronRight className="w-3.5 h-3.5" /></>}
             </button>
