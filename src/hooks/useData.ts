@@ -187,15 +187,15 @@ export function useContacts() {
 
   const deleteContactsByIds = async (ids: string[]) => {
     if (!ids.length) return;
-    try {
-      const { error } = await supabase.from('contacts').delete().in('id', ids);
-      if (error) throw error;
-    } catch { /* continue — optimistic update below */ }
+    // Optimistic: remove from local state immediately so UI updates fast
     setContacts((prev) => {
       const next = prev.filter((c) => !ids.includes(c.id));
-      if (isMockMode) saveLocalContacts(next);
+      saveLocalContacts(next); // always update cache so refresh doesn't flash stale data
       return next;
     });
+    // Then persist to DB — propagate error so callers can show an error toast
+    const { error } = await supabase.from('contacts').delete().in('id', ids);
+    if (error) throw error;
   };
 
   return { contacts, loading, fetchContacts, createContact, updateContact, deleteContact, deleteContactsByIds };
@@ -325,15 +325,15 @@ export function useCompanies() {
 
   const deleteCompaniesByIds = async (ids: string[]) => {
     if (!ids.length) return;
-    try {
-      const { error } = await supabase.from('companies').delete().in('id', ids);
-      if (error) throw error;
-    } catch { /* continue — optimistic update below */ }
+    // Optimistic: remove from local state immediately so UI updates fast
     setCompanies((prev) => {
       const next = prev.filter((c) => !ids.includes(c.id));
-      if (isMockMode) saveLocalCompanies(next);
+      saveLocalCompanies(next); // always update cache so refresh doesn't flash stale data
       return next;
     });
+    // Then persist to DB — propagate error so callers can show an error toast
+    const { error } = await supabase.from('companies').delete().in('id', ids);
+    if (error) throw error;
   };
 
   return { companies, loading, fetchCompanies, createCompany, updateCompany, deleteCompany, deleteCompaniesByIds };

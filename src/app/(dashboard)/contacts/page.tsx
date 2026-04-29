@@ -1128,21 +1128,28 @@ export default function ContactsPage() {
   const handleDeleteGroup = async (groupId: string) => {
     const contactIds = Object.keys(groupMap).filter(cid => groupMap[cid] === groupId);
     try {
+      // Delete contacts from DB first — throws on Supabase error
       if (contactIds.length > 0) {
         await deleteContactsByIds(contactIds);
+        // Clean up per-contact local state
         const nextPriorities = { ...priorities };
         contactIds.forEach(id => delete nextPriorities[id]);
         setPriorities(nextPriorities);
         savePriorities(nextPriorities);
         setSelectedIds(prev => { const n = new Set(prev); contactIds.forEach(id => n.delete(id)); return n; });
       }
+      // Remove group and clean groupMap from localStorage
       const nextGroups = customGroups.filter(g => g.id !== groupId);
       const nextMap = { ...groupMap };
       Object.keys(nextMap).forEach(cid => { if (nextMap[cid] === groupId) delete nextMap[cid]; });
       setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveGroupMap(nextMap);
+      // Re-fetch from DB to confirm deletions landed and refresh group counts
+      await fetchContacts();
       setToast({ message: `Group deleted with ${contactIds.length} contact${contactIds.length !== 1 ? 's' : ''}`, type: 'success' });
     } catch {
-      setToast({ message: 'Failed to delete group', type: 'error' });
+      // DB delete failed — re-fetch to restore true state
+      await fetchContacts();
+      setToast({ message: 'Failed to delete group. Please try again.', type: 'error' });
     }
   };
 

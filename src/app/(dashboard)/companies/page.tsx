@@ -728,7 +728,7 @@ function GroupSection({
    MAIN PAGE
 ══════════════════════════════════════════════════════════════ */
 export default function CompaniesPage() {
-  const { companies, loading, createCompany, updateCompany, deleteCompany, deleteCompaniesByIds } = useCompanies();
+  const { companies, loading, fetchCompanies, createCompany, updateCompany, deleteCompany, deleteCompaniesByIds } = useCompanies();
   // Initialize synchronously from localStorage so save* callbacks work immediately
   // on first render without waiting for the async getUser() call to resolve.
   const [userEmail, setUserEmail] = useState<string>(() => {
@@ -957,21 +957,28 @@ export default function CompaniesPage() {
   const handleDeleteGroup = async (groupId: string) => {
     const companyIds = Object.keys(groupMap).filter(cid => groupMap[cid] === groupId);
     try {
+      // Delete companies from DB first — throws on Supabase error
       if (companyIds.length > 0) {
         await deleteCompaniesByIds(companyIds);
+        // Clean up per-company local state
         const nextPriorities = { ...priorities };
         companyIds.forEach(id => delete nextPriorities[id]);
         setPriorities(nextPriorities);
         savePriorities(nextPriorities);
         setSelectedIds(prev => { const n = new Set(prev); companyIds.forEach(id => n.delete(id)); return n; });
       }
+      // Remove group and clean groupMap from localStorage
       const nextGroups = customGroups.filter(g => g.id !== groupId);
       const nextMap = { ...groupMap };
       Object.keys(nextMap).forEach(cid => { if (nextMap[cid] === groupId) delete nextMap[cid]; });
       setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveMap(nextMap);
+      // Re-fetch from DB to confirm deletions landed and refresh group counts
+      await fetchCompanies();
       setToast({ message: `Group deleted with ${companyIds.length} compan${companyIds.length !== 1 ? 'ies' : 'y'}`, type: 'success' });
     } catch {
-      setToast({ message: 'Failed to delete group', type: 'error' });
+      // DB delete failed — re-fetch to restore true state
+      await fetchCompanies();
+      setToast({ message: 'Failed to delete group. Please try again.', type: 'error' });
     }
   };
 
