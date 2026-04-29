@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   ChevronDown, ChevronRight, Plus, MoreHorizontal, Search, X,
   Trash2, Edit2, FolderPlus, Download, Users, Mail, MoveRight,
@@ -249,7 +250,7 @@ function ThreeDotMenu({ groupId, isFixed, onAction }: {
         <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[230px]">
           {THREE_DOT_ITEMS.map((item, i) => {
             if (!item) return <div key={i} className="my-1 border-t border-[#DFE3EB]" />;
-            const disabled = isFixed && ['rename','color','delete','archive','duplicate','move'].includes(item.id);
+            const disabled = isFixed && ['delete','archive'].includes(item.id);
             return (
               <button key={item.id} disabled={disabled}
                 onClick={() => { setOpen(false); onAction(item.id, groupId); }}
@@ -449,13 +450,14 @@ function InlineAddRow({ onSave, onCancel }: {
 /* ── Contact Row ────────────────────────────────────────────── */
 function ContactRow({
   contact, selected, onSelect, priority, onPriorityChange,
-  onEdit, onDelete, onEmailSave, onMoveToGroup, allGroups, currentGroupId, visibleColumns,
+  onView, onEdit, onDelete, onEmailSave, onMoveToGroup, allGroups, currentGroupId, visibleColumns,
 }: {
   contact: Contact;
   selected: boolean;
   onSelect: (id: string) => void;
   priority: Priority;
   onPriorityChange: (id: string, p: Priority) => void;
+  onView: (id: string) => void;
   onEdit: (c: Contact) => void;
   onDelete: (id: string) => void;
   onEmailSave: (id: string, email: string) => Promise<void>;
@@ -484,13 +486,13 @@ function ContactRow({
             style={{ backgroundColor: avatarColor(name || 'A') }}>
             {initials(contact)}
           </div>
-          <button onClick={() => onEdit(contact)}
+          <button onClick={() => onView(contact.id)}
             className="text-xs font-semibold hover:underline text-left truncate max-w-[130px]"
             style={{ color: '#0091AE' }}>
             {name || '—'}
           </button>
           <div className="opacity-0 group-hover/row:opacity-100 flex items-center gap-1 flex-shrink-0">
-            <button onClick={() => onEdit(contact)} title="Edit" className="p-0.5 rounded hover:bg-[#E8F4FD]">
+            <button onClick={() => onEdit(contact)} title="Edit properties" className="p-0.5 rounded hover:bg-[#E8F4FD]">
               <Edit2 className="w-3 h-3 text-[#7C98B6]" />
             </button>
             <button onClick={() => onDelete(contact.id)} title="Delete" className="p-0.5 rounded hover:bg-red-50">
@@ -556,7 +558,7 @@ function GroupSection({
   group, contacts, collapsed, onToggleCollapse,
   selectedIds, onSelect, onSelectAll,
   priorities, onPriorityChange,
-  onEdit, onDelete, onGroupAction,
+  onView, onEdit, onDelete, onGroupAction,
   onEmailSave, onMoveToGroup, allGroups,
   addingToGroup, onStartAdd, onSaveAdd, onCancelAdd,
   triggerRename, onRenameComplete,
@@ -571,6 +573,7 @@ function GroupSection({
   onSelectAll: (groupId: string, contactIds: string[]) => void;
   priorities: Record<string, Priority>;
   onPriorityChange: (id: string, p: Priority) => void;
+  onView: (id: string) => void;
   onEdit: (c: Contact) => void;
   onDelete: (id: string) => void;
   onGroupAction: (action: string, groupId: string) => void;
@@ -696,6 +699,7 @@ function GroupSection({
                 onSelect={onSelect}
                 priority={priorities[contact.id] || ''}
                 onPriorityChange={onPriorityChange}
+                onView={onView}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onEmailSave={onEmailSave}
@@ -737,7 +741,9 @@ function GroupSection({
 ══════════════════════════════════════════════════════════════ */
 export default function ContactsPage() {
   const { contacts, loading, createContact, updateContact, deleteContact } = useContacts();
+  const router = useRouter();
   const [userEmail, setUserEmail] = useState('');
+  const [fixedGroupOverrides, setFixedGroupOverrides] = useState<Record<string, { name?: string; color?: string }>>({});
 
   const [customGroups,    setCustomGroups]    = useState<Group[]>([]);
   const [groupMap,        setGroupMap]        = useState<Record<string, string>>({});
@@ -779,6 +785,8 @@ export default function ContactsPage() {
         setCollapsedGroups(new Set(JSON.parse(localStorage.getItem(storageKey('collapsed', email)) || '[]')));
         const savedCols = localStorage.getItem(storageKey('columns', email));
         if (savedCols) setVisibleColumns(new Set(JSON.parse(savedCols) as ColumnId[]));
+        const savedFgo = localStorage.getItem(storageKey('fgo', email));
+        if (savedFgo) setFixedGroupOverrides(JSON.parse(savedFgo));
       } catch { /* ignore */ }
     }).catch(() => {});
   }, []);
@@ -789,6 +797,7 @@ export default function ContactsPage() {
   const savePriorities= useCallback((p: Record<string, Priority>) => { if (userEmail) localStorage.setItem(storageKey('priorities', userEmail), JSON.stringify(p)); }, [userEmail]);
   const saveCollapsed = useCallback((s: Set<string>)            => { if (userEmail) localStorage.setItem(storageKey('collapsed', userEmail), JSON.stringify([...s])); }, [userEmail]);
   const saveColumns   = useCallback((s: Set<ColumnId>)          => { if (userEmail) localStorage.setItem(storageKey('columns',   userEmail), JSON.stringify([...s])); }, [userEmail]);
+  const saveFgo       = useCallback((o: Record<string, { name?: string; color?: string }>) => { if (userEmail) localStorage.setItem(storageKey('fgo', userEmail), JSON.stringify(o)); }, [userEmail]);
 
   const handleToggleColumn = useCallback((id: ColumnId) => {
     setVisibleColumns(prev => {
@@ -801,9 +810,13 @@ export default function ContactsPage() {
 
   /* ── All groups ── */
   const allGroups = useMemo(() => [
-    ...FIXED_GROUPS,
+    ...FIXED_GROUPS.map(g => ({
+      ...g,
+      name:  fixedGroupOverrides[g.id]?.name  ?? g.name,
+      color: fixedGroupOverrides[g.id]?.color ?? g.color,
+    })),
     ...customGroups.filter(g => !g.archived).sort((a, b) => a.order - b.order),
-  ], [customGroups]);
+  ], [customGroups, fixedGroupOverrides]);
 
   /* ── Contacts per group ── */
   const getGroupContacts = useCallback((groupId: string): Contact[] => {
@@ -926,11 +939,13 @@ export default function ContactsPage() {
       }
 
       case 'duplicate': {
-        const src = customGroups.find(g => g.id === groupId); if (!src) break;
+        const src = allGroups.find(g => g.id === groupId); if (!src) break;
         const dupeId = crypto.randomUUID();
-        const dupe: Group = { ...src, id: dupeId, name: `${src.name} (copy)`, order: src.order + 0.5 };
+        const dupe: Group = { ...src, id: dupeId, name: `${src.name} (copy)`, order: customGroups.length };
         const nextMap = { ...groupMap };
-        Object.entries(groupMap).forEach(([cid, gid]) => { if (gid === groupId) nextMap[cid] = dupeId; });
+        // For custom groups, copy existing groupMap entries; for fixed groups, copy from contacts
+        const srcContacts = getGroupContacts(groupId);
+        srcContacts.forEach(c => { nextMap[c.id] = dupeId; });
         const nextGroups = [...customGroups, dupe].sort((a, b) => a.order - b.order);
         setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveGroupMap(nextMap);
         break;
@@ -964,9 +979,17 @@ export default function ContactsPage() {
       }
 
       case 'move': {
-        const idx = customGroups.findIndex(g => g.id === groupId); if (idx <= 0) break;
-        const next = [...customGroups]; [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-        next.forEach((g, i) => { g.order = i; }); setCustomGroups([...next]); saveGroups(next);
+        // Fixed groups can't be reordered; move custom groups up among custom list
+        if (isFixedId(groupId)) break;
+        const idx = customGroups.findIndex(g => g.id === groupId);
+        if (idx < 0) break;
+        const next = [...customGroups];
+        const swapIdx = idx > 0 ? idx - 1 : 1; // move up if possible, else move down
+        if (swapIdx >= 0 && swapIdx < next.length) {
+          [next[swapIdx], next[idx]] = [next[idx], next[swapIdx]];
+          next.forEach((g, i) => { g.order = i; });
+          setCustomGroups([...next]); saveGroups(next);
+        }
         break;
       }
     }
@@ -1020,14 +1043,30 @@ export default function ContactsPage() {
     return await updateContact(id, data as Parameters<typeof updateContact>[1]);
   }, [updateContact]);
 
+  const isFixedId = (id: string) => id === 'active' || id === 'inactive';
+
   const commitRename = (groupId: string, name: string) => {
-    const next = customGroups.map(g => g.id === groupId ? { ...g, name } : g);
-    setCustomGroups(next); saveGroups(next);
+    if (isFixedId(groupId)) {
+      const next = { ...fixedGroupOverrides, [groupId]: { ...fixedGroupOverrides[groupId], name } };
+      setFixedGroupOverrides(next); saveFgo(next);
+    } else {
+      const next = customGroups.map(g => g.id === groupId ? { ...g, name } : g);
+      setCustomGroups(next); saveGroups(next);
+    }
   };
   const commitColor = (groupId: string, color: string) => {
-    const next = customGroups.map(g => g.id === groupId ? { ...g, color } : g);
-    setCustomGroups(next); saveGroups(next);
+    if (isFixedId(groupId)) {
+      const next = { ...fixedGroupOverrides, [groupId]: { ...fixedGroupOverrides[groupId], color } };
+      setFixedGroupOverrides(next); saveFgo(next);
+    } else {
+      const next = customGroups.map(g => g.id === groupId ? { ...g, color } : g);
+      setCustomGroups(next); saveGroups(next);
+    }
   };
+
+  const handleView = useCallback((id: string) => {
+    router.push(`/contacts/${id}`);
+  }, [router]);
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -1207,6 +1246,7 @@ export default function ContactsPage() {
               onSelectAll={handleSelectAll}
               priorities={priorities}
               onPriorityChange={handlePriorityChange}
+              onView={handleView}
               onEdit={(c) => { setEditContact(c); setShowForm(true); }}
               onDelete={handleDeleteContact}
               onGroupAction={handleGroupAction}
