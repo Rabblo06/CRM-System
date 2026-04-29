@@ -508,7 +508,12 @@ function GroupSection({
 ══════════════════════════════════════════════════════════════ */
 export default function CompaniesPage() {
   const { companies, loading, createCompany, updateCompany, deleteCompany } = useCompanies();
-  const [userEmail, setUserEmail] = useState('');
+  // Initialize synchronously from localStorage so save* callbacks work immediately
+  // on first render without waiting for the async getUser() call to resolve.
+  const [userEmail, setUserEmail] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('crm_demo_user_email') || '';
+  });
 
   const [customGroups,    setCustomGroups]    = useState<Group[]>([]);
   const [groupMap,        setGroupMap]        = useState<Record<string, string>>({});
@@ -531,11 +536,12 @@ export default function CompaniesPage() {
   const newBtnRef = useRef<HTMLDivElement>(null);
 
   /* ── Load persisted state ── */
+  // Immediately load from localStorage using the synchronously-initialized userEmail.
+  // This runs before the async getUser() resolves, ensuring save* callbacks have a
+  // valid email key from the very first render.
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
-      const email = user.email || '';
-      setUserEmail(email);
+    const loadFromEmail = (email: string) => {
+      if (!email) return;
       try {
         setCustomGroups(JSON.parse(localStorage.getItem(storageKey('groups', email)) || '[]'));
         setGroupMap(JSON.parse(localStorage.getItem(storageKey('map', email)) || '{}'));
@@ -544,7 +550,21 @@ export default function CompaniesPage() {
         if (savedFgo) setFixedGroupOverrides(JSON.parse(savedFgo));
         setCollapsedGroups(new Set(JSON.parse(localStorage.getItem(storageKey('collapsed', email)) || '[]')));
       } catch { /* ignore */ }
+    };
+
+    // 1. Load immediately with the email we already have from localStorage
+    if (userEmail) loadFromEmail(userEmail);
+
+    // 2. Confirm/update with the server-verified email
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user?.email) return;
+      const email = user.email;
+      if (email !== userEmail) {
+        setUserEmail(email);
+        loadFromEmail(email);
+      }
     }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveGroups    = useCallback((g: Group[])                => { if (userEmail) localStorage.setItem(storageKey('groups',    userEmail), JSON.stringify(g)); }, [userEmail]);

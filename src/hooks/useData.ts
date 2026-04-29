@@ -71,12 +71,21 @@ export function useContacts() {
       setIsMockMode(false);
       setContacts(data || []);
     } catch {
-      setIsMockMode(true);
+      // On error: show cached localStorage data so real user data is never wiped.
+      // Only fall back to mock data when truly anonymous (no email ever stored).
       const persisted = loadLocalContacts();
-      // Real users start empty; anonymous demo mode gets mock seed data
-      const initial = persisted ?? (isAnonymousUser() ? mockContacts : []);
-      if (!persisted) saveLocalContacts(initial);
-      setContacts(initial);
+      if (persisted !== null) {
+        // Had real data cached — show it; don't switch to mock mode
+        setContacts(persisted);
+      } else if (isAnonymousUser()) {
+        setIsMockMode(true);
+        const initial = mockContacts;
+        saveLocalContacts(initial);
+        setContacts(initial);
+      } else {
+        // Authenticated user but no cache yet and fetch failed — show empty, not mock
+        setContacts([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -175,23 +184,45 @@ export function useContacts() {
 /* ═══════════════════════════════════════════════════════
    useCompanies
 ═══════════════════════════════════════════════════════ */
+const COMPANIES_STORAGE_KEY = 'crm_companies_local';
+
+function loadLocalCompanies(): Company[] | null {
+  try {
+    const raw = localStorage.getItem(userKey(COMPANIES_STORAGE_KEY));
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function saveLocalCompanies(companies: Company[]) {
+  try { localStorage.setItem(userKey(COMPANIES_STORAGE_KEY), JSON.stringify(companies)); } catch {}
+}
+
 export function useCompanies() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMockMode, setIsMockMode] = useState(false);
 
   const fetchCompanies = useCallback(async () => {
     setLoading(true);
     try {
-      const userId = await getCurrentUserId();
+      // RLS automatically filters by auth.uid() — do NOT add .eq('created_by', userId)
+      // because getCurrentUserId() is async and may return null before auth initializes,
+      // which would silently return 0 rows and wipe the company list.
       const { data, error } = await supabase
         .from('companies')
         .select('*')
-        .eq('created_by', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;
+      setIsMockMode(false);
       setCompanies(data || []);
+      // Keep localStorage cache fresh so errors don't show blank
+      if (data && data.length > 0) saveLocalCompanies(data);
     } catch {
-      setCompanies(isAnonymousUser() ? mockCompanies : []);
+      setIsMockMode(true);
+      const persisted = loadLocalCompanies();
+      const initial = persisted ?? (isAnonymousUser() ? mockCompanies : []);
+      if (!persisted) saveLocalCompanies(initial);
+      setCompanies(initial);
     } finally {
       setLoading(false);
     }
@@ -218,7 +249,11 @@ export function useCompanies() {
         .select()
         .single();
       if (error) throw error;
-      setCompanies((prev) => [data, ...prev]);
+      setCompanies((prev) => {
+        const next = [data, ...prev];
+        if (isMockMode) saveLocalCompanies(next);
+        return next;
+      });
       return { data, error: null };
     } catch {
       const newCompany = {
@@ -227,7 +262,11 @@ export function useCompanies() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       } as Company;
-      setCompanies((prev) => [newCompany, ...prev]);
+      setCompanies((prev) => {
+        const next = [newCompany, ...prev];
+        saveLocalCompanies(next);
+        return next;
+      });
       return { data: newCompany, error: null };
     }
   };
@@ -244,7 +283,11 @@ export function useCompanies() {
       setCompanies((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)));
       return { data, error: null };
     } catch {
-      setCompanies((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+      setCompanies((prev) => {
+        const next = prev.map((c) => (c.id === id ? { ...c, ...updates } : c));
+        if (isMockMode) saveLocalCompanies(next);
+        return next;
+      });
       return { data: null, error: null };
     }
   };
@@ -253,7 +296,11 @@ export function useCompanies() {
     try {
       await supabase.from('companies').delete().eq('id', id);
     } catch { /* continue */ }
-    setCompanies((prev) => prev.filter((c) => c.id !== id));
+    setCompanies((prev) => {
+      const next = prev.filter((c) => c.id !== id);
+      if (isMockMode) saveLocalCompanies(next);
+      return next;
+    });
   };
 
   return { companies, loading, fetchCompanies, createCompany, updateCompany, deleteCompany };
