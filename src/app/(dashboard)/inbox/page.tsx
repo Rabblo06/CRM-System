@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Inbox, Search, Star, StarOff, Archive, Trash2, Reply, Forward,
   MoreHorizontal, Circle, Loader2, Mail, Send as SendIcon,
@@ -128,7 +128,7 @@ function buildThreads(messages: Message[]): Thread[] {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   GMAIL ICON
+   PROVIDER ICONS
 ═══════════════════════════════════════════════════════════ */
 function GmailColorIcon({ size = 16 }: { size?: number }) {
   return (
@@ -141,8 +141,17 @@ function GmailColorIcon({ size = 16 }: { size?: number }) {
   );
 }
 
+function OutlookIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="3" fill="#0078D4"/>
+      <text x="12" y="17" textAnchor="middle" fill="white" fontSize="13" fontWeight="bold">O</text>
+    </svg>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════
-   CONNECT GMAIL PROMPT
+   CONNECT PROMPTS
 ═══════════════════════════════════════════════════════════ */
 function ConnectGmailPrompt({ onConnect }: { onConnect: () => void }) {
   return (
@@ -167,6 +176,35 @@ function ConnectGmailPrompt({ onConnect }: { onConnect: () => void }) {
         </button>
         <p className="text-xs mt-4" style={{ color: '#99ACC2' }}>
           Emails are stored securely. Spam and promotions are excluded.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ConnectOutlookPrompt({ onConnect }: { onConnect: () => void }) {
+  return (
+    <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: '#F6F9FC' }}>
+      <div className="text-center max-w-sm px-6">
+        <div className="w-16 h-16 rounded-2xl border border-[#DFE3EB] flex items-center justify-center bg-white shadow-sm mx-auto mb-5">
+          <OutlookIcon size={36} />
+        </div>
+        <h2 className="text-base font-bold mb-2" style={{ color: '#2D3E50' }}>Connect your Outlook inbox</h2>
+        <p className="text-sm mb-6 leading-relaxed" style={{ color: '#7C98B6' }}>
+          Sync your Outlook / Office 365 emails to view conversations, match senders to contacts, and track deals.
+        </p>
+        <button
+          onClick={onConnect}
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white rounded-[3px] transition-colors"
+          style={{ backgroundColor: '#0078D4' }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#005fa3')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#0078D4')}
+        >
+          <OutlookIcon size={16} />
+          Connect Outlook
+        </button>
+        <p className="text-xs mt-4" style={{ color: '#99ACC2' }}>
+          Go to Settings → Email to connect your Outlook / Office 365 account.
         </p>
       </div>
     </div>
@@ -491,6 +529,22 @@ function ThreadDetail({
 export default function InboxPage() {
   const { isConnected, gmailEmail, connectGmail, emails: seedEmails } = useEmailSync();
 
+  // Provider switcher: 'gmail' | 'outlook'
+  const [provider, setProvider] = useState<'gmail' | 'outlook'>('gmail');
+  const [outlookConnected, setOutlookConnected] = useState(false);
+  const [outlookEmail, setOutlookEmail] = useState('');
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('crm_outlook_prefs');
+      if (raw) {
+        const p = JSON.parse(raw);
+        setOutlookConnected(!!p.connected);
+        setOutlookEmail(p.email || '');
+      }
+    } catch {}
+  }, []);
+
   const [inboxEnabled, setInboxEnabled] = useState<boolean | null>(null);
   useEffect(() => {
     try {
@@ -551,7 +605,7 @@ export default function InboxPage() {
         // Demo: use seed emails from useEmailSync
         const mapped: Message[] = seedEmails.map(e => ({
           id: e.id,
-          thread_id: e.contact_id || e.id,  // group by contact for demo
+          thread_id: e.contact_id || e.id,
           from: e.from_email.split('@')[0].replace('.', ' '),
           from_email: e.from_email,
           to_email: e.to_email || '',
@@ -571,15 +625,23 @@ export default function InboxPage() {
         return;
       }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('synced_emails')
         .select('*')
         .order('received_at', { ascending: false })
         .limit(500);
 
+      // Filter by provider if the column exists; fall back gracefully
+      if (provider === 'outlook') {
+        query = query.eq('provider', 'outlook');
+      } else {
+        // Gmail = either explicitly 'gmail' or NULL (rows before column was added)
+        query = query.or('provider.eq.gmail,provider.is.null');
+      }
+
+      const { data, error } = await query;
       if (error || !data) return;
 
-      // Deduplicate by gmail_message_id
       const seen = new Set<string>();
       const mapped: Message[] = [];
       for (const row of data) {
@@ -595,10 +657,10 @@ export default function InboxPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [mapRow, seedEmails, starred, trashed]);
+  }, [mapRow, seedEmails, starred, trashed, provider]);
 
-  // Initial load
-  useEffect(() => { loadEmails(); }, [loadEmails]);
+  // Reload when provider changes
+  useEffect(() => { loadEmails(); }, [loadEmails, provider]);
 
   // Polling: refresh silently every minute
   useEffect(() => {
@@ -617,7 +679,9 @@ export default function InboxPage() {
   );
 
   /* ── Folder filtering ────────────────────────────────────── */
-  const userEmail = gmailEmail || 'admin@company.com';
+  const userEmail = provider === 'outlook'
+    ? (outlookEmail || 'me@outlook.com')
+    : (gmailEmail || 'admin@company.com');
 
   const folderMessages = useMemo(() => {
     switch (folder) {
@@ -760,6 +824,27 @@ export default function InboxPage() {
     } catch { setSyncing(false); }
   }, [connectGmail, loadEmails]);
 
+  const startOutlookSync = useCallback(async () => {
+    setSyncing(true);
+    setSyncProgress({ synced: 0, total: 500 });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) { setSyncing(false); return; }
+      const es = new EventSource(`/api/outlook/sync?token=${token}`);
+      es.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.type === 'total')    setSyncProgress(p => ({ ...p, total: msg.total }));
+          if (msg.type === 'progress') setSyncProgress({ synced: msg.synced, total: msg.total });
+          if (msg.type === 'complete') { es.close(); setSyncing(false); loadEmails(); }
+          if (msg.type === 'error')    { es.close(); setSyncing(false); }
+        } catch {}
+      };
+      es.onerror = () => { es.close(); setSyncing(false); };
+    } catch { setSyncing(false); }
+  }, [loadEmails]);
+
   /* ── Folder switch resets page + selection ──────────────── */
   const switchFolder = (f: Folder) => {
     setFolder(f);
@@ -768,8 +853,9 @@ export default function InboxPage() {
     setSearch('');
   };
 
-  const noGmailConnected = !isConnected && !loading && !isAnonymousUser() && allMessages.length === 0;
-  const inboxDisabled = isConnected && inboxEnabled === false && !isAnonymousUser();
+  const noGmailConnected = provider === 'gmail' && !isConnected && !loading && !isAnonymousUser() && allMessages.length === 0;
+  const noOutlookConnected = provider === 'outlook' && !outlookConnected && !loading && !isAnonymousUser();
+  const inboxDisabled = provider === 'gmail' && isConnected && inboxEnabled === false && !isAnonymousUser();
 
   /* ── FOLDER NAV ──────────────────────────────────────────── */
   const FOLDERS: { id: Folder; label: string; Icon: React.ElementType }[] = [
@@ -788,14 +874,46 @@ export default function InboxPage() {
         className="flex-shrink-0 flex flex-col border-r pt-4 pb-4"
         style={{ width: 200, borderColor: '#DFE3EB', backgroundColor: '#FFFFFF' }}
       >
-        {/* Brand + Gmail badge */}
-        <div className="px-4 mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <GmailColorIcon size={18} />
-            <span className="text-sm font-bold" style={{ color: '#2D3E50' }}>Inbox</span>
-          </div>
-          {isConnected && gmailEmail && (
+        {/* Brand */}
+        <div className="px-4 mb-3">
+          <span className="text-sm font-bold" style={{ color: '#2D3E50' }}>Inbox</span>
+        </div>
+
+        {/* Provider switcher */}
+        <div className="px-3 mb-3 flex gap-1">
+          <button
+            onClick={() => { setProvider('gmail'); setFolder('inbox'); setPage(1); setSelected(null); }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+            style={{
+              backgroundColor: provider === 'gmail' ? '#F6F9FC' : 'transparent',
+              color: provider === 'gmail' ? '#2D3E50' : '#99ACC2',
+              border: provider === 'gmail' ? '1px solid #DFE3EB' : '1px solid transparent',
+            }}
+          >
+            <GmailColorIcon size={13} />
+            Gmail
+          </button>
+          <button
+            onClick={() => { setProvider('outlook'); setFolder('inbox'); setPage(1); setSelected(null); }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+            style={{
+              backgroundColor: provider === 'outlook' ? '#F6F9FC' : 'transparent',
+              color: provider === 'outlook' ? '#2D3E50' : '#99ACC2',
+              border: provider === 'outlook' ? '1px solid #DFE3EB' : '1px solid transparent',
+            }}
+          >
+            <OutlookIcon size={13} />
+            Outlook
+          </button>
+        </div>
+
+        {/* Account badge */}
+        <div className="px-4 mb-2">
+          {provider === 'gmail' && isConnected && gmailEmail && (
             <p className="text-[10px] truncate" style={{ color: '#99ACC2' }}>{gmailEmail}</p>
+          )}
+          {provider === 'outlook' && outlookConnected && outlookEmail && (
+            <p className="text-[10px] truncate" style={{ color: '#99ACC2' }}>{outlookEmail}</p>
           )}
         </div>
 
@@ -852,8 +970,8 @@ export default function InboxPage() {
           </button>
         </div>
 
-        {/* Sync button */}
-        {!isConnected && !isAnonymousUser() && (
+        {/* Connect/Sync buttons */}
+        {provider === 'gmail' && !isConnected && !isAnonymousUser() && (
           <div className="px-4 mt-2">
             <button
               onClick={() => setShowSyncModal(true)}
@@ -863,6 +981,31 @@ export default function InboxPage() {
               <GmailColorIcon size={12} />
               Connect Gmail
             </button>
+          </div>
+        )}
+        {provider === 'outlook' && outlookConnected && !isAnonymousUser() && (
+          <div className="px-4 mt-2">
+            <button
+              onClick={startOutlookSync}
+              disabled={syncing}
+              className="w-full flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors"
+              style={{ backgroundColor: '#EBF5FB', color: '#0078D4' }}
+            >
+              <OutlookIcon size={12} />
+              {syncing ? 'Syncing…' : 'Sync Outlook'}
+            </button>
+          </div>
+        )}
+        {provider === 'outlook' && !outlookConnected && !isAnonymousUser() && (
+          <div className="px-4 mt-2">
+            <a
+              href="/settings?tab=email"
+              className="w-full flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors"
+              style={{ backgroundColor: '#EBF5FB', color: '#0078D4', display: 'flex' }}
+            >
+              <OutlookIcon size={12} />
+              Connect Outlook
+            </a>
           </div>
         )}
       </div>
@@ -987,6 +1130,8 @@ export default function InboxPage() {
         </div>
       ) : noGmailConnected ? (
         <ConnectGmailPrompt onConnect={() => setShowSyncModal(true)} />
+      ) : noOutlookConnected ? (
+        <ConnectOutlookPrompt onConnect={() => { window.location.href = '/settings?tab=email'; }} />
       ) : liveThread ? (
         <ThreadDetail
           thread={liveThread}

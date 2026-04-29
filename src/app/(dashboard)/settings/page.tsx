@@ -158,6 +158,7 @@ function SettingsPageInner() {
   const [outlookConnected, setOutlookConnected] = useState(false);
   const [outlookEmail, setOutlookEmail] = useState('');
   const [showOutlookDisconnectModal, setShowOutlookDisconnectModal] = useState(false);
+  const [outlookSyncing, setOutlookSyncing] = useState(false);
 
   const { isConnected: gmailConnected, gmailEmail, connectGmail, disconnectGmail } = useEmailSync();
 
@@ -236,7 +237,6 @@ function SettingsPageInner() {
       }));
     } catch {}
     setShowOutlookConfirmModal(false);
-    // Open OAuth popup
     const popup = window.open('/api/outlook/auth', 'outlook_oauth', 'width=520,height=640,left=200,top=100');
     const channel = new BroadcastChannel('outlook_auth');
     channel.onmessage = async (e) => {
@@ -250,12 +250,53 @@ function SettingsPageInner() {
           const prefs = JSON.parse(localStorage.getItem('crm_outlook_prefs') || '{}');
           localStorage.setItem('crm_outlook_prefs', JSON.stringify({ ...prefs, connected: true, email }));
         } catch {}
+        // Import contacts if opted in
+        if (outlookImportContacts) {
+          setOutlookSyncing(true);
+          try {
+            const { createBrowserClient } = await import('@supabase/ssr');
+            const sb = createBrowserClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            );
+            const { data: { session } } = await sb.auth.getSession();
+            const token = session?.access_token;
+            if (token) {
+              await new Promise<void>((resolve) => {
+                const es = new EventSource(`/api/outlook/contacts?token=${token}`);
+                es.onmessage = (ev) => {
+                  try {
+                    const msg = JSON.parse(ev.data);
+                    if (msg.type === 'complete' || msg.type === 'error') { es.close(); resolve(); }
+                  } catch {}
+                };
+                es.onerror = () => { es.close(); resolve(); };
+              });
+            }
+          } catch {}
+          setOutlookSyncing(false);
+        }
       }
     };
   };
 
-  const handleDisconnectOutlook = () => {
+  const handleDisconnectOutlook = async () => {
     setShowOutlookDisconnectModal(false);
+    try {
+      const { createBrowserClient } = await import('@supabase/ssr');
+      const sb = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const { data: { session } } = await sb.auth.getSession();
+      const token = session?.access_token;
+      if (token) {
+        await fetch('/api/outlook/disconnect', {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    } catch {}
     setOutlookConnected(false);
     setOutlookEmail('');
     try { localStorage.removeItem('crm_outlook_prefs'); } catch {}
@@ -411,6 +452,7 @@ function SettingsPageInner() {
                       <div className="flex items-center gap-1.5">
                         <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>Outlook / Office 365</p>
                         {outlookConnected && <Check className="w-3.5 h-3.5" style={{ color: '#00BDA5' }} />}
+                        {outlookSyncing && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: '#E5F5F8', color: '#0091AE' }}>Syncing contacts…</span>}
                       </div>
                       <p className="text-xs" style={{ color: outlookConnected ? '#00BDA5' : '#7C98B6' }}>
                         {outlookConnected ? outlookEmail : 'Not connected'}
