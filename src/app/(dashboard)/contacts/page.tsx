@@ -625,7 +625,7 @@ function GroupSection({
             ? <ChevronRight className="w-4 h-4" style={{ color: group.color }} />
             : <ChevronDown className="w-4 h-4" style={{ color: group.color }} />}
         </button>
-        {isEditingName && !isFixed ? (
+        {isEditingName ? (
           <input
             ref={nameInputRef}
             value={editNameVal}
@@ -639,7 +639,7 @@ function GroupSection({
           <span
             className="text-xs font-bold cursor-default"
             style={{ color: group.color }}
-            onDoubleClick={() => { if (!isFixed) { setEditNameVal(group.name); setIsEditingName(true); } }}
+            onDoubleClick={() => { setEditNameVal(group.name); setIsEditingName(true); }}
           >{group.name}</span>
         )}
         <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: group.color }}>
@@ -818,13 +818,16 @@ export default function ContactsPage() {
     ...customGroups.filter(g => !g.archived).sort((a, b) => a.order - b.order),
   ], [customGroups, fixedGroupOverrides]);
 
-  /* ── Contacts per group ── */
-  const getGroupContacts = useCallback((groupId: string): Contact[] => {
-    let base: Contact[];
-    if (groupId === 'active')   base = contacts.filter(c => !groupMap[c.id] && c.is_active !== false);
-    else if (groupId === 'inactive') base = contacts.filter(c => !groupMap[c.id] && c.is_active === false);
-    else base = contacts.filter(c => groupMap[c.id] === groupId);
+  /* ── Raw (unfiltered) contacts per group — used for duplicate/export actions ── */
+  const getRawGroupContacts = useCallback((groupId: string): Contact[] => {
+    if (groupId === 'active')   return contacts.filter(c => !groupMap[c.id] && c.is_active !== false);
+    if (groupId === 'inactive') return contacts.filter(c => !groupMap[c.id] && c.is_active === false);
+    return contacts.filter(c => groupMap[c.id] === groupId);
+  }, [contacts, groupMap]);
 
+  /* ── Filtered contacts per group — used for display ── */
+  const getGroupContacts = useCallback((groupId: string): Contact[] => {
+    let base = getRawGroupContacts(groupId);
     if (search.trim()) {
       const q = search.toLowerCase();
       base = base.filter(c =>
@@ -844,7 +847,7 @@ export default function ContactsPage() {
       base = base.filter(c => ((c as { company?: { name?: string } }).company?.name || '').toLowerCase().includes(fc));
     }
     return base;
-  }, [contacts, groupMap, search, priorities, filterPriorities, filterCompany]);
+  }, [getRawGroupContacts, search, priorities, filterPriorities, filterCompany]);
 
   /* ── Selection ── */
   const toggleSelect = (id: string) => {
@@ -943,9 +946,7 @@ export default function ContactsPage() {
         const dupeId = crypto.randomUUID();
         const dupe: Group = { ...src, id: dupeId, name: `${src.name} (copy)`, order: customGroups.length };
         const nextMap = { ...groupMap };
-        // For custom groups, copy existing groupMap entries; for fixed groups, copy from contacts
-        const srcContacts = getGroupContacts(groupId);
-        srcContacts.forEach(c => { nextMap[c.id] = dupeId; });
+        getRawGroupContacts(groupId).forEach(c => { nextMap[c.id] = dupeId; });
         const nextGroups = [...customGroups, dupe].sort((a, b) => a.order - b.order);
         setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveGroupMap(nextMap);
         break;
@@ -955,7 +956,7 @@ export default function ContactsPage() {
       case 'color':  setColorPickerGroup(groupId); break;
 
       case 'export': {
-        const gc = getGroupContacts(groupId);
+        const gc = getRawGroupContacts(groupId);
         const data = gc.map(c => ({
           'First Name': c.first_name, 'Last Name': c.last_name,
           Email: c.email || '', Phone: c.phone || '',
@@ -993,7 +994,7 @@ export default function ContactsPage() {
         break;
       }
     }
-  }, [allGroups, customGroups, groupMap, priorities, getGroupContacts, toggleCollapse, saveGroups, saveGroupMap, saveCollapsed]);
+  }, [allGroups, customGroups, groupMap, priorities, getRawGroupContacts, getGroupContacts, toggleCollapse, saveGroups, saveGroupMap, saveCollapsed]);
 
   /* ── Import complete ── */
   const handleImportComplete = useCallback((result: ImportResult) => {

@@ -137,7 +137,7 @@ function ThreeDotMenu({ groupId, isFixed, onAction }: {
         <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[230px]">
           {THREE_DOT_ITEMS.map((item, i) => {
             if (!item) return <div key={i} className="my-1 border-t border-[#DFE3EB]" />;
-            const disabled = isFixed && ['rename','color','delete','archive','duplicate','move'].includes(item.id);
+            const disabled = isFixed && ['delete','archive'].includes(item.id);
             return (
               <button key={item.id} disabled={disabled}
                 onClick={() => { setOpen(false); onAction(item.id, groupId); }}
@@ -426,7 +426,7 @@ function GroupSection({
             ? <ChevronRight className="w-4 h-4" style={{ color: group.color }} />
             : <ChevronDown className="w-4 h-4" style={{ color: group.color }} />}
         </button>
-        {isEditingName && !isFixed ? (
+        {isEditingName ? (
           <input
             ref={nameInputRef}
             value={editNameVal}
@@ -440,7 +440,7 @@ function GroupSection({
           <span
             className="text-xs font-bold cursor-default"
             style={{ color: group.color }}
-            onDoubleClick={() => { if (!isFixed) { setEditNameVal(group.name); setIsEditingName(true); } }}
+            onDoubleClick={() => { setEditNameVal(group.name); setIsEditingName(true); }}
           >{group.name}</span>
         )}
         <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: group.color }}>
@@ -524,8 +524,9 @@ export default function CompaniesPage() {
   const [editName,        setEditName]        = useState('');
   const [addingToGroup,   setAddingToGroup]   = useState<string | null>(null);
 
-  const [colorPickerGroup,   setColorPickerGroup]   = useState<string | null>(null);
-  const [triggerRenameGroup, setTriggerRenameGroup] = useState<string | null>(null);
+  const [colorPickerGroup,     setColorPickerGroup]     = useState<string | null>(null);
+  const [triggerRenameGroup,   setTriggerRenameGroup]   = useState<string | null>(null);
+  const [fixedGroupOverrides,  setFixedGroupOverrides]  = useState<Record<string, { name?: string; color?: string }>>({});
 
   const newBtnRef = useRef<HTMLDivElement>(null);
 
@@ -539,6 +540,8 @@ export default function CompaniesPage() {
         setCustomGroups(JSON.parse(localStorage.getItem(storageKey('groups', email)) || '[]'));
         setGroupMap(JSON.parse(localStorage.getItem(storageKey('map', email)) || '{}'));
         setStatuses(JSON.parse(localStorage.getItem(storageKey('statuses', email)) || '{}'));
+        const savedFgo = localStorage.getItem(storageKey('fgo', email));
+        if (savedFgo) setFixedGroupOverrides(JSON.parse(savedFgo));
         setCollapsedGroups(new Set(JSON.parse(localStorage.getItem(storageKey('collapsed', email)) || '[]')));
       } catch { /* ignore */ }
     }).catch(() => {});
@@ -548,11 +551,16 @@ export default function CompaniesPage() {
   const saveMap       = useCallback((m: Record<string, string>) => { if (userEmail) localStorage.setItem(storageKey('map',       userEmail), JSON.stringify(m)); }, [userEmail]);
   const saveStatuses  = useCallback((s: Record<string, Status>) => { if (userEmail) localStorage.setItem(storageKey('statuses',  userEmail), JSON.stringify(s)); }, [userEmail]);
   const saveCollapsed = useCallback((s: Set<string>)            => { if (userEmail) localStorage.setItem(storageKey('collapsed', userEmail), JSON.stringify([...s])); }, [userEmail]);
+  const saveFgo       = useCallback((o: Record<string, { name?: string; color?: string }>) => { if (userEmail) localStorage.setItem(storageKey('fgo', userEmail), JSON.stringify(o)); }, [userEmail]);
 
   const allGroups = useMemo(() => [
-    DEFAULT_GROUP,
+    {
+      ...DEFAULT_GROUP,
+      name:  fixedGroupOverrides['all']?.name  ?? DEFAULT_GROUP.name,
+      color: fixedGroupOverrides['all']?.color ?? DEFAULT_GROUP.color,
+    },
     ...customGroups.filter(g => !g.archived).sort((a, b) => a.order - b.order),
-  ], [customGroups]);
+  ], [customGroups, fixedGroupOverrides]);
 
   const getGroupCompanies = useCallback((groupId: string): Company[] => {
     let base: Company[];
@@ -634,11 +642,11 @@ export default function CompaniesPage() {
       }
 
       case 'duplicate': {
-        const src = customGroups.find(g => g.id === groupId); if (!src) break;
+        const src = allGroups.find(g => g.id === groupId); if (!src) break;
         const dupeId = crypto.randomUUID();
-        const dupe: Group = { ...src, id: dupeId, name: `${src.name} (copy)`, order: src.order + 0.5 };
+        const dupe: Group = { ...src, id: dupeId, name: `${src.name} (copy)`, order: customGroups.length };
         const nextMap = { ...groupMap };
-        Object.entries(groupMap).forEach(([cid, gid]) => { if (gid === groupId) nextMap[cid] = dupeId; });
+        getGroupCompanies(groupId).forEach(c => { nextMap[c.id] = dupeId; });
         const nextGroups = [...customGroups, dupe].sort((a, b) => a.order - b.order);
         setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveMap(nextMap);
         break;
@@ -813,8 +821,14 @@ export default function CompaniesPage() {
             onCancelAdd={() => setAddingToGroup(null)}
             triggerRename={triggerRenameGroup}
             onRenameComplete={(id, name) => {
-              const next = customGroups.map(g => g.id === id ? { ...g, name } : g);
-              setCustomGroups(next); saveGroups(next); setTriggerRenameGroup(null);
+              if (id === 'all') {
+                const next = { ...fixedGroupOverrides, all: { ...fixedGroupOverrides['all'], name } };
+                setFixedGroupOverrides(next); saveFgo(next);
+              } else {
+                const next = customGroups.map(g => g.id === id ? { ...g, name } : g);
+                setCustomGroups(next); saveGroups(next);
+              }
+              setTriggerRenameGroup(null);
             }}
           />
         ))}
@@ -863,9 +877,17 @@ export default function CompaniesPage() {
       )}
 
       {colorPickerGroup && (() => {
-        const g = customGroups.find(g => g.id === colorPickerGroup); if (!g) return null;
+        const g = allGroups.find(g => g.id === colorPickerGroup); if (!g) return null;
         return <ColorPickerModal groupName={g.name} current={g.color}
-          onSelect={color => { const next = customGroups.map(g => g.id === colorPickerGroup ? { ...g, color } : g); setCustomGroups(next); saveGroups(next); }}
+          onSelect={color => {
+            if (colorPickerGroup === 'all') {
+              const next = { ...fixedGroupOverrides, all: { ...fixedGroupOverrides['all'], color } };
+              setFixedGroupOverrides(next); saveFgo(next);
+            } else {
+              const next = customGroups.map(g => g.id === colorPickerGroup ? { ...g, color } : g);
+              setCustomGroups(next); saveGroups(next);
+            }
+          }}
           onClose={() => setColorPickerGroup(null)} />;
       })()}
 
