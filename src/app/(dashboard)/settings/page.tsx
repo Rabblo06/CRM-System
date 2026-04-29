@@ -139,14 +139,69 @@ function SettingsPageInner() {
     setPhoneLabel('Outbound number');
     setCountryCode('+1');
   };
+  // Gmail connect flow
+  const [showGmailConfirmModal, setShowGmailConfirmModal] = useState(false);
+  const [gmailImportContacts, setGmailImportContacts] = useState(true);
+  const [gmailEnableInbox, setGmailEnableInbox] = useState(true);
   const [showGmailModal, setShowGmailModal] = useState(false);
+  const [gmailSyncing, setGmailSyncing] = useState(false);
+
+  // Gmail disconnect flow
+  const [showGmailDisconnectModal, setShowGmailDisconnectModal] = useState(false);
   const [showDisconnectPopup, setShowDisconnectPopup] = useState(false);
   const [disconnectCountdown, setDisconnectCountdown] = useState(10);
+
+  // Outlook connect flow
+  const [showOutlookConfirmModal, setShowOutlookConfirmModal] = useState(false);
+  const [outlookImportContacts, setOutlookImportContacts] = useState(true);
+  const [outlookEnableInbox, setOutlookEnableInbox] = useState(true);
+  const [outlookConnected, setOutlookConnected] = useState(false);
+  const [outlookEmail, setOutlookEmail] = useState('');
+  const [showOutlookDisconnectModal, setShowOutlookDisconnectModal] = useState(false);
+
   const { isConnected: gmailConnected, gmailEmail, connectGmail, disconnectGmail } = useEmailSync();
 
+  // Load persisted Outlook state
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('crm_outlook_prefs');
+      if (raw) {
+        const p = JSON.parse(raw);
+        setOutlookConnected(!!p.connected);
+        setOutlookEmail(p.email || '');
+      }
+    } catch {}
+  }, []);
+
+  const handleGmailConnectContinue = () => {
+    // Save prefs to localStorage before OAuth
+    try {
+      localStorage.setItem('crm_gmail_prefs', JSON.stringify({
+        import_contacts: gmailImportContacts,
+        enable_inbox: gmailEnableInbox,
+      }));
+    } catch {}
+    setShowGmailConfirmModal(false);
+    setShowGmailModal(true);
+  };
+
+  const handleGmailOAuthSuccess = async (email: string) => {
+    connectGmail(email);
+    setShowGmailModal(false);
+    const prefs = (() => { try { return JSON.parse(localStorage.getItem('crm_gmail_prefs') || '{}'); } catch { return {}; } })();
+    if (prefs.import_contacts) {
+      setGmailSyncing(true);
+      try {
+        await fetch('/api/google/contacts', { method: 'POST' });
+      } catch {}
+      setGmailSyncing(false);
+    }
+  };
+
   const handleDisconnectGmail = async () => {
+    setShowGmailDisconnectModal(false);
     disconnectGmail();
-    // Delete contacts and companies from Supabase
+    try { localStorage.removeItem('crm_gmail_prefs'); } catch {}
     const { createBrowserClient } = await import('@supabase/ssr');
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -170,6 +225,40 @@ function SettingsPageInner() {
         window.location.reload();
       }
     }, 1000);
+  };
+
+  const handleOutlookConnectContinue = () => {
+    try {
+      localStorage.setItem('crm_outlook_prefs', JSON.stringify({
+        import_contacts: outlookImportContacts,
+        enable_inbox: outlookEnableInbox,
+        connected: false,
+      }));
+    } catch {}
+    setShowOutlookConfirmModal(false);
+    // Open OAuth popup
+    const popup = window.open('/api/outlook/auth', 'outlook_oauth', 'width=520,height=640,left=200,top=100');
+    const channel = new BroadcastChannel('outlook_auth');
+    channel.onmessage = async (e) => {
+      channel.close();
+      popup?.close();
+      if (e.data?.type === 'success') {
+        const email = e.data.email || '';
+        setOutlookConnected(true);
+        setOutlookEmail(email);
+        try {
+          const prefs = JSON.parse(localStorage.getItem('crm_outlook_prefs') || '{}');
+          localStorage.setItem('crm_outlook_prefs', JSON.stringify({ ...prefs, connected: true, email }));
+        } catch {}
+      }
+    };
+  };
+
+  const handleDisconnectOutlook = () => {
+    setShowOutlookDisconnectModal(false);
+    setOutlookConnected(false);
+    setOutlookEmail('');
+    try { localStorage.removeItem('crm_outlook_prefs'); } catch {}
   };
 
   const handleSave = () => {
@@ -298,6 +387,7 @@ function SettingsPageInner() {
                       <div className="flex items-center gap-1.5">
                         <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>Gmail</p>
                         {gmailConnected && <Check className="w-3.5 h-3.5" style={{ color: '#00BDA5' }} />}
+                        {gmailSyncing && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: '#E5F5F8', color: '#0091AE' }}>Syncing contacts…</span>}
                       </div>
                       <p className="text-xs" style={{ color: gmailConnected ? '#00BDA5' : '#7C98B6' }}>
                         {gmailConnected ? gmailEmail : 'Not connected'}
@@ -305,23 +395,33 @@ function SettingsPageInner() {
                     </div>
                   </div>
                   {gmailConnected ? (
-                    <Button variant="outline" size="sm" onClick={handleDisconnectGmail} className="text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
+                    <Button variant="outline" size="sm" onClick={() => setShowGmailDisconnectModal(true)} className="text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
                   ) : (
-                    <Button variant="outline" size="sm" onClick={() => setShowGmailModal(true)}>Connect</Button>
+                    <Button variant="outline" size="sm" onClick={() => setShowGmailConfirmModal(true)}>Connect</Button>
                   )}
                 </div>
+
                 {/* Outlook row */}
-                <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: '#DFE3EB' }}>
+                <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: outlookConnected ? '#00BDA5' : '#DFE3EB', backgroundColor: outlookConnected ? '#F0FBF9' : undefined }}>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F0F3F7' }}>
                       <Mail className="w-4 h-4" style={{ color: '#0078D4' }} />
                     </div>
                     <div>
-                      <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>Outlook / Office 365</p>
-                      <p className="text-xs" style={{ color: '#7C98B6' }}>Not connected</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>Outlook / Office 365</p>
+                        {outlookConnected && <Check className="w-3.5 h-3.5" style={{ color: '#00BDA5' }} />}
+                      </div>
+                      <p className="text-xs" style={{ color: outlookConnected ? '#00BDA5' : '#7C98B6' }}>
+                        {outlookConnected ? outlookEmail : 'Not connected'}
+                      </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">Connect</Button>
+                  {outlookConnected ? (
+                    <Button variant="outline" size="sm" onClick={() => setShowOutlookDisconnectModal(true)} className="text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => setShowOutlookConfirmModal(true)}>Connect</Button>
+                  )}
                 </div>
               </div>
             </SectionCard>
@@ -362,13 +462,190 @@ function SettingsPageInner() {
               </SectionCard>
             )}
 
+            {/* Gmail OAuth popup modal */}
             {showGmailModal && (
               <GmailSyncModal
-                onConnected={(email, _name) => { connectGmail(email); setShowGmailModal(false); }}
+                onConnected={(email, _name) => handleGmailOAuthSuccess(email)}
                 onClose={() => setShowGmailModal(false)}
               />
             )}
 
+            {/* Gmail Connect confirmation modal */}
+            {showGmailConfirmModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setShowGmailConfirmModal(false); }}>
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden" style={{ border: '1px solid #DFE3EB' }}>
+                  <div className="flex items-center justify-between px-5 py-3.5" style={{ backgroundColor: '#EA4335' }}>
+                    <div className="flex items-center gap-2.5">
+                      <svg width="18" height="18" viewBox="0 0 48 48">
+                        <path d="M4.5 39h7V23.25L2 17.5V37a2 2 0 002 2h.5z" fill="#fff"/>
+                        <path d="M36.5 39H44a2 2 0 002-2V17.5l-9.5 5.75z" fill="#fff"/>
+                        <path d="M36.5 9L24 18.5 11.5 9 2 15.5l9.5 5.75v14.75h15V21.25L36.5 15.5z" fill="#fff"/>
+                        <path d="M11.5 9H36.5L24 18.5 11.5 9z" fill="#ffcdd2"/>
+                      </svg>
+                      <h3 className="text-sm font-semibold text-white">Connect Gmail</h3>
+                    </div>
+                    <button onClick={() => setShowGmailConfirmModal(false)} className="text-white/70 hover:text-white"><X className="w-4 h-4" /></button>
+                  </div>
+                  <div className="p-5 space-y-4">
+                    <p className="text-xs" style={{ color: '#516F90' }}>
+                      Choose what to enable when connecting your Gmail account:
+                    </p>
+                    <div className="space-y-3">
+                      <label className="flex items-start gap-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={gmailImportContacts}
+                          onChange={e => setGmailImportContacts(e.target.checked)}
+                          className="mt-0.5 w-4 h-4 rounded accent-[#FF7A59] flex-shrink-0"
+                        />
+                        <div>
+                          <p className="text-xs font-semibold" style={{ color: '#2D3E50' }}>Import contacts from Google Contacts</p>
+                          <p className="text-xs mt-0.5" style={{ color: '#7C98B6' }}>Sync your Google Contacts into the CRM as leads. Existing contacts won&apos;t be duplicated.</p>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={gmailEnableInbox}
+                          onChange={e => setGmailEnableInbox(e.target.checked)}
+                          className="mt-0.5 w-4 h-4 rounded accent-[#FF7A59] flex-shrink-0"
+                        />
+                        <div>
+                          <p className="text-xs font-semibold" style={{ color: '#2D3E50' }}>Enable Inbox feature</p>
+                          <p className="text-xs mt-0.5" style={{ color: '#7C98B6' }}>Access your Gmail inbox directly inside the CRM to send, receive and log emails.</p>
+                        </div>
+                      </label>
+                    </div>
+                    <div className="p-3 rounded-lg border text-xs" style={{ borderColor: '#DFE3EB', color: '#7C98B6', backgroundColor: '#F6F9FC' }}>
+                      We only use your Google data to power these features. We never sell or share your data with third parties.
+                    </div>
+                  </div>
+                  <div className="px-5 py-3.5 border-t flex items-center justify-end gap-2" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
+                    <Button variant="outline" size="sm" onClick={() => setShowGmailConfirmModal(false)}>Cancel</Button>
+                    <Button size="sm" style={{ backgroundColor: '#EA4335', color: '#fff' }} onClick={handleGmailConnectContinue}>
+                      Continue to Google
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Gmail Disconnect confirmation modal */}
+            {showGmailDisconnectModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setShowGmailDisconnectModal(false); }}>
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden" style={{ border: '1px solid #DFE3EB' }}>
+                  <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: '#DFE3EB' }}>
+                    <h3 className="text-sm font-semibold" style={{ color: '#2D3E50' }}>Disconnect Gmail?</h3>
+                    <button onClick={() => setShowGmailDisconnectModal(false)} className="text-[#7C98B6] hover:text-[#2D3E50]"><X className="w-4 h-4" /></button>
+                  </div>
+                  <div className="p-5 space-y-3">
+                    <p className="text-xs" style={{ color: '#516F90' }}>
+                      Disconnecting Gmail will:
+                    </p>
+                    <ul className="space-y-1.5">
+                      {[
+                        'Remove your Gmail connection from the CRM',
+                        'Delete all synced contacts and companies',
+                        'Delete all synced emails from the inbox',
+                        'Revoke the CRM\'s access to your Google account',
+                      ].map(item => (
+                        <li key={item} className="flex items-start gap-2 text-xs" style={{ color: '#516F90' }}>
+                          <X className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: '#FF7A59' }} />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>This action cannot be undone.</p>
+                  </div>
+                  <div className="px-5 py-3.5 border-t flex items-center justify-end gap-2" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
+                    <Button variant="outline" size="sm" onClick={() => setShowGmailDisconnectModal(false)}>Keep connected</Button>
+                    <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white border-0" onClick={handleDisconnectGmail}>
+                      Yes, disconnect
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Outlook Connect confirmation modal */}
+            {showOutlookConfirmModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setShowOutlookConfirmModal(false); }}>
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden" style={{ border: '1px solid #DFE3EB' }}>
+                  <div className="flex items-center justify-between px-5 py-3.5" style={{ backgroundColor: '#0078D4' }}>
+                    <div className="flex items-center gap-2.5">
+                      <Mail className="w-4 h-4 text-white" />
+                      <h3 className="text-sm font-semibold text-white">Connect Outlook / Office 365</h3>
+                    </div>
+                    <button onClick={() => setShowOutlookConfirmModal(false)} className="text-white/70 hover:text-white"><X className="w-4 h-4" /></button>
+                  </div>
+                  <div className="p-5 space-y-4">
+                    <p className="text-xs" style={{ color: '#516F90' }}>
+                      Choose what to enable when connecting your Microsoft account:
+                    </p>
+                    <div className="space-y-3">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={outlookImportContacts}
+                          onChange={e => setOutlookImportContacts(e.target.checked)}
+                          className="mt-0.5 w-4 h-4 rounded accent-[#0078D4] flex-shrink-0"
+                        />
+                        <div>
+                          <p className="text-xs font-semibold" style={{ color: '#2D3E50' }}>Import contacts from Microsoft Contacts</p>
+                          <p className="text-xs mt-0.5" style={{ color: '#7C98B6' }}>Sync your Outlook contacts into the CRM as leads.</p>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={outlookEnableInbox}
+                          onChange={e => setOutlookEnableInbox(e.target.checked)}
+                          className="mt-0.5 w-4 h-4 rounded accent-[#0078D4] flex-shrink-0"
+                        />
+                        <div>
+                          <p className="text-xs font-semibold" style={{ color: '#2D3E50' }}>Enable Inbox feature</p>
+                          <p className="text-xs mt-0.5" style={{ color: '#7C98B6' }}>Access your Outlook inbox directly inside the CRM.</p>
+                        </div>
+                      </label>
+                    </div>
+                    <div className="p-3 rounded-lg border text-xs" style={{ borderColor: '#DFE3EB', color: '#7C98B6', backgroundColor: '#F6F9FC' }}>
+                      We only use your Microsoft data to power these features. We never sell or share your data with third parties.
+                    </div>
+                  </div>
+                  <div className="px-5 py-3.5 border-t flex items-center justify-end gap-2" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
+                    <Button variant="outline" size="sm" onClick={() => setShowOutlookConfirmModal(false)}>Cancel</Button>
+                    <Button size="sm" style={{ backgroundColor: '#0078D4', color: '#fff' }} onClick={handleOutlookConnectContinue}>
+                      Continue to Microsoft
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Outlook Disconnect confirmation modal */}
+            {showOutlookDisconnectModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setShowOutlookDisconnectModal(false); }}>
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden" style={{ border: '1px solid #DFE3EB' }}>
+                  <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: '#DFE3EB' }}>
+                    <h3 className="text-sm font-semibold" style={{ color: '#2D3E50' }}>Disconnect Outlook?</h3>
+                    <button onClick={() => setShowOutlookDisconnectModal(false)} className="text-[#7C98B6] hover:text-[#2D3E50]"><X className="w-4 h-4" /></button>
+                  </div>
+                  <div className="p-5 space-y-3">
+                    <p className="text-xs" style={{ color: '#516F90' }}>
+                      Disconnecting Outlook will remove the integration and revoke CRM access to your Microsoft account. This action cannot be undone.
+                    </p>
+                  </div>
+                  <div className="px-5 py-3.5 border-t flex items-center justify-end gap-2" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
+                    <Button variant="outline" size="sm" onClick={() => setShowOutlookDisconnectModal(false)}>Keep connected</Button>
+                    <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white border-0" onClick={handleDisconnectOutlook}>
+                      Yes, disconnect
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Disconnect success popup */}
             {showDisconnectPopup && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                 <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">

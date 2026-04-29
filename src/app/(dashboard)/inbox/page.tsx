@@ -491,6 +491,16 @@ function ThreadDetail({
 export default function InboxPage() {
   const { isConnected, gmailEmail, connectGmail, emails: seedEmails } = useEmailSync();
 
+  const [inboxEnabled, setInboxEnabled] = useState<boolean | null>(null);
+  useEffect(() => {
+    try {
+      const prefs = JSON.parse(localStorage.getItem('crm_gmail_prefs') || '{}');
+      setInboxEnabled(prefs.enable_inbox !== false);
+    } catch {
+      setInboxEnabled(true);
+    }
+  }, []);
+
   const [allMessages, setAllMessages]   = useState<Message[]>([]);
   const [loading, setLoading]           = useState(true);
   const [refreshing, setRefreshing]     = useState(false);
@@ -759,6 +769,7 @@ export default function InboxPage() {
   };
 
   const noGmailConnected = !isConnected && !loading && !isAnonymousUser() && allMessages.length === 0;
+  const inboxDisabled = isConnected && inboxEnabled === false && !isAnonymousUser();
 
   /* ── FOLDER NAV ──────────────────────────────────────────── */
   const FOLDERS: { id: Folder; label: string; Icon: React.ElementType }[] = [
@@ -955,7 +966,26 @@ export default function InboxPage() {
       </div>
 
       {/* ── RIGHT: DETAIL PANEL ───────────────────────────── */}
-      {noGmailConnected ? (
+      {inboxDisabled ? (
+        <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: '#F6F9FC' }}>
+          <div className="text-center max-w-sm px-6">
+            <div className="w-16 h-16 rounded-2xl border border-[#DFE3EB] flex items-center justify-center bg-white shadow-sm mx-auto mb-5">
+              <Mail className="w-8 h-8" style={{ color: '#7C98B6' }} />
+            </div>
+            <h2 className="text-base font-bold mb-2" style={{ color: '#2D3E50' }}>Inbox not enabled</h2>
+            <p className="text-sm mb-6 leading-relaxed" style={{ color: '#7C98B6' }}>
+              Your Gmail account is connected but the Inbox feature was not enabled. Go to Settings → Email to re-connect and enable it.
+            </p>
+            <a
+              href="/settings?tab=email"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white rounded-[3px]"
+              style={{ backgroundColor: '#FF7A59' }}
+            >
+              Go to Email Settings
+            </a>
+          </div>
+        </div>
+      ) : noGmailConnected ? (
         <ConnectGmailPrompt onConnect={() => setShowSyncModal(true)} />
       ) : liveThread ? (
         <ThreadDetail
