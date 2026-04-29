@@ -185,7 +185,20 @@ export function useContacts() {
     });
   };
 
-  return { contacts, loading, fetchContacts, createContact, updateContact, deleteContact };
+  const deleteContactsByIds = async (ids: string[]) => {
+    if (!ids.length) return;
+    try {
+      const { error } = await supabase.from('contacts').delete().in('id', ids);
+      if (error) throw error;
+    } catch { /* continue — optimistic update below */ }
+    setContacts((prev) => {
+      const next = prev.filter((c) => !ids.includes(c.id));
+      if (isMockMode) saveLocalContacts(next);
+      return next;
+    });
+  };
+
+  return { contacts, loading, fetchContacts, createContact, updateContact, deleteContact, deleteContactsByIds };
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -310,7 +323,20 @@ export function useCompanies() {
     });
   };
 
-  return { companies, loading, fetchCompanies, createCompany, updateCompany, deleteCompany };
+  const deleteCompaniesByIds = async (ids: string[]) => {
+    if (!ids.length) return;
+    try {
+      const { error } = await supabase.from('companies').delete().in('id', ids);
+      if (error) throw error;
+    } catch { /* continue — optimistic update below */ }
+    setCompanies((prev) => {
+      const next = prev.filter((c) => !ids.includes(c.id));
+      if (isMockMode) saveLocalCompanies(next);
+      return next;
+    });
+  };
+
+  return { companies, loading, fetchCompanies, createCompany, updateCompany, deleteCompany, deleteCompaniesByIds };
 }
 
 /* ═══════════════════════════════════════════════════════

@@ -340,27 +340,48 @@ function ColorPickerModal({ groupName, current, onSelect, onClose }: {
 }
 
 
-/* ── Delete confirm modal ───────────────────────────────────── */
+/* ── Delete group confirm modal ─────────────────────────────── */
 function DeleteGroupModal({ groupName, onConfirm, onClose }: {
   groupName: string; onConfirm: () => void; onClose: () => void;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-      <div className="bg-white rounded-[3px] shadow-2xl w-96" style={{ border: '1px solid #DFE3EB' }}>
+      <div className="bg-white rounded-[3px] shadow-2xl w-[420px]" style={{ border: '1px solid #DFE3EB' }}>
         <div className="px-5 py-4 border-b border-[#DFE3EB]">
-          <p className="text-sm font-bold text-[#2D3E50]">Delete group</p>
+          <p className="text-sm font-bold text-[#2D3E50]">Delete group?</p>
         </div>
         <div className="px-5 py-4">
           <p className="text-sm text-[#516F90]">
-            Are you sure you want to delete <strong>"{groupName}"</strong>? Contacts will move to Active Contacts.
+            Are you sure you want to delete <strong className="text-[#2D3E50]">"{groupName}"</strong>?
+            All contacts inside this group will also be deleted. This action cannot be undone.
           </p>
         </div>
         <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#DFE3EB]">
-          <button onClick={onClose} className="px-4 py-1.5 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">Cancel</button>
+          <button onClick={onClose}
+            className="px-4 py-1.5 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">
+            Cancel
+          </button>
           <button onClick={() => { onConfirm(); onClose(); }}
-            className="px-4 py-1.5 text-sm font-bold text-white rounded-[3px] bg-red-500 hover:bg-red-600">Delete</button>
+            className="px-4 py-1.5 text-sm font-bold text-white rounded-[3px] bg-red-500 hover:bg-red-600">
+            Delete group
+          </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ── Toast notification ─────────────────────────────────────── */
+function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 3500);
+    return () => clearTimeout(t);
+  }, [onClose]);
+  return (
+    <div className="fixed bottom-5 right-5 z-[100] flex items-center gap-3 px-4 py-3 rounded-[3px] shadow-xl text-white text-sm font-semibold"
+      style={{ backgroundColor: type === 'success' ? '#00A38D' : '#EF4444' }}>
+      {message}
+      <button onClick={onClose}><X className="w-4 h-4 opacity-80 hover:opacity-100" /></button>
     </div>
   );
 }
@@ -801,7 +822,7 @@ function GroupSection({
    MAIN PAGE
 ══════════════════════════════════════════════════════════════ */
 export default function ContactsPage() {
-  const { contacts, loading, fetchContacts, createContact, updateContact, deleteContact } = useContacts();
+  const { contacts, loading, fetchContacts, createContact, updateContact, deleteContact, deleteContactsByIds } = useContacts();
   const router = useRouter();
   // Initialize synchronously from localStorage so save* callbacks work immediately
   // on first render without waiting for the async getUser() call to resolve.
@@ -827,6 +848,7 @@ export default function ContactsPage() {
   const [colorPickerGroup,    setColorPickerGroup]    = useState<string | null>(null);
   const [triggerRenameGroup,  setTriggerRenameGroup]  = useState<string | null>(null);
   const [deleteGroupId,       setDeleteGroupId]       = useState<string | null>(null);
+  const [toast,               setToast]               = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const [showFilter,       setShowFilter]       = useState(false);
   const [filterPriorities, setFilterPriorities] = useState<Set<string>>(new Set());
@@ -1102,12 +1124,26 @@ export default function ContactsPage() {
     fetchContacts();
   }, [customGroups, groupMap, saveGroups, saveGroupMap, fetchContacts]);
 
-  /* ── Delete group ── */
-  const handleDeleteGroup = (groupId: string) => {
-    const next = customGroups.filter(g => g.id !== groupId);
-    const nextMap = { ...groupMap };
-    Object.keys(nextMap).forEach(cid => { if (nextMap[cid] === groupId) delete nextMap[cid]; });
-    setCustomGroups(next); setGroupMap(nextMap); saveGroups(next); saveGroupMap(nextMap);
+  /* ── Delete group (and all contacts inside it) ── */
+  const handleDeleteGroup = async (groupId: string) => {
+    const contactIds = Object.keys(groupMap).filter(cid => groupMap[cid] === groupId);
+    try {
+      if (contactIds.length > 0) {
+        await deleteContactsByIds(contactIds);
+        const nextPriorities = { ...priorities };
+        contactIds.forEach(id => delete nextPriorities[id]);
+        setPriorities(nextPriorities);
+        savePriorities(nextPriorities);
+        setSelectedIds(prev => { const n = new Set(prev); contactIds.forEach(id => n.delete(id)); return n; });
+      }
+      const nextGroups = customGroups.filter(g => g.id !== groupId);
+      const nextMap = { ...groupMap };
+      Object.keys(nextMap).forEach(cid => { if (nextMap[cid] === groupId) delete nextMap[cid]; });
+      setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveGroupMap(nextMap);
+      setToast({ message: `Group deleted with ${contactIds.length} contact${contactIds.length !== 1 ? 's' : ''}`, type: 'success' });
+    } catch {
+      setToast({ message: 'Failed to delete group', type: 'error' });
+    }
   };
 
   /* ── Delete contact ── */
@@ -1392,9 +1428,11 @@ export default function ContactsPage() {
       {deleteGroupId && (() => {
         const g = customGroups.find(g => g.id === deleteGroupId); if (!g) return null;
         return <DeleteGroupModal groupName={g.name}
-          onConfirm={() => handleDeleteGroup(deleteGroupId)}
+          onConfirm={() => { handleDeleteGroup(deleteGroupId); }}
           onClose={() => setDeleteGroupId(null)} />;
       })()}
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

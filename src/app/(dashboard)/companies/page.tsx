@@ -281,6 +281,52 @@ function ColorPickerModal({ groupName, current, onSelect, onClose }: {
 }
 
 
+/* ── Delete group confirm modal ─────────────────────────────── */
+function DeleteGroupModal({ groupName, onConfirm, onClose }: {
+  groupName: string; onConfirm: () => void; onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+      <div className="bg-white rounded-[3px] shadow-2xl w-[420px]" style={{ border: '1px solid #DFE3EB' }}>
+        <div className="px-5 py-4 border-b border-[#DFE3EB]">
+          <p className="text-sm font-bold text-[#2D3E50]">Delete group?</p>
+        </div>
+        <div className="px-5 py-4">
+          <p className="text-sm text-[#516F90]">
+            Are you sure you want to delete <strong className="text-[#2D3E50]">"{groupName}"</strong>?
+            All companies inside this group will also be deleted. This action cannot be undone.
+          </p>
+        </div>
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#DFE3EB]">
+          <button onClick={onClose}
+            className="px-4 py-1.5 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">
+            Cancel
+          </button>
+          <button onClick={() => { onConfirm(); onClose(); }}
+            className="px-4 py-1.5 text-sm font-bold text-white rounded-[3px] bg-red-500 hover:bg-red-600">
+            Delete group
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Toast notification ─────────────────────────────────────── */
+function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 3500);
+    return () => clearTimeout(t);
+  }, [onClose]);
+  return (
+    <div className="fixed bottom-5 right-5 z-[100] flex items-center gap-3 px-4 py-3 rounded-[3px] shadow-xl text-white text-sm font-semibold"
+      style={{ backgroundColor: type === 'success' ? '#00A38D' : '#EF4444' }}>
+      {message}
+      <button onClick={onClose}><X className="w-4 h-4 opacity-80 hover:opacity-100" /></button>
+    </div>
+  );
+}
+
 /* ── Inline editable text cell ─────────────────────────────── */
 function InlineCell({ value, onSave, placeholder = 'Add…' }: {
   value: string; onSave: (v: string) => void; placeholder?: string;
@@ -682,7 +728,7 @@ function GroupSection({
    MAIN PAGE
 ══════════════════════════════════════════════════════════════ */
 export default function CompaniesPage() {
-  const { companies, loading, createCompany, updateCompany, deleteCompany } = useCompanies();
+  const { companies, loading, createCompany, updateCompany, deleteCompany, deleteCompaniesByIds } = useCompanies();
   // Initialize synchronously from localStorage so save* callbacks work immediately
   // on first render without waiting for the async getUser() call to resolve.
   const [userEmail, setUserEmail] = useState<string>(() => {
@@ -708,6 +754,8 @@ export default function CompaniesPage() {
 
   const [colorPickerGroup,     setColorPickerGroup]     = useState<string | null>(null);
   const [triggerRenameGroup,   setTriggerRenameGroup]   = useState<string | null>(null);
+  const [deleteGroupId,        setDeleteGroupId]        = useState<string | null>(null);
+  const [toast,                setToast]                = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [fixedGroupOverrides,  setFixedGroupOverrides]  = useState<Record<string, { name?: string; color?: string }>>({});
 
   const newBtnRef = useRef<HTMLDivElement>(null);
@@ -888,13 +936,7 @@ export default function CompaniesPage() {
 
       case 'apps': alert('Apps & integrations — coming soon!'); break;
 
-      case 'delete': {
-        if (!confirm(`Delete group "${group.name}"? Companies will move to All Companies.`)) break;
-        const nextGroups = customGroups.filter(g => g.id !== groupId);
-        const nextMap = { ...groupMap }; Object.keys(nextMap).forEach(cid => { if (nextMap[cid] === groupId) delete nextMap[cid]; });
-        setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveMap(nextMap);
-        break;
-      }
+      case 'delete': setDeleteGroupId(groupId); break;
 
       case 'archive': {
         const next = customGroups.map(g => g.id === groupId ? { ...g, archived: true } : g);
@@ -910,6 +952,28 @@ export default function CompaniesPage() {
       }
     }
   }, [allGroups, customGroups, groupMap, statuses, getGroupCompanies, toggleCollapse, saveGroups, saveMap, saveCollapsed]);
+
+  /* ── Delete group (and all companies inside it) ── */
+  const handleDeleteGroup = async (groupId: string) => {
+    const companyIds = Object.keys(groupMap).filter(cid => groupMap[cid] === groupId);
+    try {
+      if (companyIds.length > 0) {
+        await deleteCompaniesByIds(companyIds);
+        const nextPriorities = { ...priorities };
+        companyIds.forEach(id => delete nextPriorities[id]);
+        setPriorities(nextPriorities);
+        savePriorities(nextPriorities);
+        setSelectedIds(prev => { const n = new Set(prev); companyIds.forEach(id => n.delete(id)); return n; });
+      }
+      const nextGroups = customGroups.filter(g => g.id !== groupId);
+      const nextMap = { ...groupMap };
+      Object.keys(nextMap).forEach(cid => { if (nextMap[cid] === groupId) delete nextMap[cid]; });
+      setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveMap(nextMap);
+      setToast({ message: `Group deleted with ${companyIds.length} compan${companyIds.length !== 1 ? 'ies' : 'y'}`, type: 'success' });
+    } catch {
+      setToast({ message: 'Failed to delete group', type: 'error' });
+    }
+  };
 
   /* ── Import complete ── */
   const handleImportComplete = useCallback((result: CompanyImportResult) => {
@@ -1114,6 +1178,14 @@ export default function CompaniesPage() {
           onClose={() => setColorPickerGroup(null)} />;
       })()}
 
+      {deleteGroupId && (() => {
+        const g = customGroups.find(g => g.id === deleteGroupId); if (!g) return null;
+        return <DeleteGroupModal groupName={g.name}
+          onConfirm={() => { handleDeleteGroup(deleteGroupId); }}
+          onClose={() => setDeleteGroupId(null)} />;
+      })()}
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }
