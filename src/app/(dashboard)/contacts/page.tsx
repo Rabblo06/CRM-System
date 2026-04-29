@@ -62,6 +62,8 @@ const ALL_COLUMNS = [
 
 type ColumnId = (typeof ALL_COLUMNS)[number]['id'];
 
+const DEFAULT_VISIBLE: ColumnId[] = ['email','accounts','phone','title','priority'];
+
 const THREE_DOT_ITEMS = [
   { id: 'collapse_this', label: 'Collapse this group' },
   { id: 'collapse_all',  label: 'Collapse all groups' },
@@ -364,9 +366,10 @@ function DeleteGroupModal({ groupName, onConfirm, onClose }: {
 }
 
 /* ── Inline add row ─────────────────────────────────────────── */
-function InlineAddRow({ onSave, onCancel }: {
+function InlineAddRow({ onSave, onCancel, visibleColumns }: {
   onSave: (data: { first_name: string; last_name: string; email: string; phone: string; job_title: string }) => Promise<void>;
   onCancel: () => void;
+  visibleColumns: Set<ColumnId>;
 }) {
   const [firstName, setFirstName] = useState('');
   const [lastName,  setLastName]  = useState('');
@@ -376,6 +379,7 @@ function InlineAddRow({ onSave, onCancel }: {
   const [saving,    setSaving]    = useState(false);
 
   const canSave = firstName.trim() || lastName.trim();
+  const vc = visibleColumns;
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -385,57 +389,47 @@ function InlineAddRow({ onSave, onCancel }: {
   };
 
   const inp = "h-7 px-2 text-xs border border-[#CBD6E2] rounded outline-none text-[#2D3E50] w-full";
+  const fi = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#0091AE'; };
+  const bl = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#CBD6E2'; };
+  const kd = (e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onCancel(); };
 
   return (
     <tr className="border-b border-[#F0F3F7] bg-blue-50/20">
-      <td className="w-10 px-3 py-2" />
-      {/* Name */}
-      <td className="px-2 py-2 min-w-[180px]">
+      <td className="w-10 px-3 py-2 border-r border-[#F0F3F7]" />
+      {/* Contact name — always */}
+      <td className="px-2 py-2 min-w-[180px] border-r border-[#F0F3F7]">
         <div className="flex gap-1">
           <input autoFocus placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onCancel(); }}
-            className={inp} style={{ width: '50%' }}
-            onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
+            onKeyDown={kd} className={inp} style={{ width: '50%' }} onFocus={fi} onBlur={bl} />
           <input placeholder="Last name" value={lastName} onChange={e => setLastName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onCancel(); }}
-            className={inp} style={{ width: '50%' }}
-            onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
+            onKeyDown={kd} className={inp} style={{ width: '50%' }} onFocus={fi} onBlur={bl} />
         </div>
       </td>
-      {/* Email */}
-      <td className="px-2 py-2 min-w-[200px]">
-        <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onCancel(); }}
-          className={inp}
-          onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
-          onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
-      </td>
-      {/* Activities */}
-      <td className="px-2 py-2 w-[100px]" />
-      {/* Account */}
-      <td className="px-2 py-2 min-w-[130px]" />
-      {/* Deals */}
-      <td className="px-2 py-2 w-[80px]" />
-      {/* Deals value */}
-      <td className="px-2 py-2 w-[100px]" />
-      {/* Phone */}
-      <td className="px-2 py-2 min-w-[150px]">
-        <input placeholder="Phone" value={phone} onChange={e => setPhone(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onCancel(); }}
-          className={inp}
-          onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
-          onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
-      </td>
-      {/* Title */}
-      <td className="px-2 py-2 min-w-[120px]">
-        <input placeholder="Job title" value={title} onChange={e => setTitle(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onCancel(); }}
-          className={inp}
-          onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
-          onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
-      </td>
+      {vc.has('email') && (
+        <td className="px-2 py-2 min-w-[200px] border-r border-[#F0F3F7]">
+          <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={kd} className={inp} onFocus={fi} onBlur={bl} />
+        </td>
+      )}
+      {vc.has('activities') && <td className="px-2 py-2 w-[100px] border-r border-[#F0F3F7]" />}
+      {vc.has('accounts')   && <td className="px-2 py-2 min-w-[130px] border-r border-[#F0F3F7]" />}
+      {vc.has('deals')      && <td className="px-2 py-2 w-[80px] border-r border-[#F0F3F7]" />}
+      {vc.has('deals_value')&& <td className="px-2 py-2 w-[100px] border-r border-[#F0F3F7]" />}
+      {vc.has('phone') && (
+        <td className="px-2 py-2 min-w-[150px] border-r border-[#F0F3F7]">
+          <input placeholder="Phone" value={phone} onChange={e => setPhone(e.target.value)} onKeyDown={kd} className={inp} onFocus={fi} onBlur={bl} />
+        </td>
+      )}
+      {vc.has('mobile')       && <td className="px-2 py-2 min-w-[140px] border-r border-[#F0F3F7]" />}
+      {vc.has('title') && (
+        <td className="px-2 py-2 min-w-[120px] border-r border-[#F0F3F7]">
+          <input placeholder="Job title" value={title} onChange={e => setTitle(e.target.value)} onKeyDown={kd} className={inp} onFocus={fi} onBlur={bl} />
+        </td>
+      )}
+      {vc.has('address')      && <td className="px-2 py-2 min-w-[160px] border-r border-[#F0F3F7]" />}
+      {vc.has('manager_name') && <td className="px-2 py-2 min-w-[140px] border-r border-[#F0F3F7]" />}
+      {vc.has('email_note')   && <td className="px-2 py-2 min-w-[160px] border-r border-[#F0F3F7]" />}
+      {vc.has('next_step')    && <td className="px-2 py-2 min-w-[160px] border-r border-[#F0F3F7]" />}
+      {vc.has('priority')     && <td className="px-2 py-2 w-[110px] border-r border-[#F0F3F7]" />}
       {/* Actions */}
       <td className="px-2 py-2 w-[120px]">
         <div className="flex items-center gap-1">
@@ -506,16 +500,17 @@ function ContactRow({
   const company = (contact as { company?: { name?: string } }).company?.name;
 
   const vc = visibleColumns;
+  const cellCls = "border-r border-[#F0F3F7]";
   return (
     <tr className="border-b border-[#F0F3F7] hover:bg-[#F8FAFC] transition-colors group/row">
       {/* Checkbox */}
-      <td className="w-10 px-3 py-2.5 sticky left-0 bg-inherit">
+      <td className={`w-10 px-3 py-2.5 sticky left-0 bg-inherit ${cellCls}`}>
         <input type="checkbox" checked={selected} onChange={() => onSelect(contact.id)}
           className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
       </td>
 
       {/* Contact name — always visible */}
-      <td className="px-3 py-2.5 min-w-[180px] sticky left-10 bg-inherit">
+      <td className={`px-3 py-2.5 min-w-[200px] sticky left-10 bg-inherit ${cellCls}`}>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
             style={{ backgroundColor: avatarColor(name || 'A') }}>
@@ -539,7 +534,7 @@ function ContactRow({
       </td>
 
       {vc.has('email') && (
-        <td className="px-3 py-2.5 min-w-[200px] relative">
+        <td className={`px-3 py-2.5 min-w-[200px] relative ${cellCls}`}>
           {emailEditing ? (
             <EmailCellPopover email={contact.email || ''} onSave={async (e) => { await onEmailSave(contact.id, e); }} onClose={() => setEmailEditing(false)} />
           ) : (
@@ -551,21 +546,21 @@ function ContactRow({
         </td>
       )}
       {vc.has('activities') && (
-        <td className="px-3 py-2.5 w-[100px]"><ActivityTimeline contact={contact} /></td>
+        <td className={`px-3 py-2.5 w-[100px] ${cellCls}`}><ActivityTimeline contact={contact} /></td>
       )}
       {vc.has('accounts') && (
-        <td className="px-3 py-2.5 min-w-[130px]">
+        <td className={`px-3 py-2.5 min-w-[130px] ${cellCls}`}>
           {company ? <Pill label={company} color="#0091AE" /> : <span className="text-xs text-[#B0C1D4]">—</span>}
         </td>
       )}
       {vc.has('deals') && (
-        <td className="px-3 py-2.5 w-[80px]"><span className="text-xs text-[#B0C1D4]">—</span></td>
+        <td className={`px-3 py-2.5 w-[80px] ${cellCls}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
       )}
       {vc.has('deals_value') && (
-        <td className="px-3 py-2.5 w-[100px]"><span className="text-xs text-[#B0C1D4]">—</span></td>
+        <td className={`px-3 py-2.5 w-[100px] ${cellCls}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
       )}
       {vc.has('phone') && (
-        <td className="px-3 py-2.5 min-w-[150px]">
+        <td className={`px-3 py-2.5 min-w-[150px] ${cellCls}`}>
           {contact.phone ? (
             <span className="flex items-center gap-1.5 text-xs text-[#2D3E50]">
               <span>{getPhoneFlag(contact.phone)}</span>
@@ -574,45 +569,41 @@ function ContactRow({
           ) : <span className="text-xs text-[#B0C1D4]">—</span>}
         </td>
       )}
-      {vc.has('title') && (
-        <td className="px-3 py-2.5 min-w-[120px]">
-          <InlineCell value={contact.job_title || ''} onSave={v => onFieldSave(contact.id, 'job_title', v)} placeholder="Add position" />
+      {/* mobile comes before title — matches ALL_COLUMNS order */}
+      {vc.has('mobile') && (
+        <td className={`px-3 py-2.5 min-w-[140px] ${cellCls}`}>
+          <InlineCell value={contact.mobile || ''} onSave={v => onFieldSave(contact.id, 'mobile', v)} placeholder="Add mobile" />
         </td>
       )}
-      {vc.has('mobile') && (
-        <td className="px-3 py-2.5 min-w-[140px]">
-          {contact.mobile ? (
-            <span className="flex items-center gap-1.5 text-xs text-[#2D3E50]">
-              <span>{getPhoneFlag(contact.mobile)}</span>
-              <InlineCell value={contact.mobile} onSave={v => onFieldSave(contact.id, 'mobile', v)} placeholder="Add mobile" />
-            </span>
-          ) : (
-            <InlineCell value="" onSave={v => onFieldSave(contact.id, 'mobile', v)} placeholder="Add mobile" />
-          )}
+      {vc.has('title') && (
+        <td className={`px-3 py-2.5 min-w-[120px] ${cellCls}`}>
+          {contact.job_title
+            ? <Pill label={contact.job_title} color="#8B5CF6" />
+            : <InlineCell value="" onSave={v => onFieldSave(contact.id, 'job_title', v)} placeholder="Add position" />}
         </td>
       )}
       {vc.has('address') && (
-        <td className="px-3 py-2.5 min-w-[160px]">
+        <td className={`px-3 py-2.5 min-w-[160px] ${cellCls}`}>
           <InlineCell value={contact.address || ''} onSave={v => onFieldSave(contact.id, 'address', v)} placeholder="Add address" />
         </td>
       )}
       {vc.has('manager_name') && (
-        <td className="px-3 py-2.5 min-w-[140px]">
+        <td className={`px-3 py-2.5 min-w-[140px] ${cellCls}`}>
           <InlineCell value={contact.manager_name || ''} onSave={v => onFieldSave(contact.id, 'manager_name', v)} placeholder="Add manager" />
         </td>
       )}
       {vc.has('email_note') && (
-        <td className="px-3 py-2.5 min-w-[160px]">
+        <td className={`px-3 py-2.5 min-w-[160px] ${cellCls}`}>
           <InlineCell value={contact.email_note || ''} onSave={v => onFieldSave(contact.id, 'email_note', v)} placeholder="Add email note" />
         </td>
       )}
       {vc.has('next_step') && (
-        <td className="px-3 py-2.5 min-w-[160px]">
+        <td className={`px-3 py-2.5 min-w-[160px] ${cellCls}`}>
           <InlineCell value={contact.next_step || ''} onSave={v => onFieldSave(contact.id, 'next_step', v)} placeholder="Add next step" />
         </td>
       )}
       {vc.has('priority') && (
-        <td className="px-3 py-2.5 w-[110px]">
+        <td className={`px-3 py-2.5 w-[110px] ${cellCls}`}>
           <PriorityBadge priority={priority} onChange={(p) => onPriorityChange(contact.id, p)} />
         </td>
       )}
@@ -721,16 +712,16 @@ function GroupSection({
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-[#DFE3EB] bg-white">
-              <th className="w-10 px-3 py-2 sticky left-0 bg-white z-10">
+              <th className="w-10 px-3 py-2 sticky left-0 bg-white z-10 border-r border-[#DFE3EB]">
                 <input type="checkbox"
                   checked={contacts.length > 0 && contacts.every(c => selectedIds.has(c.id))}
                   onChange={() => onSelectAll(group.id, contacts.map(c => c.id))}
                   className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
               </th>
               {/* Contact column header — always shown */}
-              <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap" style={{ fontSize: 10 }}>Contact</th>
+              <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap border-r border-[#DFE3EB]" style={{ fontSize: 10 }}>Contact</th>
               {ALL_COLUMNS.filter(c => c.id !== 'contact' && visibleColumns.has(c.id)).map(col => (
-                <th key={col.id} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap" style={{ fontSize: 10 }}>
+                <th key={col.id} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap border-r border-[#DFE3EB]" style={{ fontSize: 10 }}>
                   {col.label}
                 </th>
               ))}
@@ -784,6 +775,7 @@ function GroupSection({
               <InlineAddRow
                 onSave={(data) => onSaveAdd(data, group.id)}
                 onCancel={onCancelAdd}
+                visibleColumns={visibleColumns}
               />
             )}
 
@@ -809,7 +801,7 @@ function GroupSection({
    MAIN PAGE
 ══════════════════════════════════════════════════════════════ */
 export default function ContactsPage() {
-  const { contacts, loading, createContact, updateContact, deleteContact } = useContacts();
+  const { contacts, loading, fetchContacts, createContact, updateContact, deleteContact } = useContacts();
   const router = useRouter();
   // Initialize synchronously from localStorage so save* callbacks work immediately
   // on first render without waiting for the async getUser() call to resolve.
@@ -840,7 +832,7 @@ export default function ContactsPage() {
   const [filterPriorities, setFilterPriorities] = useState<Set<string>>(new Set());
   const [filterCompany,    setFilterCompany]    = useState('');
   const [visibleColumns,   setVisibleColumns]   = useState<Set<ColumnId>>(
-    new Set(ALL_COLUMNS.map(c => c.id))
+    new Set(DEFAULT_VISIBLE)
   );
 
   const newBtnRef = useRef<HTMLDivElement>(null);
@@ -1098,14 +1090,17 @@ export default function ContactsPage() {
       const nextMap = { ...groupMap };
       result.contactIds.forEach(id => { nextMap[id] = existing.id; });
       setGroupMap(nextMap); saveGroupMap(nextMap);
-      return;
+    } else {
+      const ng: Group = { id: result.groupId, name: result.groupName, color: GROUP_COLORS[customGroups.length % GROUP_COLORS.length], order: customGroups.length };
+      const nextGroups = [...customGroups, ng];
+      const nextMap = { ...groupMap };
+      result.contactIds.forEach(id => { nextMap[id] = result.groupId; });
+      setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveGroupMap(nextMap);
     }
-    const ng: Group = { id: result.groupId, name: result.groupName, color: GROUP_COLORS[customGroups.length % GROUP_COLORS.length], order: customGroups.length };
-    const nextGroups = [...customGroups, ng];
-    const nextMap = { ...groupMap };
-    result.contactIds.forEach(id => { nextMap[id] = result.groupId; });
-    setCustomGroups(nextGroups); setGroupMap(nextMap); saveGroups(nextGroups); saveGroupMap(nextMap);
-  }, [customGroups, groupMap, saveGroups, saveGroupMap]);
+    // Re-fetch from DB so state holds real DB IDs (not optimistic local ones).
+    // This ensures the group map IDs match contacts on reload.
+    fetchContacts();
+  }, [customGroups, groupMap, saveGroups, saveGroupMap, fetchContacts]);
 
   /* ── Delete group ── */
   const handleDeleteGroup = (groupId: string) => {
@@ -1387,7 +1382,7 @@ export default function ContactsPage() {
       )}
 
       {colorPickerGroup && (() => {
-        const g = customGroups.find(g => g.id === colorPickerGroup); if (!g) return null;
+        const g = allGroups.find(g => g.id === colorPickerGroup); if (!g) return null;
         return <ColorPickerModal groupName={g.name} current={g.color}
           onSelect={(color) => commitColor(colorPickerGroup, color)}
           onClose={() => setColorPickerGroup(null)} />;

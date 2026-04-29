@@ -54,7 +54,6 @@ function saveLocalContacts(contacts: Contact[]) {
 export function useContacts() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isMockMode, setIsMockMode] = useState(false);
 
   const fetchContacts = useCallback(async () => {
@@ -70,6 +69,8 @@ export function useContacts() {
       if (error) throw error;
       setIsMockMode(false);
       setContacts(data || []);
+      // Keep localStorage cache in sync with DB so reload never shows stale/missing data
+      if (data && data.length > 0) saveLocalContacts(data);
     } catch {
       // On error: show cached localStorage data so real user data is never wiped.
       // Only fall back to mock data when truly anonymous (no email ever stored).
@@ -107,7 +108,13 @@ export function useContacts() {
         });
       }
 
-      const payload = { ...contact, created_by: userId };
+      // Strip relation/computed fields that are not columns in the contacts table.
+      // Passing e.g. company: 'string' (a JOIN relation, not a column) causes a
+      // PostgREST schema error that the catch block then silently swallows,
+      // saving contacts to localStorage only and losing them on reload.
+      const { company: _c, tags: _t, _count: _cnt, ...safeContact } =
+        contact as Record<string, unknown>;
+      const payload = { ...safeContact, created_by: userId };
 
       const { data, error } = await supabase
         .from('contacts')
@@ -178,7 +185,7 @@ export function useContacts() {
     });
   };
 
-  return { contacts, loading, error, fetchContacts, createContact, updateContact, deleteContact };
+  return { contacts, loading, fetchContacts, createContact, updateContact, deleteContact };
 }
 
 /* ═══════════════════════════════════════════════════════

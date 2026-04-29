@@ -22,6 +22,7 @@ export interface Company {
   description?: string;
   logo_url?: string;
   annual_revenue?: number;
+  email?: string;
   mobile?: string;
   manager_name?: string;
   email_note?: string;

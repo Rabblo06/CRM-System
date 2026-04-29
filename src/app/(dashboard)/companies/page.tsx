@@ -29,16 +29,21 @@ type Status = 'active' | 'prospect' | 'customer' | 'churned' | '';
 const ALL_COLUMNS = [
   { id: 'company',      label: 'Name of company' },
   { id: 'domain',       label: 'Domain' },
+  { id: 'email',        label: 'Email' },
+  { id: 'activities',   label: 'Activities timeline' },
+  { id: 'accounts',     label: 'Accounts' },
+  { id: 'deals',        label: 'Deals' },
+  { id: 'deals_value',  label: 'Deals value' },
   { id: 'phone',        label: 'Phone number' },
   { id: 'mobile',       label: 'Mobile no' },
   { id: 'address',      label: 'Address' },
   { id: 'manager_name', label: 'Name of manager' },
   { id: 'industry',     label: 'Industry' },
-  { id: 'deals',        label: 'Deals' },
-  { id: 'deals_value',  label: 'Deals value' },
+  { id: 'owner',        label: 'Owner' },
   { id: 'email_note',   label: 'Emailnote' },
   { id: 'next_step',    label: 'Next step' },
   { id: 'status',       label: 'Status' },
+  { id: 'priority',     label: 'Priority' },
 ] as const;
 type ColumnId = (typeof ALL_COLUMNS)[number]['id'];
 
@@ -133,6 +138,49 @@ function Pill({ label, color = '#0091AE' }: { label: string; color?: string }) {
       style={{ borderColor: `${color}40`, color, backgroundColor: `${color}10` }}>
       {label}
     </span>
+  );
+}
+
+/* ── Priority badge ─────────────────────────────────────────── */
+type Priority = 'high' | 'medium' | 'low' | '';
+const PRIORITY_CONFIG: Record<string, { label: string; badge: string }> = {
+  high:   { label: 'High',   badge: '#FF7A59' },
+  medium: { label: 'Medium', badge: '#3B82F6' },
+  low:    { label: 'Low',    badge: '#10B981' },
+};
+
+function PriorityBadge({ priority, onChange }: { priority: Priority; onChange?: (p: Priority) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+  const cfg = priority ? PRIORITY_CONFIG[priority] : null;
+  return (
+    <div ref={ref} className="relative">
+      <button onClick={() => onChange && setOpen(v => !v)}
+        className="inline-flex items-center px-3 py-1 rounded text-xs font-bold min-w-[64px] justify-center"
+        style={cfg ? { backgroundColor: cfg.badge, color: '#fff' } : { backgroundColor: '#F0F3F7', color: '#99ACC2' }}>
+        {cfg ? cfg.label : '—'}
+      </button>
+      {open && onChange && (
+        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[110px]">
+          <button onClick={() => { onChange(''); setOpen(false); }}
+            className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] text-[#99ACC2]">— None</button>
+          {(['high','medium','low'] as Priority[]).map(k => (
+            <button key={k} onClick={() => { onChange(k); setOpen(false); }}
+              className="w-full px-2 py-1.5 text-xs hover:bg-[#F6F9FC]">
+              <span className="flex-1 font-bold text-center py-0.5 rounded text-white text-xs block"
+                style={{ backgroundColor: PRIORITY_CONFIG[k].badge }}>
+                {PRIORITY_CONFIG[k].label}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -335,11 +383,12 @@ function InlineAddRow({ onSave, onCancel }: {
 
 /* ── Company Row ────────────────────────────────────────────── */
 function CompanyRow({
-  company, selected, onSelect, status, onStatusChange, onEdit, onDelete,
-  onMoveToGroup, allGroups, currentGroupId, visibleColumns, onFieldSave,
+  company, selected, onSelect, status, onStatusChange, priority, onPriorityChange,
+  onEdit, onDelete, onMoveToGroup, allGroups, currentGroupId, visibleColumns, onFieldSave,
 }: {
   company: Company; selected: boolean; onSelect: (id: string) => void;
   status: Status; onStatusChange: (id: string, s: Status) => void;
+  priority: Priority; onPriorityChange: (id: string, p: Priority) => void;
   onEdit: (c: Company) => void; onDelete: (id: string) => void;
   onMoveToGroup: (id: string, groupId: string) => void;
   allGroups: Group[]; currentGroupId: string;
@@ -347,15 +396,16 @@ function CompanyRow({
   onFieldSave: (id: string, field: string, value: string) => Promise<void>;
 }) {
   const vc = visibleColumns;
+  const cc = "border-r border-[#F0F3F7]";
   return (
     <tr className="border-b border-[#F0F3F7] hover:bg-[#F8FAFC] transition-colors group/row">
-      <td className="w-10 px-3 py-2.5">
+      <td className={`w-10 px-3 py-2.5 ${cc}`}>
         <input type="checkbox" checked={selected} onChange={() => onSelect(company.id)}
           className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
       </td>
 
       {/* Company name — always visible */}
-      <td className="px-3 py-2.5 min-w-[200px] sticky left-10 bg-inherit">
+      <td className={`px-3 py-2.5 min-w-[200px] sticky left-10 bg-inherit ${cc}`}>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
             style={{ backgroundColor: avatarColor(company.name || 'A') }}>
@@ -379,57 +429,83 @@ function CompanyRow({
       </td>
 
       {vc.has('domain') && (
-        <td className="px-3 py-2.5 min-w-[160px]">
+        <td className={`px-3 py-2.5 min-w-[160px] ${cc}`}>
           {company.domain ? (
             <a href={`https://${company.domain}`} target="_blank" rel="noopener noreferrer"
               className="text-xs hover:underline" style={{ color: '#0091AE' }}>{company.domain}</a>
           ) : <span className="text-xs text-[#B0C1D4]">—</span>}
         </td>
       )}
+      {vc.has('email') && (
+        <td className={`px-3 py-2.5 min-w-[180px] ${cc}`}>
+          <InlineCell value={(company as { email?: string }).email || ''} onSave={v => onFieldSave(company.id, 'email', v)} placeholder="Add email" />
+        </td>
+      )}
+      {vc.has('activities') && (
+        <td className={`px-3 py-2.5 w-[100px] ${cc}`}>
+          <div className="flex items-end gap-0.5">
+            {[false,false,false,false,false].map((_, i) => (
+              <div key={i} style={{ width: 4, height: 14, borderRadius: 2, backgroundColor: '#DFE3EB' }} />
+            ))}
+          </div>
+        </td>
+      )}
+      {vc.has('accounts') && (
+        <td className={`px-3 py-2.5 w-[80px] ${cc}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
+      )}
+      {vc.has('deals') && (
+        <td className={`px-3 py-2.5 w-[80px] ${cc}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
+      )}
+      {vc.has('deals_value') && (
+        <td className={`px-3 py-2.5 w-[100px] ${cc}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
+      )}
       {vc.has('phone') && (
-        <td className="px-3 py-2.5 min-w-[140px]">
+        <td className={`px-3 py-2.5 min-w-[140px] ${cc}`}>
           <InlineCell value={company.phone || ''} onSave={v => onFieldSave(company.id, 'phone', v)} placeholder="Add phone" />
         </td>
       )}
       {vc.has('mobile') && (
-        <td className="px-3 py-2.5 min-w-[140px]">
+        <td className={`px-3 py-2.5 min-w-[140px] ${cc}`}>
           <InlineCell value={company.mobile || ''} onSave={v => onFieldSave(company.id, 'mobile', v)} placeholder="Add mobile" />
         </td>
       )}
       {vc.has('address') && (
-        <td className="px-3 py-2.5 min-w-[160px]">
+        <td className={`px-3 py-2.5 min-w-[160px] ${cc}`}>
           <InlineCell value={company.address || ''} onSave={v => onFieldSave(company.id, 'address', v)} placeholder="Add address" />
         </td>
       )}
       {vc.has('manager_name') && (
-        <td className="px-3 py-2.5 min-w-[140px]">
+        <td className={`px-3 py-2.5 min-w-[140px] ${cc}`}>
           <InlineCell value={company.manager_name || ''} onSave={v => onFieldSave(company.id, 'manager_name', v)} placeholder="Add manager" />
         </td>
       )}
       {vc.has('industry') && (
-        <td className="px-3 py-2.5 min-w-[120px]">
-          <InlineCell value={company.industry || ''} onSave={v => onFieldSave(company.id, 'industry', v)} placeholder="Add industry" />
+        <td className={`px-3 py-2.5 min-w-[120px] ${cc}`}>
+          {company.industry ? <Pill label={company.industry} color="#0091AE" />
+            : <InlineCell value="" onSave={v => onFieldSave(company.id, 'industry', v)} placeholder="Add industry" />}
         </td>
       )}
-      {vc.has('deals') && (
-        <td className="px-3 py-2.5 w-[80px]"><span className="text-xs text-[#B0C1D4]">—</span></td>
-      )}
-      {vc.has('deals_value') && (
-        <td className="px-3 py-2.5 w-[100px]"><span className="text-xs text-[#B0C1D4]">—</span></td>
+      {vc.has('owner') && (
+        <td className={`px-3 py-2.5 min-w-[120px] ${cc}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
       )}
       {vc.has('email_note') && (
-        <td className="px-3 py-2.5 min-w-[160px]">
+        <td className={`px-3 py-2.5 min-w-[160px] ${cc}`}>
           <InlineCell value={company.email_note || ''} onSave={v => onFieldSave(company.id, 'email_note', v)} placeholder="Add email note" />
         </td>
       )}
       {vc.has('next_step') && (
-        <td className="px-3 py-2.5 min-w-[160px]">
+        <td className={`px-3 py-2.5 min-w-[160px] ${cc}`}>
           <InlineCell value={company.next_step || ''} onSave={v => onFieldSave(company.id, 'next_step', v)} placeholder="Add next step" />
         </td>
       )}
       {vc.has('status') && (
-        <td className="px-3 py-2.5 w-[110px]">
+        <td className={`px-3 py-2.5 w-[110px] ${cc}`}>
           <StatusBadge status={status} onChange={(s) => onStatusChange(company.id, s)} />
+        </td>
+      )}
+      {vc.has('priority') && (
+        <td className={`px-3 py-2.5 w-[110px] ${cc}`}>
+          <PriorityBadge priority={priority} onChange={(p) => onPriorityChange(company.id, p)} />
         </td>
       )}
     </tr>
@@ -439,7 +515,7 @@ function CompanyRow({
 /* ── Group Section ──────────────────────────────────────────── */
 function GroupSection({
   group, companies, collapsed, onToggleCollapse, selectedIds, onSelect, onSelectAll,
-  statuses, onStatusChange, onEdit, onDelete, onGroupAction,
+  statuses, onStatusChange, priorities, onPriorityChange, onEdit, onDelete, onGroupAction,
   onMoveToGroup, allGroups, addingToGroup, onStartAdd, onSaveAdd, onCancelAdd,
   triggerRename, onRenameComplete, visibleColumns, onToggleColumn, onFieldSave,
 }: {
@@ -448,6 +524,7 @@ function GroupSection({
   selectedIds: Set<string>; onSelect: (id: string) => void;
   onSelectAll: (gId: string, ids: string[]) => void;
   statuses: Record<string, Status>; onStatusChange: (id: string, s: Status) => void;
+  priorities: Record<string, Priority>; onPriorityChange: (id: string, p: Priority) => void;
   onEdit: (c: Company) => void; onDelete: (id: string) => void;
   onGroupAction: (action: string, groupId: string) => void;
   onMoveToGroup: (id: string, groupId: string) => void;
@@ -568,6 +645,7 @@ function GroupSection({
               <CompanyRow key={company.id} company={company}
                 selected={selectedIds.has(company.id)} onSelect={onSelect}
                 status={statuses[company.id] || ''} onStatusChange={onStatusChange}
+                priority={priorities[company.id] || ''} onPriorityChange={onPriorityChange}
                 onEdit={onEdit} onDelete={onDelete}
                 onMoveToGroup={onMoveToGroup} allGroups={allGroups} currentGroupId={group.id}
                 visibleColumns={visibleColumns} onFieldSave={onFieldSave}
@@ -617,6 +695,7 @@ export default function CompaniesPage() {
   const [statuses,        setStatuses]        = useState<Record<string, Status>>({});
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [visibleColumns,  setVisibleColumns]  = useState<Set<ColumnId>>(new Set(DEFAULT_VISIBLE));
+  const [priorities,      setPriorities]      = useState<Record<string, Priority>>({});
 
   const [search,          setSearch]          = useState('');
   const [selectedIds,     setSelectedIds]     = useState<Set<string>>(new Set());
@@ -649,6 +728,7 @@ export default function CompaniesPage() {
         setCollapsedGroups(new Set(JSON.parse(localStorage.getItem(storageKey('collapsed', email)) || '[]')));
         const savedCols = localStorage.getItem(storageKey('columns', email));
         if (savedCols) setVisibleColumns(new Set(JSON.parse(savedCols) as ColumnId[]));
+        setPriorities(JSON.parse(localStorage.getItem(storageKey('priorities', email)) || '{}'));
       } catch { /* ignore */ }
     };
 
@@ -670,8 +750,9 @@ export default function CompaniesPage() {
   const saveGroups    = useCallback((g: Group[])                => { if (userEmail) localStorage.setItem(storageKey('groups',    userEmail), JSON.stringify(g)); }, [userEmail]);
   const saveMap       = useCallback((m: Record<string, string>) => { if (userEmail) localStorage.setItem(storageKey('map',       userEmail), JSON.stringify(m)); }, [userEmail]);
   const saveStatuses  = useCallback((s: Record<string, Status>) => { if (userEmail) localStorage.setItem(storageKey('statuses',  userEmail), JSON.stringify(s)); }, [userEmail]);
-  const saveCollapsed = useCallback((s: Set<string>)            => { if (userEmail) localStorage.setItem(storageKey('collapsed', userEmail), JSON.stringify([...s])); }, [userEmail]);
-  const saveColumns   = useCallback((s: Set<ColumnId>)          => { if (userEmail) localStorage.setItem(storageKey('columns',   userEmail), JSON.stringify([...s])); }, [userEmail]);
+  const saveCollapsed   = useCallback((s: Set<string>)              => { if (userEmail) localStorage.setItem(storageKey('collapsed',  userEmail), JSON.stringify([...s])); }, [userEmail]);
+  const saveColumns     = useCallback((s: Set<ColumnId>)            => { if (userEmail) localStorage.setItem(storageKey('columns',    userEmail), JSON.stringify([...s])); }, [userEmail]);
+  const savePriorities  = useCallback((p: Record<string, Priority>) => { if (userEmail) localStorage.setItem(storageKey('priorities', userEmail), JSON.stringify(p)); }, [userEmail]);
   const saveFgo       = useCallback((o: Record<string, { name?: string; color?: string }>) => { if (userEmail) localStorage.setItem(storageKey('fgo', userEmail), JSON.stringify(o)); }, [userEmail]);
 
   const handleToggleColumn = useCallback((id: ColumnId) => {
@@ -686,6 +767,10 @@ export default function CompaniesPage() {
   const handleFieldSave = useCallback(async (id: string, field: string, value: string) => {
     await updateCompany(id, { [field]: value } as Parameters<typeof updateCompany>[1]);
   }, [updateCompany]);
+
+  const handlePriorityChange = (id: string, p: Priority) => {
+    const next = { ...priorities, [id]: p }; setPriorities(next); savePriorities(next);
+  };
 
   const allGroups = useMemo(() => [
     {
@@ -945,6 +1030,7 @@ export default function CompaniesPage() {
             onToggleCollapse={toggleCollapse}
             selectedIds={selectedIds} onSelect={toggleSelect} onSelectAll={handleSelectAll}
             statuses={statuses} onStatusChange={handleStatusChange}
+            priorities={priorities} onPriorityChange={handlePriorityChange}
             onEdit={openEdit} onDelete={handleDelete}
             onGroupAction={handleGroupAction}
             onMoveToGroup={handleMoveToGroup}

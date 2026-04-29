@@ -21,6 +21,37 @@ interface ImportWizardProps {
 
 type Step = 1 | 2 | 3 | 4;
 
+/* ── Enum normalizers — map any CSV value to a valid DB enum ── */
+const LEAD_STATUS_VALID = new Set(['new','contacted','qualified','unqualified','converted']);
+const LEAD_STATUS_FALLBACKS: Record<string, string> = {
+  active: 'new', open: 'new', fresh: 'new', new: 'new',
+  'in progress': 'contacted', 'in-progress': 'contacted', reached: 'contacted', called: 'contacted',
+  won: 'converted', closed: 'converted', converted: 'converted',
+  lost: 'unqualified', dead: 'unqualified', rejected: 'unqualified', unqualified: 'unqualified',
+  qualified: 'qualified', interested: 'qualified',
+};
+function normalizeLeadStatus(v: string): string {
+  const lower = v.toLowerCase().trim();
+  if (LEAD_STATUS_VALID.has(lower)) return lower;
+  return LEAD_STATUS_FALLBACKS[lower] ?? 'new';
+}
+
+const LIFECYCLE_VALID = new Set(['lead','marketing_qualified','sales_qualified','opportunity','customer','evangelist']);
+const LIFECYCLE_FALLBACKS: Record<string, string> = {
+  lead: 'lead', prospect: 'lead', subscriber: 'lead',
+  mql: 'marketing_qualified', 'marketing qualified': 'marketing_qualified',
+  sql: 'sales_qualified', 'sales qualified': 'sales_qualified',
+  opportunity: 'opportunity', opp: 'opportunity',
+  customer: 'customer', client: 'customer',
+  evangelist: 'evangelist', advocate: 'evangelist',
+};
+function normalizeLifecycleStage(v: string): string {
+  const lower = v.toLowerCase().replace(/[-_]+/g, ' ').trim();
+  const underscored = lower.replace(/\s+/g, '_');
+  if (LIFECYCLE_VALID.has(underscored)) return underscored;
+  return LIFECYCLE_FALLBACKS[lower] ?? 'lead';
+}
+
 /* ── Field definitions shown in the mapping dropdown ── */
 const CONTACT_FIELDS = [
   { value: '__skip__',         label: "Don't import" },
@@ -305,14 +336,28 @@ export default function ImportWizard({
       if (!contact.first_name) contact.first_name = '';
       if (!contact.last_name) contact.last_name = '';
 
+      // ── Build a clean DB payload ──────────────────────────────
+      // 'company' from CSV is a text name, not a UUID — the contacts
+      // table only has company_id (FK). Passing company: 'string'
+      // causes a PostgREST schema error and silently falls back to
+      // localStorage-only, making contacts disappear on reload.
+      const dbPayload: Record<string, string> = {};
+      for (const [k, v] of Object.entries(contact)) {
+        if (!v) continue; // skip empty strings
+        if (k === 'company') continue; // relation — no text column in contacts table
+        if (k === 'lead_status') { dbPayload[k] = normalizeLeadStatus(v); continue; }
+        if (k === 'lifecycle_stage') { dbPayload[k] = normalizeLifecycleStage(v); continue; }
+        dbPayload[k] = v;
+      }
+
       // Duplicate detection by email
-      const emailKey = contact.email?.toLowerCase();
+      const emailKey = dbPayload.email?.toLowerCase();
       const existingId = emailKey ? emailIndex.get(emailKey) : undefined;
 
       if (existingId) {
         if (matchMode === 'skip') { skipped++; continue; }
         if (matchMode === 'update' && updateContact) {
-          try { await updateContact(existingId, contact); importedIds.push(existingId); success++; }
+          try { await updateContact(existingId, dbPayload); importedIds.push(existingId); success++; }
           catch { failed++; }
           if (mountedRef.current) setProgress(Math.round(((i + 1) / rows.length) * 100));
           continue;
@@ -320,7 +365,7 @@ export default function ImportWizard({
       }
 
       try {
-        const res = await createContact(contact);
+        const res = await createContact(dbPayload);
         if (res?.data?.id) {
           importedIds.push(res.data.id);
           if (emailKey) emailIndex.set(emailKey, res.data.id);
