@@ -25,14 +25,18 @@ const COMPANY_FIELDS = [
   { value: '__skip__',  label: "Don't import" },
   { value: 'name',      label: 'Company Name' },
   { value: 'domain',    label: 'Domain / Website' },
-  { value: 'phone',     label: 'Phone / Mobile' },
-  { value: 'industry',  label: 'Industry / Sector' },
-  { value: 'size',      label: 'Company Size / Employees' },
-  { value: 'city',      label: 'City' },
-  { value: 'country',   label: 'Country' },
-  { value: 'address',   label: 'Address' },
-  { value: 'website',   label: 'Website URL' },
-  { value: 'description', label: 'Description / Notes / Comments' },
+  { value: 'phone',        label: 'Phone number' },
+  { value: 'mobile',       label: 'Mobile no' },
+  { value: 'industry',     label: 'Industry / Sector' },
+  { value: 'size',         label: 'Company Size / Employees' },
+  { value: 'city',         label: 'City' },
+  { value: 'country',      label: 'Country' },
+  { value: 'address',      label: 'Address' },
+  { value: 'website',      label: 'Website URL' },
+  { value: 'description',  label: 'Description / Notes' },
+  { value: 'manager_name', label: 'Name of manager' },
+  { value: 'email_note',   label: 'Emailnote' },
+  { value: 'next_step',    label: 'Next step' },
 ];
 
 function normalizeKey(s: string): string {
@@ -72,11 +76,13 @@ const AUTO_MAP_NORM: Record<string, string> = {
   phonenumber: 'phone',
   telephone: 'phone',
   telno: 'phone',
-  mobile: 'phone',
-  mobileno: 'phone',
-  mobilenumber: 'phone',
   contactno: 'phone',
   contactnumber: 'phone',
+
+  // Mobile
+  mobile: 'mobile',
+  mobileno: 'mobile',
+  mobilenumber: 'mobile',
 
   // Industry
   industry: 'industry',
@@ -107,13 +113,21 @@ const AUTO_MAP_NORM: Record<string, string> = {
   comments: 'description',
   comment: 'description',
   description: 'description',
-  nextstep: 'description',
-  nextaction: 'description',
+
+  // Manager name
+  nameofmanager: 'manager_name',
+  manager: 'manager_name',
+  managername: 'manager_name',
+
+  // Email note
+  emailnote: 'email_note',
+
+  // Next step
+  nextstep: 'next_step',
+  nextaction: 'next_step',
 
   // Skip-worthy fields
   owner: '__skip__',
-  nameofmanager: '__skip__',
-  manager: '__skip__',
   deals: '__skip__',
   dealsvalue: '__skip__',
   status: '__skip__',

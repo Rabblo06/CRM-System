@@ -44,15 +44,20 @@ const PRIORITY_CONFIG: Record<string, { label: string; bg: string; text: string;
 };
 
 const ALL_COLUMNS = [
-  { id: 'contact',     label: 'Contact' },
-  { id: 'email',       label: 'Email' },
-  { id: 'activities',  label: 'Activities timeline' },
-  { id: 'accounts',    label: 'Accounts' },
-  { id: 'deals',       label: 'Deals' },
-  { id: 'deals_value', label: 'Deals value' },
-  { id: 'phone',       label: 'Phone' },
-  { id: 'title',       label: 'Title' },
-  { id: 'priority',    label: 'Priority' },
+  { id: 'contact',      label: 'Contact' },
+  { id: 'email',        label: 'Email' },
+  { id: 'activities',   label: 'Activities timeline' },
+  { id: 'accounts',     label: 'Accounts' },
+  { id: 'deals',        label: 'Deals' },
+  { id: 'deals_value',  label: 'Deals value' },
+  { id: 'phone',        label: 'Phone number' },
+  { id: 'mobile',       label: 'Mobile no' },
+  { id: 'title',        label: 'Position' },
+  { id: 'address',      label: 'Address' },
+  { id: 'manager_name', label: 'Name of manager' },
+  { id: 'email_note',   label: 'Emailnote' },
+  { id: 'next_step',    label: 'Next step' },
+  { id: 'priority',     label: 'Priority' },
 ] as const;
 
 type ColumnId = (typeof ALL_COLUMNS)[number]['id'];
@@ -447,10 +452,39 @@ function InlineAddRow({ onSave, onCancel }: {
   );
 }
 
+/* ── Inline editable text cell ─────────────────────────────── */
+function InlineCell({ value, onSave, placeholder = 'Add…' }: {
+  value: string; onSave: (v: string) => void; placeholder?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(value);
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (editing) ref.current?.focus(); }, [editing]);
+  useEffect(() => { setVal(value); }, [value]);
+  const commit = () => { setEditing(false); if (val !== value) onSave(val.trim()); };
+  if (editing) {
+    return (
+      <input ref={ref} value={val}
+        onChange={e => setVal(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setVal(value); setEditing(false); } }}
+        onBlur={commit}
+        className="w-full text-xs px-1 py-0.5 border border-[#0091AE] rounded outline-none text-[#2D3E50] bg-white"
+      />
+    );
+  }
+  return (
+    <button onClick={() => setEditing(true)} className="text-xs text-left w-full truncate max-w-[160px]">
+      {val
+        ? <span className="text-[#2D3E50]">{val}</span>
+        : <span className="opacity-0 group-hover/row:opacity-60 text-[#B0C1D4]">{placeholder}</span>}
+    </button>
+  );
+}
+
 /* ── Contact Row ────────────────────────────────────────────── */
 function ContactRow({
   contact, selected, onSelect, priority, onPriorityChange,
-  onView, onEdit, onDelete, onEmailSave, onMoveToGroup, allGroups, currentGroupId, visibleColumns,
+  onView, onEdit, onDelete, onEmailSave, onFieldSave, onMoveToGroup, allGroups, currentGroupId, visibleColumns,
 }: {
   contact: Contact;
   selected: boolean;
@@ -461,6 +495,7 @@ function ContactRow({
   onEdit: (c: Contact) => void;
   onDelete: (id: string) => void;
   onEmailSave: (id: string, email: string) => Promise<void>;
+  onFieldSave: (id: string, field: string, value: string) => Promise<void>;
   onMoveToGroup: (contactId: string, targetGroupId: string) => void;
   allGroups: Group[];
   currentGroupId: string;
@@ -541,7 +576,39 @@ function ContactRow({
       )}
       {vc.has('title') && (
         <td className="px-3 py-2.5 min-w-[120px]">
-          {contact.job_title ? <Pill label={contact.job_title} color="#8B5CF6" /> : <span className="text-xs text-[#B0C1D4]">—</span>}
+          <InlineCell value={contact.job_title || ''} onSave={v => onFieldSave(contact.id, 'job_title', v)} placeholder="Add position" />
+        </td>
+      )}
+      {vc.has('mobile') && (
+        <td className="px-3 py-2.5 min-w-[140px]">
+          {contact.mobile ? (
+            <span className="flex items-center gap-1.5 text-xs text-[#2D3E50]">
+              <span>{getPhoneFlag(contact.mobile)}</span>
+              <InlineCell value={contact.mobile} onSave={v => onFieldSave(contact.id, 'mobile', v)} placeholder="Add mobile" />
+            </span>
+          ) : (
+            <InlineCell value="" onSave={v => onFieldSave(contact.id, 'mobile', v)} placeholder="Add mobile" />
+          )}
+        </td>
+      )}
+      {vc.has('address') && (
+        <td className="px-3 py-2.5 min-w-[160px]">
+          <InlineCell value={contact.address || ''} onSave={v => onFieldSave(contact.id, 'address', v)} placeholder="Add address" />
+        </td>
+      )}
+      {vc.has('manager_name') && (
+        <td className="px-3 py-2.5 min-w-[140px]">
+          <InlineCell value={contact.manager_name || ''} onSave={v => onFieldSave(contact.id, 'manager_name', v)} placeholder="Add manager" />
+        </td>
+      )}
+      {vc.has('email_note') && (
+        <td className="px-3 py-2.5 min-w-[160px]">
+          <InlineCell value={contact.email_note || ''} onSave={v => onFieldSave(contact.id, 'email_note', v)} placeholder="Add email note" />
+        </td>
+      )}
+      {vc.has('next_step') && (
+        <td className="px-3 py-2.5 min-w-[160px]">
+          <InlineCell value={contact.next_step || ''} onSave={v => onFieldSave(contact.id, 'next_step', v)} placeholder="Add next step" />
         </td>
       )}
       {vc.has('priority') && (
@@ -559,7 +626,7 @@ function GroupSection({
   selectedIds, onSelect, onSelectAll,
   priorities, onPriorityChange,
   onView, onEdit, onDelete, onGroupAction,
-  onEmailSave, onMoveToGroup, allGroups,
+  onEmailSave, onFieldSave, onMoveToGroup, allGroups,
   addingToGroup, onStartAdd, onSaveAdd, onCancelAdd,
   triggerRename, onRenameComplete,
   visibleColumns, onToggleColumn,
@@ -578,6 +645,7 @@ function GroupSection({
   onDelete: (id: string) => void;
   onGroupAction: (action: string, groupId: string) => void;
   onEmailSave: (id: string, email: string) => Promise<void>;
+  onFieldSave: (id: string, field: string, value: string) => Promise<void>;
   onMoveToGroup: (contactId: string, targetGroupId: string) => void;
   allGroups: Group[];
   addingToGroup: string | null;
@@ -703,6 +771,7 @@ function GroupSection({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onEmailSave={onEmailSave}
+                onFieldSave={onFieldSave}
                 onMoveToGroup={onMoveToGroup}
                 allGroups={allGroups}
                 currentGroupId={group.id}
@@ -897,6 +966,11 @@ export default function ContactsPage() {
   /* ── Email save ── */
   const handleEmailSave = useCallback(async (id: string, email: string) => {
     await updateContact(id, { email } as Parameters<typeof updateContact>[1]);
+  }, [updateContact]);
+
+  /* ── Generic field save (inline cell edits) ── */
+  const handleFieldSave = useCallback(async (id: string, field: string, value: string) => {
+    await updateContact(id, { [field]: value } as Parameters<typeof updateContact>[1]);
   }, [updateContact]);
 
   /* ── Move contact between groups ── */
@@ -1272,6 +1346,7 @@ export default function ContactsPage() {
               onDelete={handleDeleteContact}
               onGroupAction={handleGroupAction}
               onEmailSave={handleEmailSave}
+              onFieldSave={handleFieldSave}
               onMoveToGroup={handleMoveToGroup}
               allGroups={allGroups}
               addingToGroup={addingToGroup}

@@ -28,7 +28,8 @@ const CONTACT_FIELDS = [
   { value: 'first_name',       label: 'First Name' },
   { value: 'last_name',        label: 'Last Name' },
   { value: 'email',            label: 'Email' },
-  { value: 'phone',            label: 'Phone / Mobile' },
+  { value: 'phone',            label: 'Phone number' },
+  { value: 'mobile',           label: 'Mobile no' },
   { value: 'job_title',        label: 'Title / Position / Role' },
   { value: 'department',       label: 'Department' },
   { value: 'company',          label: 'Company / Account' },
@@ -38,7 +39,10 @@ const CONTACT_FIELDS = [
   { value: 'lead_status',      label: 'Lead Status / Status' },
   { value: 'lifecycle_stage',  label: 'Lifecycle Stage' },
   { value: 'source',           label: 'Lead Source' },
-  { value: 'notes',            label: 'Notes / Comments / Next step' },
+  { value: 'notes',            label: 'Notes / Comments' },
+  { value: 'manager_name',     label: 'Name of manager' },
+  { value: 'email_note',       label: 'Emailnote' },
+  { value: 'next_step',        label: 'Next step' },
   { value: 'linkedin_url',     label: 'LinkedIn URL' },
 ];
 
@@ -77,7 +81,6 @@ const AUTO_MAP_NORM: Record<string, string> = {
   emailaddress: 'email',
   primaryemail: 'email',
   workemail: 'email',
-  emailnote: 'email',
   emailid: 'email',
 
   // Phone
@@ -87,14 +90,16 @@ const AUTO_MAP_NORM: Record<string, string> = {
   telephone: 'phone',
   telno: 'phone',
   telnumber: 'phone',
-  mobile: 'phone',
-  mobileno: 'phone',
-  mobilenumber: 'phone',
-  cellphone: 'phone',
-  cell: 'phone',
   workphone: 'phone',
   contactno: 'phone',
   contactnumber: 'phone',
+
+  // Mobile
+  mobile: 'mobile',
+  mobileno: 'mobile',
+  mobilenumber: 'mobile',
+  cellphone: 'mobile',
+  cell: 'mobile',
 
   // Company / Account
   company: 'company',
@@ -136,17 +141,24 @@ const AUTO_MAP_NORM: Record<string, string> = {
   country: 'country',
   nation: 'country',
 
-  // Notes / comments / next step
+  // Notes / comments
   notes: 'notes',
   note: 'notes',
   comments: 'notes',
   comment: 'notes',
   description: 'notes',
-  nextstep: 'notes',
-  nextaction: 'notes',
-  nameofmanager: 'notes',
-  manager: 'notes',
-  managername: 'notes',
+
+  // Manager name
+  nameofmanager: 'manager_name',
+  manager: 'manager_name',
+  managername: 'manager_name',
+
+  // Email note
+  emailnote: 'email_note',
+
+  // Next step
+  nextstep: 'next_step',
+  nextaction: 'next_step',
 
   // Source
   source: 'source',

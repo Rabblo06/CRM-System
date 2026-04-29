@@ -22,6 +22,10 @@ export interface Company {
   description?: string;
   logo_url?: string;
   annual_revenue?: number;
+  mobile?: string;
+  manager_name?: string;
+  email_note?: string;
+  next_step?: string;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -51,6 +55,9 @@ export interface Contact {
   city?: string;
   country?: string;
   notes?: string;
+  manager_name?: string;
+  email_note?: string;
+  next_step?: string;
   avatar_url?: string;
   is_active: boolean;
   last_contacted_at?: string;
