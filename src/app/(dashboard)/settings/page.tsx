@@ -141,9 +141,6 @@ function SettingsPageInner() {
     setCountryCode('+1');
   };
   // Gmail connect flow
-  const [showGmailConfirmModal, setShowGmailConfirmModal] = useState(false);
-  const [gmailImportContacts, setGmailImportContacts] = useState(true);
-  const [gmailEnableInbox, setGmailEnableInbox] = useState(true);
   const [showGmailModal, setShowGmailModal] = useState(false);
   const [gmailSyncing, setGmailSyncing] = useState(false);
   type SyncStatus = 'idle' | 'syncing' | 'done' | 'error';
@@ -231,28 +228,15 @@ function SettingsPageInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleGmailConnectContinue = () => {
-    // Save prefs to localStorage before OAuth
-    try {
-      localStorage.setItem('crm_gmail_prefs', JSON.stringify({
-        import_contacts: gmailImportContacts,
-        enable_inbox: gmailEnableInbox,
-      }));
-    } catch {}
-    setShowGmailConfirmModal(false);
-    setShowGmailModal(true);
-  };
-
-  const handleGmailOAuthSuccess = async (email: string) => {
+  const handleGmailOAuthSuccess = async (email: string, _name: string, opts: { importContacts: boolean; enableInbox: boolean }) => {
     connectGmail(email);
     setShowGmailModal(false);
-    const prefs = (() => { try { return JSON.parse(localStorage.getItem('crm_gmail_prefs') || '{}'); } catch { return {}; } })();
-    if (prefs.import_contacts) {
+    if (opts.importContacts) {
       setGmailSyncing(true);
       try { await fetch('/api/google/contacts', { method: 'POST' }); } catch {}
       setGmailSyncing(false);
     }
-    if (prefs.enable_inbox !== false) {
+    if (opts.enableInbox) {
       handleGmailSyncNow();
     }
   };
@@ -368,47 +352,89 @@ function SettingsPageInner() {
       }));
     } catch {}
     setShowOutlookConfirmModal(false);
-    const popup = window.open('/api/outlook/auth', 'outlook_oauth', 'width=520,height=640,left=200,top=100');
+
+    const width = 520, height = 640;
+    const left = Math.round(window.screenX + (window.outerWidth - width) / 2);
+    const top = Math.round(window.screenY + (window.outerHeight - height) / 2);
+    const popup = window.open('/api/outlook/auth', 'outlook_oauth', `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`);
+
     const channel = new BroadcastChannel('outlook_auth');
+    let handled = false;
+
+    const onSuccess = async (email: string) => {
+      setOutlookConnected(true);
+      setOutlookEmail(email);
+      try {
+        localStorage.setItem('crm_outlook_prefs', JSON.stringify({ connected: true, email, import_contacts: outlookImportContacts, enable_inbox: outlookEnableInbox }));
+      } catch {}
+      if (outlookImportContacts) {
+        setOutlookSyncing(true);
+        try {
+          const { createBrowserClient } = await import('@supabase/ssr');
+          const sb = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+          );
+          const { data: { session } } = await sb.auth.getSession();
+          const token = session?.access_token;
+          if (token) {
+            await new Promise<void>((resolve) => {
+              const es = new EventSource(`/api/outlook/contacts?token=${token}`);
+              es.onmessage = (ev) => {
+                try {
+                  const msg = JSON.parse(ev.data);
+                  if (msg.type === 'complete' || msg.type === 'error') { es.close(); resolve(); }
+                } catch {}
+              };
+              es.onerror = () => { es.close(); resolve(); };
+            });
+          }
+        } catch {}
+        setOutlookSyncing(false);
+      }
+      if (outlookEnableInbox) {
+        handleOutlookSyncNow();
+      }
+    };
+
     channel.onmessage = async (e) => {
+      if (handled) return;
+      handled = true;
       channel.close();
       popup?.close();
       if (e.data?.type === 'success') {
-        const email = e.data.email || '';
-        setOutlookConnected(true);
-        setOutlookEmail(email);
-        try {
-          const prefs = JSON.parse(localStorage.getItem('crm_outlook_prefs') || '{}');
-          localStorage.setItem('crm_outlook_prefs', JSON.stringify({ ...prefs, connected: true, email }));
-        } catch {}
-        // Import contacts if opted in
-        if (outlookImportContacts) {
-          setOutlookSyncing(true);
-          try {
-            const { createBrowserClient } = await import('@supabase/ssr');
-            const sb = createBrowserClient(
-              process.env.NEXT_PUBLIC_SUPABASE_URL!,
-              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-            );
-            const { data: { session } } = await sb.auth.getSession();
-            const token = session?.access_token;
-            if (token) {
-              await new Promise<void>((resolve) => {
-                const es = new EventSource(`/api/outlook/contacts?token=${token}`);
-                es.onmessage = (ev) => {
-                  try {
-                    const msg = JSON.parse(ev.data);
-                    if (msg.type === 'complete' || msg.type === 'error') { es.close(); resolve(); }
-                  } catch {}
-                };
-                es.onerror = () => { es.close(); resolve(); };
-              });
-            }
-          } catch {}
-          setOutlookSyncing(false);
-        }
+        await onSuccess(e.data.email || '');
       }
     };
+
+    // Fallback: when popup closes without BroadcastChannel, check DB
+    const checkClosed = setInterval(() => {
+      try {
+        if (popup?.closed) {
+          clearInterval(checkClosed);
+          channel.close();
+          if (!handled) {
+            handled = true;
+            (async () => {
+              try {
+                const { createBrowserClient } = await import('@supabase/ssr');
+                const sb = createBrowserClient(
+                  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+                );
+                const { data: { user } } = await sb.auth.getUser();
+                if (user) {
+                  const { data } = await sb.from('outlook_tokens').select('email').eq('user_id', user.id).maybeSingle();
+                  if (data) {
+                    await onSuccess(data.email || '');
+                  }
+                }
+              } catch {}
+            })();
+          }
+        }
+      } catch {}
+    }, 500);
   };
 
   const handleDisconnectOutlook = async () => {
@@ -583,7 +609,7 @@ function SettingsPageInner() {
                         <Button variant="outline" size="sm" onClick={() => setShowGmailDisconnectModal(true)} className="text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
                       </div>
                     ) : (
-                      <Button variant="outline" size="sm" onClick={() => setShowGmailConfirmModal(true)}>Connect</Button>
+                      <Button variant="outline" size="sm" onClick={() => setShowGmailModal(true)}>Connect</Button>
                     )}
                   </div>
                   {gmailConnected && (gmailSyncStatus !== 'idle' || gmailLastSync) && (
@@ -684,69 +710,9 @@ function SettingsPageInner() {
             {/* Gmail OAuth popup modal */}
             {showGmailModal && (
               <GmailSyncModal
-                onConnected={(email, _name) => handleGmailOAuthSuccess(email)}
+                onConnected={handleGmailOAuthSuccess}
                 onClose={() => setShowGmailModal(false)}
               />
-            )}
-
-            {/* Gmail Connect confirmation modal */}
-            {showGmailConfirmModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setShowGmailConfirmModal(false); }}>
-                <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden" style={{ border: '1px solid #DFE3EB' }}>
-                  <div className="flex items-center justify-between px-5 py-3.5" style={{ backgroundColor: '#EA4335' }}>
-                    <div className="flex items-center gap-2.5">
-                      <svg width="18" height="18" viewBox="0 0 48 48">
-                        <path d="M4.5 39h7V23.25L2 17.5V37a2 2 0 002 2h.5z" fill="#fff"/>
-                        <path d="M36.5 39H44a2 2 0 002-2V17.5l-9.5 5.75z" fill="#fff"/>
-                        <path d="M36.5 9L24 18.5 11.5 9 2 15.5l9.5 5.75v14.75h15V21.25L36.5 15.5z" fill="#fff"/>
-                        <path d="M11.5 9H36.5L24 18.5 11.5 9z" fill="#ffcdd2"/>
-                      </svg>
-                      <h3 className="text-sm font-semibold text-white">Connect Gmail</h3>
-                    </div>
-                    <button onClick={() => setShowGmailConfirmModal(false)} className="text-white/70 hover:text-white"><X className="w-4 h-4" /></button>
-                  </div>
-                  <div className="p-5 space-y-4">
-                    <p className="text-xs" style={{ color: '#516F90' }}>
-                      Choose what to enable when connecting your Gmail account:
-                    </p>
-                    <div className="space-y-3">
-                      <label className="flex items-start gap-3 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          checked={gmailImportContacts}
-                          onChange={e => setGmailImportContacts(e.target.checked)}
-                          className="mt-0.5 w-4 h-4 rounded accent-[#FF7A59] flex-shrink-0"
-                        />
-                        <div>
-                          <p className="text-xs font-semibold" style={{ color: '#2D3E50' }}>Import contacts from Google Contacts</p>
-                          <p className="text-xs mt-0.5" style={{ color: '#7C98B6' }}>Sync your Google Contacts into the CRM as leads. Existing contacts won&apos;t be duplicated.</p>
-                        </div>
-                      </label>
-                      <label className="flex items-start gap-3 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          checked={gmailEnableInbox}
-                          onChange={e => setGmailEnableInbox(e.target.checked)}
-                          className="mt-0.5 w-4 h-4 rounded accent-[#FF7A59] flex-shrink-0"
-                        />
-                        <div>
-                          <p className="text-xs font-semibold" style={{ color: '#2D3E50' }}>Enable Inbox feature</p>
-                          <p className="text-xs mt-0.5" style={{ color: '#7C98B6' }}>Access your Gmail inbox directly inside the CRM to send, receive and log emails.</p>
-                        </div>
-                      </label>
-                    </div>
-                    <div className="p-3 rounded-lg border text-xs" style={{ borderColor: '#DFE3EB', color: '#7C98B6', backgroundColor: '#F6F9FC' }}>
-                      We only use your Google data to power these features. We never sell or share your data with third parties.
-                    </div>
-                  </div>
-                  <div className="px-5 py-3.5 border-t flex items-center justify-end gap-2" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
-                    <Button variant="outline" size="sm" onClick={() => setShowGmailConfirmModal(false)}>Cancel</Button>
-                    <Button size="sm" style={{ backgroundColor: '#EA4335', color: '#fff' }} onClick={handleGmailConnectContinue}>
-                      Continue to Google
-                    </Button>
-                  </div>
-                </div>
-              </div>
             )}
 
             {/* Gmail Disconnect confirmation modal */}

@@ -24,6 +24,7 @@ type Step = 1 | 2 | 3 | 4;
 const COMPANY_FIELDS = [
   { value: '__skip__',  label: "Don't import" },
   { value: 'name',      label: 'Company Name' },
+  { value: 'email',     label: 'Email' },
   { value: 'domain',    label: 'Domain / Website' },
   { value: 'phone',        label: 'Phone number' },
   { value: 'mobile',       label: 'Mobile no' },
@@ -59,6 +60,13 @@ const AUTO_MAP_NORM: Record<string, string> = {
   firm: 'name',
   business: 'name',
   businessname: 'name',
+
+  // Email
+  email: 'email',
+  companyemail: 'email',
+  contactemail: 'email',
+  emailaddress: 'email',
+  mail: 'email',
 
   // Domain
   domain: 'domain',

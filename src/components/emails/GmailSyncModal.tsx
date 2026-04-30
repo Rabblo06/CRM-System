@@ -5,7 +5,7 @@ import { X, Link2, Shield, Zap, AlertCircle } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 
 interface GmailSyncModalProps {
-  onConnected: (email: string, name: string) => void;
+  onConnected: (email: string, name: string, opts: { importContacts: boolean; enableInbox: boolean }) => void;
   onClose: () => void;
 }
 
@@ -57,6 +57,8 @@ export function GmailSyncModal({ onConnected, onClose }: GmailSyncModalProps) {
   const [dotIndex, setDotIndex] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
   const [popupRef, setPopupRef] = useState<Window | null>(null);
+  const [importContacts, setImportContacts] = useState(true);
+  const [enableInbox, setEnableInbox] = useState(true);
 
   // Animate connecting dots
   useEffect(() => {
@@ -73,7 +75,7 @@ export function GmailSyncModal({ onConnected, onClose }: GmailSyncModalProps) {
       bc.close();
       try { popupRef?.close(); } catch {}
       if (event.data?.type === 'gmail_auth_success') {
-        onConnected(event.data.email, event.data.name || '');
+        onConnected(event.data.email, event.data.name || '', { importContacts, enableInbox });
         onClose();
       } else if (event.data?.type === 'gmail_auth_error') {
         setErrorMsg(event.data.error || 'Authentication failed');
@@ -174,6 +176,34 @@ export function GmailSyncModal({ onConnected, onClose }: GmailSyncModalProps) {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Options */}
+            <div className="mt-4 space-y-2.5">
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={importContacts}
+                  onChange={e => setImportContacts(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded accent-[#FF7A59] flex-shrink-0"
+                />
+                <div>
+                  <p className="text-xs font-semibold text-[#2D3E50]">Import contacts from Google</p>
+                  <p className="text-xs text-[#7C98B6]">Sync Google Contacts into CRM. No duplicates.</p>
+                </div>
+              </label>
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={enableInbox}
+                  onChange={e => setEnableInbox(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded accent-[#FF7A59] flex-shrink-0"
+                />
+                <div>
+                  <p className="text-xs font-semibold text-[#2D3E50]">Enable inbox sync</p>
+                  <p className="text-xs text-[#7C98B6]">Access your Gmail inbox inside CRM.</p>
+                </div>
+              </label>
             </div>
 
             <button
