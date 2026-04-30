@@ -168,6 +168,7 @@ function SettingsPageInner() {
   const [outlookEmail, setOutlookEmail] = useState('');
   const [showOutlookDisconnectModal, setShowOutlookDisconnectModal] = useState(false);
   const [outlookSyncing, setOutlookSyncing] = useState(false);
+  const [outlookOAuthError, setOutlookOAuthError] = useState('');
 
   const { isConnected: gmailConnected, gmailEmail, connectGmail, disconnectGmail } = useEmailSync();
 
@@ -399,22 +400,30 @@ function SettingsPageInner() {
 
     channel.onmessage = async (e) => {
       if (handled) return;
-      handled = true;
       channel.close();
       popup?.close();
       if (e.data?.type === 'success') {
+        handled = true;
+        setOutlookOAuthError('');
         await onSuccess(e.data.email || '');
+      } else if (e.data?.type === 'error') {
+        // Show error but don't mark handled — popup-closed DB check will confirm
+        setOutlookOAuthError(
+          e.data.error === 'access_denied' ? 'Access was denied. Please try again and approve the permissions.'
+          : e.data.error === 'token_exchange_failed' ? 'Could not exchange the auth code. Check your Microsoft app credentials.'
+          : e.data.error ? `Connection failed: ${e.data.error}`
+          : 'Connection failed. Please try again.'
+        );
       }
     };
 
-    // Fallback: when popup closes without BroadcastChannel, check DB
+    // Always check DB when popup closes — ground-truth fallback
     const checkClosed = setInterval(() => {
       try {
         if (popup?.closed) {
           clearInterval(checkClosed);
           channel.close();
           if (!handled) {
-            handled = true;
             (async () => {
               try {
                 const { createBrowserClient } = await import('@supabase/ssr');
@@ -426,6 +435,8 @@ function SettingsPageInner() {
                 if (user) {
                   const { data } = await sb.from('outlook_tokens').select('email').eq('user_id', user.id).maybeSingle();
                   if (data) {
+                    handled = true;
+                    setOutlookOAuthError('');
                     await onSuccess(data.email || '');
                   }
                 }
@@ -656,9 +667,15 @@ function SettingsPageInner() {
                         <Button variant="outline" size="sm" onClick={() => setShowOutlookDisconnectModal(true)} className="text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
                       </div>
                     ) : (
-                      <Button variant="outline" size="sm" onClick={() => setShowOutlookConfirmModal(true)}>Connect</Button>
+                      <Button variant="outline" size="sm" onClick={() => { setOutlookOAuthError(''); setShowOutlookConfirmModal(true); }}>Connect</Button>
                     )}
                   </div>
+                  {outlookOAuthError && !outlookConnected && (
+                    <div className="px-3 py-1.5 border-t text-xs flex items-center gap-2" style={{ borderColor: '#FECDD3', backgroundColor: '#FFF1F2' }}>
+                      <X className="w-3 h-3 flex-shrink-0" style={{ color: '#FF7A59' }} />
+                      <span style={{ color: '#FF7A59' }}>{outlookOAuthError}</span>
+                    </div>
+                  )}
                   {outlookConnected && (outlookSyncStatus !== 'idle' || outlookLastSync) && (
                     <div className="px-3 py-1.5 border-t text-xs flex items-center gap-2" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
                       {outlookSyncStatus === 'syncing' && <span style={{ color: '#0091AE' }}>Syncing inbox emails…</span>}
