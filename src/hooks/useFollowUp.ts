@@ -1,14 +1,5 @@
 'use client';
 
-/**
- * useFollowUp
- *
- * Polls /api/followup/check every 60 seconds.
- * When new follow-up tasks are auto-created, shows an in-app notification.
- *
- * Also exports sendEmailWithFollowUp() — a wrapper around /api/gmail/send
- * that includes the follow-up configuration.
- */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 
@@ -47,7 +38,6 @@ export function useFollowUp() {
       const newTasks: { taskId: string; subject: string; contactId: string | null }[] = data.tasks || [];
 
       if (newTasks.length > 0) {
-        console.log('[useFollowUp] Auto-created follow-up tasks:', newTasks);
         const notifs: FollowUpNotification[] = newTasks.map(t => ({
           id: crypto.randomUUID(),
           taskId: t.taskId,
@@ -81,40 +71,71 @@ export function useFollowUp() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [poll]);
 
-  const sendEmailWithFollowUp = useCallback(async (opts: SendEmailOptions): Promise<{ success: boolean; error?: string }> => {
+  const sendEmailWithFollowUp = useCallback(async (
+    opts: SendEmailOptions,
+  ): Promise<{ success: boolean; error?: string }> => {
     setSending(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return { success: false, error: 'Not authenticated' };
 
-      console.log('[useFollowUp] Sending email with follow-up:', {
-        to: opts.to,
-        subject: opts.subject,
-        followUpEnabled: opts.followUpEnabled,
-        followUpDays: opts.followUpDays,
-      });
+      // Check which email provider is connected by querying Supabase token tables.
+      // Prefer Outlook if connected; fall back to Gmail.
+      const { data: outlookToken } = await supabase
+        .from('outlook_tokens')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      const res = await fetch('/api/gmail/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          to: opts.to,
-          cc: opts.cc,
-          bcc: opts.bcc,
-          subject: opts.subject,
-          html: opts.html,
-          contact_id: opts.contactId ?? null,
-          follow_up_enabled: opts.followUpEnabled ?? false,
-          follow_up_days: opts.followUpDays ?? 3,
-        }),
-      });
+      if (outlookToken) {
+        // ── Outlook send ─────────────────────────────────────
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) return { success: false, error: 'Session expired. Please log in again.' };
 
-      const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error };
+        const res = await fetch('/api/outlook/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            to: opts.to,
+            cc: opts.cc,
+            bcc: opts.bcc,
+            subject: opts.subject,
+            html: opts.html,
+            contact_id: opts.contactId ?? null,
+          }),
+        });
 
-      console.log('[useFollowUp] Email sent. messageId:', data.messageId);
-      return { success: true };
+        const data = await res.json();
+        if (!res.ok) return { success: false, error: data.error || 'Failed to send via Outlook' };
+        return { success: true };
+
+      } else {
+        // ── Gmail send ───────────────────────────────────────
+        const res = await fetch('/api/gmail/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            to: opts.to,
+            cc: opts.cc,
+            bcc: opts.bcc,
+            subject: opts.subject,
+            html: opts.html,
+            contact_id: opts.contactId ?? null,
+            follow_up_enabled: opts.followUpEnabled ?? false,
+            follow_up_days: opts.followUpDays ?? 3,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) return { success: false, error: data.error };
+        return { success: true };
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       console.error('[useFollowUp] Send error:', msg);

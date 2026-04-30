@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, Loader2 } from 'lucide-react';
 import { GmailSyncModal } from './GmailSyncModal';
 import { useEmailSync } from '@/hooks/useEmailSync';
 
@@ -43,18 +43,60 @@ function OutlookIcon() {
 
 interface ConnectEmailModalProps {
   onClose: () => void;
-  onConnected?: (email: string) => void;
+  onConnected?: (email: string, provider: 'gmail' | 'outlook') => void;
 }
 
 export function ConnectEmailModal({ onClose, onConnected }: ConnectEmailModalProps) {
   const { connectGmail } = useEmailSync();
   const [showGmailSync, setShowGmailSync] = useState(false);
+  const [outlookLoading, setOutlookLoading] = useState(false);
 
   const handleGmailConnected = (email: string) => {
     connectGmail(email);
     setShowGmailSync(false);
-    onConnected?.(email);
+    onConnected?.(email, 'gmail');
     onClose();
+  };
+
+  const handleOutlookConnect = () => {
+    setOutlookLoading(true);
+    const popup = window.open(
+      '/api/outlook/auth',
+      'outlook_oauth',
+      'width=520,height=640,left=200,top=100',
+    );
+
+    const channel = new BroadcastChannel('outlook_auth');
+    channel.onmessage = (e) => {
+      channel.close();
+      popup?.close();
+      setOutlookLoading(false);
+
+      if (e.data?.type === 'success') {
+        const email = e.data.email || '';
+        try {
+          const existing = JSON.parse(localStorage.getItem('crm_outlook_prefs') || '{}');
+          localStorage.setItem('crm_outlook_prefs', JSON.stringify({
+            ...existing,
+            connected: true,
+            email,
+          }));
+        } catch {}
+        onConnected?.(email, 'outlook');
+        onClose();
+      } else {
+        // OAuth failed or was cancelled — just stop loading
+      }
+    };
+
+    // If popup is closed without completing OAuth
+    const checkClosed = setInterval(() => {
+      if (popup?.closed) {
+        clearInterval(checkClosed);
+        channel.close();
+        setOutlookLoading(false);
+      }
+    }, 500);
   };
 
   if (showGmailSync) {
@@ -113,11 +155,15 @@ export function ConnectEmailModal({ onClose, onConnected }: ConnectEmailModalPro
             Gmail
           </button>
           <button
-            onClick={() => alert('Outlook integration coming soon!')}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-[#DFE3EB] rounded-lg text-sm font-medium text-[#2D3E50] hover:bg-[#F6F9FC] transition-colors"
+            onClick={handleOutlookConnect}
+            disabled={outlookLoading}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-[#DFE3EB] rounded-lg text-sm font-medium text-[#2D3E50] hover:bg-[#F6F9FC] transition-colors disabled:opacity-60"
           >
-            <OutlookIcon />
-            Outlook
+            {outlookLoading
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : <OutlookIcon />
+            }
+            {outlookLoading ? 'Connecting…' : 'Outlook'}
           </button>
         </div>
       </div>
