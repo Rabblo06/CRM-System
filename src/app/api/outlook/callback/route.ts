@@ -54,13 +54,19 @@ export async function GET(request: NextRequest) {
     const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
 
     const supabase = adminClient();
-    await supabase.from('outlook_tokens').upsert({
+    const { error: upsertErr } = await supabase.from('outlook_tokens').upsert({
       user_id: userId,
       access_token: tokenData.access_token,
       refresh_token: tokenData.refresh_token || '',
       expires_at: expiresAt,
       email,
+      display_name: name,
     }, { onConflict: 'user_id' });
+
+    if (upsertErr) {
+      logger.error('outlook/callback: failed to store token', { userId, err: upsertErr.message });
+      return NextResponse.redirect(`${origin}/auth/outlook-callback?error=db_error`);
+    }
 
     logger.info('outlook/callback: token stored', { userId, email });
     return NextResponse.redirect(

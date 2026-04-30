@@ -1767,7 +1767,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     const data = await res.json();
                     if (!res.ok) {
                       const errMsg = data.error || 'Failed to send';
-                      const isAuthErr = /insufficient|scope|authentication/i.test(errMsg);
+                      const isAuthErr = /insufficient|scope|authentication|not found|connect/i.test(errMsg);
                       setAuthScopeError(isAuthErr);
                       setEmailError(errMsg);
                       setEmailSending(false);
