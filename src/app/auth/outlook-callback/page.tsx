@@ -18,8 +18,12 @@ function OutlookCallbackInner() {
     } else {
       channel.postMessage({ type: 'success', email, name });
     }
-    channel.close();
-    window.close();
+    // Give the parent window time to receive the BroadcastChannel message
+    // before the popup closes. Closing immediately can drop the message.
+    setTimeout(() => {
+      channel.close();
+      window.close();
+    }, 500);
   }, [searchParams]);
 
   return (

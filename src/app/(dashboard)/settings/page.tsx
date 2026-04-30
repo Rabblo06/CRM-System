@@ -9,7 +9,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   User, Database, Bell, Shield, Check, Mail, Phone, Calendar, CheckSquare,
-  Zap, Plus, X, Send, Trash2, Edit2, UserPlus, ChevronRight, PhoneCall
+  Zap, Plus, X, Send, Trash2, Edit2, UserPlus, ChevronRight, PhoneCall,
+  RefreshCw, Loader2,
 } from 'lucide-react';
 import { useEmailSync } from '@/hooks/useEmailSync';
 import { GmailSyncModal } from '@/components/emails/GmailSyncModal';
@@ -145,6 +146,17 @@ function SettingsPageInner() {
   const [gmailEnableInbox, setGmailEnableInbox] = useState(true);
   const [showGmailModal, setShowGmailModal] = useState(false);
   const [gmailSyncing, setGmailSyncing] = useState(false);
+  type SyncStatus = 'idle' | 'syncing' | 'done' | 'error';
+  const [gmailSyncStatus, setGmailSyncStatus] = useState<SyncStatus>('idle');
+  const [gmailLastSync, setGmailLastSync] = useState<string | null>(() => {
+    try { return localStorage.getItem('crm_gmail_last_sync'); } catch { return null; }
+  });
+  const [gmailSyncError, setGmailSyncError] = useState('');
+  const [outlookSyncStatus, setOutlookSyncStatus] = useState<SyncStatus>('idle');
+  const [outlookLastSync, setOutlookLastSync] = useState<string | null>(() => {
+    try { return localStorage.getItem('crm_outlook_last_sync'); } catch { return null; }
+  });
+  const [outlookSyncError, setOutlookSyncError] = useState('');
 
   // Gmail disconnect flow
   const [showGmailDisconnectModal, setShowGmailDisconnectModal] = useState(false);
@@ -162,16 +174,61 @@ function SettingsPageInner() {
 
   const { isConnected: gmailConnected, gmailEmail, connectGmail, disconnectGmail } = useEmailSync();
 
-  // Load persisted Outlook state
+  // Load Outlook status — DB is authoritative, fall back to localStorage
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('crm_outlook_prefs');
-      if (raw) {
-        const p = JSON.parse(raw);
-        setOutlookConnected(!!p.connected);
-        setOutlookEmail(p.email || '');
-      }
-    } catch {}
+    (async () => {
+      try {
+        const { createBrowserClient } = await import('@supabase/ssr');
+        const sb = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        const { data: { user } } = await sb.auth.getUser();
+        if (user) {
+          const { data } = await sb.from('outlook_tokens').select('email').eq('user_id', user.id).maybeSingle();
+          if (data) {
+            setOutlookConnected(true);
+            setOutlookEmail(data.email || '');
+            try {
+              const existing = JSON.parse(localStorage.getItem('crm_outlook_prefs') || '{}');
+              localStorage.setItem('crm_outlook_prefs', JSON.stringify({ ...existing, connected: true, email: data.email || '' }));
+            } catch {}
+            return;
+          }
+        }
+      } catch {}
+      // Fall back to localStorage
+      try {
+        const raw = localStorage.getItem('crm_outlook_prefs');
+        if (raw) {
+          const p = JSON.parse(raw);
+          setOutlookConnected(!!p.connected);
+          setOutlookEmail(p.email || '');
+        }
+      } catch {}
+    })();
+  }, []);
+
+  // Load Gmail status — if localStorage says not connected, check DB
+  useEffect(() => {
+    if (gmailConnected) return;
+    (async () => {
+      try {
+        const { createBrowserClient } = await import('@supabase/ssr');
+        const sb = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        const { data: { user } } = await sb.auth.getUser();
+        if (user) {
+          const { data } = await sb.from('google_tokens').select('gmail_email').eq('user_id', user.id).maybeSingle();
+          if (data?.gmail_email) {
+            connectGmail(data.gmail_email);
+          }
+        }
+      } catch {}
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleGmailConnectContinue = () => {
@@ -192,10 +249,84 @@ function SettingsPageInner() {
     const prefs = (() => { try { return JSON.parse(localStorage.getItem('crm_gmail_prefs') || '{}'); } catch { return {}; } })();
     if (prefs.import_contacts) {
       setGmailSyncing(true);
-      try {
-        await fetch('/api/google/contacts', { method: 'POST' });
-      } catch {}
+      try { await fetch('/api/google/contacts', { method: 'POST' }); } catch {}
       setGmailSyncing(false);
+    }
+    if (prefs.enable_inbox !== false) {
+      handleGmailSyncNow();
+    }
+  };
+
+  const handleGmailSyncNow = () => {
+    setGmailSyncStatus('syncing');
+    setGmailSyncError('');
+    const es = new EventSource('/api/gmail/sync');
+    es.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === 'complete' || msg.type === 'error') {
+          es.close();
+          if (msg.type === 'complete') {
+            const now = new Date().toLocaleString();
+            setGmailSyncStatus('done');
+            setGmailLastSync(now);
+            try { localStorage.setItem('crm_gmail_last_sync', now); } catch {}
+          } else {
+            setGmailSyncStatus('error');
+            setGmailSyncError(msg.message || 'Sync failed');
+          }
+        }
+      } catch {}
+    };
+    es.onerror = () => {
+      es.close();
+      setGmailSyncStatus('error');
+      setGmailSyncError('Connection error during sync');
+    };
+  };
+
+  const handleOutlookSyncNow = async () => {
+    setOutlookSyncStatus('syncing');
+    setOutlookSyncError('');
+    try {
+      const { createBrowserClient } = await import('@supabase/ssr');
+      const sb = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const { data: { session } } = await sb.auth.getSession();
+      const token = session?.access_token;
+      if (!token) { setOutlookSyncStatus('error'); setOutlookSyncError('Not authenticated'); return; }
+      await new Promise<void>((resolve) => {
+        const es = new EventSource(`/api/outlook/sync?token=${token}`);
+        es.onmessage = (ev) => {
+          try {
+            const msg = JSON.parse(ev.data);
+            if (msg.type === 'complete' || msg.type === 'error') {
+              es.close();
+              if (msg.type === 'complete') {
+                const now = new Date().toLocaleString();
+                setOutlookSyncStatus('done');
+                setOutlookLastSync(now);
+                try { localStorage.setItem('crm_outlook_last_sync', now); } catch {}
+              } else {
+                setOutlookSyncStatus('error');
+                setOutlookSyncError(msg.message || 'Sync failed');
+              }
+              resolve();
+            }
+          } catch {}
+        };
+        es.onerror = () => {
+          es.close();
+          setOutlookSyncStatus('error');
+          setOutlookSyncError('Connection error during sync');
+          resolve();
+        };
+      });
+    } catch (err) {
+      setOutlookSyncStatus('error');
+      setOutlookSyncError(err instanceof Error ? err.message : 'Sync failed');
     }
   };
 
@@ -414,55 +545,101 @@ function SettingsPageInner() {
             <SectionCard title="Email Integration" description="Connect your email account to log emails automatically">
               <div className="space-y-4 max-w-md">
                 {/* Gmail row */}
-                <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: gmailConnected ? '#00BDA5' : '#DFE3EB', backgroundColor: gmailConnected ? '#F0FBF9' : undefined }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F0F3F7' }}>
-                      <svg width="18" height="18" viewBox="0 0 48 48">
-                        <path d="M4.5 39h7V23.25L2 17.5V37a2 2 0 002 2h.5z" fill="#4285F4"/>
-                        <path d="M36.5 39H44a2 2 0 002-2V17.5l-9.5 5.75z" fill="#34A853"/>
-                        <path d="M36.5 9L24 18.5 11.5 9 2 15.5l9.5 5.75v14.75h15V21.25L36.5 15.5z" fill="#EA4335"/>
-                        <path d="M11.5 9H36.5L24 18.5 11.5 9z" fill="#FBBC04"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>Gmail</p>
-                        {gmailConnected && <Check className="w-3.5 h-3.5" style={{ color: '#00BDA5' }} />}
-                        {gmailSyncing && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: '#E5F5F8', color: '#0091AE' }}>Syncing contacts…</span>}
+                <div className="rounded-lg border overflow-hidden" style={{ borderColor: gmailConnected ? '#00BDA5' : '#DFE3EB' }}>
+                  <div className="flex items-center justify-between p-3" style={{ backgroundColor: gmailConnected ? '#F0FBF9' : undefined }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F0F3F7' }}>
+                        <svg width="18" height="18" viewBox="0 0 48 48">
+                          <path d="M4.5 39h7V23.25L2 17.5V37a2 2 0 002 2h.5z" fill="#4285F4"/>
+                          <path d="M36.5 39H44a2 2 0 002-2V17.5l-9.5 5.75z" fill="#34A853"/>
+                          <path d="M36.5 9L24 18.5 11.5 9 2 15.5l9.5 5.75v14.75h15V21.25L36.5 15.5z" fill="#EA4335"/>
+                          <path d="M11.5 9H36.5L24 18.5 11.5 9z" fill="#FBBC04"/>
+                        </svg>
                       </div>
-                      <p className="text-xs" style={{ color: gmailConnected ? '#00BDA5' : '#7C98B6' }}>
-                        {gmailConnected ? gmailEmail : 'Not connected'}
-                      </p>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>Gmail</p>
+                          {gmailConnected && <Check className="w-3.5 h-3.5" style={{ color: '#00BDA5' }} />}
+                          {gmailSyncing && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: '#E5F5F8', color: '#0091AE' }}>Syncing contacts…</span>}
+                        </div>
+                        <p className="text-xs" style={{ color: gmailConnected ? '#00BDA5' : '#7C98B6' }}>
+                          {gmailConnected ? gmailEmail : 'Not connected'}
+                        </p>
+                      </div>
                     </div>
+                    {gmailConnected ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline" size="sm"
+                          onClick={handleGmailSyncNow}
+                          disabled={gmailSyncStatus === 'syncing'}
+                          className="gap-1 text-xs"
+                        >
+                          {gmailSyncStatus === 'syncing'
+                            ? <><Loader2 className="w-3 h-3 animate-spin" />Syncing…</>
+                            : <><RefreshCw className="w-3 h-3" />Sync now</>
+                          }
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setShowGmailDisconnectModal(true)} className="text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
+                      </div>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => setShowGmailConfirmModal(true)}>Connect</Button>
+                    )}
                   </div>
-                  {gmailConnected ? (
-                    <Button variant="outline" size="sm" onClick={() => setShowGmailDisconnectModal(true)} className="text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
-                  ) : (
-                    <Button variant="outline" size="sm" onClick={() => setShowGmailConfirmModal(true)}>Connect</Button>
+                  {gmailConnected && (gmailSyncStatus !== 'idle' || gmailLastSync) && (
+                    <div className="px-3 py-1.5 border-t text-xs flex items-center gap-2" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
+                      {gmailSyncStatus === 'syncing' && <span style={{ color: '#0091AE' }}>Syncing inbox emails…</span>}
+                      {gmailSyncStatus === 'done' && <><Check className="w-3 h-3" style={{ color: '#00BDA5' }} /><span style={{ color: '#00BDA5' }}>Synced · Last: {gmailLastSync}</span></>}
+                      {gmailSyncStatus === 'error' && <span style={{ color: '#FF7A59' }}>Error: {gmailSyncError}</span>}
+                      {gmailSyncStatus === 'idle' && gmailLastSync && <span style={{ color: '#7C98B6' }}>Last synced: {gmailLastSync}</span>}
+                    </div>
                   )}
                 </div>
 
                 {/* Outlook row */}
-                <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: outlookConnected ? '#00BDA5' : '#DFE3EB', backgroundColor: outlookConnected ? '#F0FBF9' : undefined }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F0F3F7' }}>
-                      <Mail className="w-4 h-4" style={{ color: '#0078D4' }} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>Outlook / Office 365</p>
-                        {outlookConnected && <Check className="w-3.5 h-3.5" style={{ color: '#00BDA5' }} />}
-                        {outlookSyncing && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: '#E5F5F8', color: '#0091AE' }}>Syncing contacts…</span>}
+                <div className="rounded-lg border overflow-hidden" style={{ borderColor: outlookConnected ? '#00BDA5' : '#DFE3EB' }}>
+                  <div className="flex items-center justify-between p-3" style={{ backgroundColor: outlookConnected ? '#F0FBF9' : undefined }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F0F3F7' }}>
+                        <Mail className="w-4 h-4" style={{ color: '#0078D4' }} />
                       </div>
-                      <p className="text-xs" style={{ color: outlookConnected ? '#00BDA5' : '#7C98B6' }}>
-                        {outlookConnected ? outlookEmail : 'Not connected'}
-                      </p>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>Outlook / Office 365</p>
+                          {outlookConnected && <Check className="w-3.5 h-3.5" style={{ color: '#00BDA5' }} />}
+                          {outlookSyncing && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: '#E5F5F8', color: '#0091AE' }}>Syncing contacts…</span>}
+                        </div>
+                        <p className="text-xs" style={{ color: outlookConnected ? '#00BDA5' : '#7C98B6' }}>
+                          {outlookConnected ? outlookEmail : 'Not connected'}
+                        </p>
+                      </div>
                     </div>
+                    {outlookConnected ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline" size="sm"
+                          onClick={handleOutlookSyncNow}
+                          disabled={outlookSyncStatus === 'syncing'}
+                          className="gap-1 text-xs"
+                        >
+                          {outlookSyncStatus === 'syncing'
+                            ? <><Loader2 className="w-3 h-3 animate-spin" />Syncing…</>
+                            : <><RefreshCw className="w-3 h-3" />Sync now</>
+                          }
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setShowOutlookDisconnectModal(true)} className="text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
+                      </div>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => setShowOutlookConfirmModal(true)}>Connect</Button>
+                    )}
                   </div>
-                  {outlookConnected ? (
-                    <Button variant="outline" size="sm" onClick={() => setShowOutlookDisconnectModal(true)} className="text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
-                  ) : (
-                    <Button variant="outline" size="sm" onClick={() => setShowOutlookConfirmModal(true)}>Connect</Button>
+                  {outlookConnected && (outlookSyncStatus !== 'idle' || outlookLastSync) && (
+                    <div className="px-3 py-1.5 border-t text-xs flex items-center gap-2" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
+                      {outlookSyncStatus === 'syncing' && <span style={{ color: '#0091AE' }}>Syncing inbox emails…</span>}
+                      {outlookSyncStatus === 'done' && <><Check className="w-3 h-3" style={{ color: '#00BDA5' }} /><span style={{ color: '#00BDA5' }}>Synced · Last: {outlookLastSync}</span></>}
+                      {outlookSyncStatus === 'error' && <span style={{ color: '#FF7A59' }}>Error: {outlookSyncError}</span>}
+                      {outlookSyncStatus === 'idle' && outlookLastSync && <span style={{ color: '#7C98B6' }}>Last synced: {outlookLastSync}</span>}
+                    </div>
                   )}
                 </div>
               </div>

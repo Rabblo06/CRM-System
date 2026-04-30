@@ -27,6 +27,7 @@ import {
   Briefcase,
   Send,
   X,
+  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -92,18 +93,45 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
   const { updateContact } = useContacts();
   const { isConnected: gmailConnected, gmailEmail, getEmailsForContact, deleteEmail } = useEmailSync();
 
-  // Outlook connection state (persisted in localStorage by settings page)
+  // Outlook connection — DB is authoritative, fall back to localStorage
   const [outlookConnected, setOutlookConnected] = useState(false);
   const [outlookEmail, setOutlookEmail] = useState('');
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('crm_outlook_prefs');
-      if (raw) { const p = JSON.parse(raw); setOutlookConnected(!!p.connected); setOutlookEmail(p.email || ''); }
-    } catch {}
+    (async () => {
+      try {
+        const { createBrowserClient } = await import('@supabase/ssr');
+        const sb = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        const { data: { user } } = await sb.auth.getUser();
+        if (user) {
+          const { data } = await sb.from('outlook_tokens').select('email').eq('user_id', user.id).maybeSingle();
+          if (data) {
+            setOutlookConnected(true);
+            setOutlookEmail(data.email || '');
+            return;
+          }
+        }
+      } catch {}
+      try {
+        const raw = localStorage.getItem('crm_outlook_prefs');
+        if (raw) { const p = JSON.parse(raw); setOutlookConnected(!!p.connected); setOutlookEmail(p.email || ''); }
+      } catch {}
+    })();
   }, []);
 
   const emailConnected = gmailConnected || outlookConnected;
-  const senderEmail = outlookConnected ? outlookEmail : gmailEmail;
+
+  // Provider selection — auto-picks available provider; dropdown when both connected
+  const [selectedProvider, setSelectedProvider] = useState<'gmail' | 'outlook'>('gmail');
+  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
+  useEffect(() => {
+    if (outlookConnected && !gmailConnected) setSelectedProvider('outlook');
+    else setSelectedProvider('gmail');
+  }, [outlookConnected, gmailConnected]);
+  const senderEmail = selectedProvider === 'outlook' ? outlookEmail : gmailEmail;
+
   const { templates: emailTemplates } = useEmailTemplates();
 
   // Fetch the contact directly by ID — reliable regardless of list state
@@ -1564,24 +1592,46 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
           >
             <span className="font-semibold text-sm text-[#2D3E50]">New Email Message</span>
             <div className="flex items-center gap-1.5">
-              {/* Connected email provider pill */}
-              <div className="flex items-center gap-1.5 border border-[#DFE3EB] rounded-full px-2 py-1 bg-white">
-                {outlookConnected ? (
-                  <svg width="14" height="14" viewBox="0 0 48 48"><rect width="28" height="28" x="4" y="10" rx="2" fill="#0078D4"/><rect width="22" height="22" x="22" y="14" rx="2" fill="#50B0F0"/><text x="10" y="29" fill="white" fontSize="14" fontWeight="bold">O</text></svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 48 48" fill="none">
-                    <path d="M4.5 39h7V23.25L2 17.5V37a2 2 0 002 2h.5z" fill="#4285F4"/>
-                    <path d="M36.5 39H44a2 2 0 002-2V17.5l-9.5 5.75z" fill="#34A853"/>
-                    <path d="M36.5 9L24 18.5 11.5 9 2 15.5l9.5 5.75v14.75h15V21.25L36.5 15.5z" fill="#EA4335"/>
-                    <path d="M11.5 9H36.5L24 18.5 11.5 9z" fill="#FBBC04"/>
-                  </svg>
+              {/* Email provider selector — dropdown when both connected */}
+              <div className="relative">
+                <button
+                  onClick={() => (gmailConnected && outlookConnected) && setShowProviderDropdown(v => !v)}
+                  className="flex items-center gap-1.5 border border-[#DFE3EB] rounded-full px-2 py-1 bg-white hover:bg-[#F6F9FC]"
+                >
+                  {selectedProvider === 'outlook' ? (
+                    <svg width="14" height="14" viewBox="0 0 48 48"><rect width="28" height="28" x="4" y="10" rx="2" fill="#0078D4"/><rect width="22" height="22" x="22" y="14" rx="2" fill="#50B0F0"/><text x="10" y="29" fill="white" fontSize="14" fontWeight="bold">O</text></svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 48 48" fill="none">
+                      <path d="M4.5 39h7V23.25L2 17.5V37a2 2 0 002 2h.5z" fill="#4285F4"/>
+                      <path d="M36.5 39H44a2 2 0 002-2V17.5l-9.5 5.75z" fill="#34A853"/>
+                      <path d="M36.5 9L24 18.5 11.5 9 2 15.5l9.5 5.75v14.75h15V21.25L36.5 15.5z" fill="#EA4335"/>
+                      <path d="M11.5 9H36.5L24 18.5 11.5 9z" fill="#FBBC04"/>
+                    </svg>
+                  )}
+                  <span className="text-xs text-[#516F90] max-w-[140px] truncate">{senderEmail || (selectedProvider === 'outlook' ? 'Outlook' : 'Gmail')}</span>
+                  {gmailConnected && outlookConnected && <ChevronDown className="w-3 h-3 text-[#516F90]" />}
+                </button>
+                {showProviderDropdown && (
+                  <div className="absolute top-full right-0 mt-1 bg-white border border-[#DFE3EB] rounded-lg shadow-lg z-50 py-1 min-w-[200px]">
+                    {gmailConnected && (
+                      <button onClick={() => { setSelectedProvider('gmail'); setShowProviderDropdown(false); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#F6F9FC] text-xs text-left">
+                        <svg width="14" height="14" viewBox="0 0 48 48" fill="none"><path d="M4.5 39h7V23.25L2 17.5V37a2 2 0 002 2h.5z" fill="#4285F4"/><path d="M36.5 39H44a2 2 0 002-2V17.5l-9.5 5.75z" fill="#34A853"/><path d="M36.5 9L24 18.5 11.5 9 2 15.5l9.5 5.75v14.75h15V21.25L36.5 15.5z" fill="#EA4335"/><path d="M11.5 9H36.5L24 18.5 11.5 9z" fill="#FBBC04"/></svg>
+                        <span className="text-[#2D3E50] truncate">{gmailEmail || 'Gmail'}</span>
+                        {selectedProvider === 'gmail' && <Check className="w-3 h-3 text-[#00BDA5] ml-auto flex-shrink-0" />}
+                      </button>
+                    )}
+                    {outlookConnected && (
+                      <button onClick={() => { setSelectedProvider('outlook'); setShowProviderDropdown(false); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#F6F9FC] text-xs text-left">
+                        <svg width="14" height="14" viewBox="0 0 48 48"><rect width="28" height="28" x="4" y="10" rx="2" fill="#0078D4"/><rect width="22" height="22" x="22" y="14" rx="2" fill="#50B0F0"/><text x="10" y="29" fill="white" fontSize="14" fontWeight="bold">O</text></svg>
+                        <span className="text-[#2D3E50] truncate">{outlookEmail || 'Outlook'}</span>
+                        {selectedProvider === 'outlook' && <Check className="w-3 h-3 text-[#00BDA5] ml-auto flex-shrink-0" />}
+                      </button>
+                    )}
+                  </div>
                 )}
-                <span className="text-xs text-[#516F90] max-w-[140px] truncate">{senderEmail || (outlookConnected ? 'Outlook' : 'Gmail')}</span>
-                <ChevronDown className="w-3 h-3 text-[#516F90]" />
               </div>
-              <button className="p-1 rounded hover:bg-[#E8EDF5] text-[#516F90]"><ExternalLink className="w-3.5 h-3.5" /></button>
               <button
-                onClick={() => { closeModals(); setEmailSubject(''); setEmailCc(''); setEmailBcc(''); setShowCc(false); setShowBcc(false); setShowTemplatePicker(false); setAuthScopeError(false); setEmailError(''); if (emailEditorRef.current) emailEditorRef.current.innerHTML = ''; }}
+                onClick={() => { closeModals(); setEmailSubject(''); setEmailCc(''); setEmailBcc(''); setShowCc(false); setShowBcc(false); setShowTemplatePicker(false); setAuthScopeError(false); setEmailError(''); setShowProviderDropdown(false); if (emailEditorRef.current) emailEditorRef.current.innerHTML = ''; }}
                 className="p-1 rounded hover:bg-[#E8EDF5] text-[#516F90]"
               ><X className="w-3.5 h-3.5" /></button>
             </div>
@@ -1750,7 +1800,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     const { data: { session } } = await supabase.auth.getSession();
 
                     let res: Response;
-                    if (outlookConnected) {
+                    if (selectedProvider === 'outlook') {
                       res = await fetch('/api/outlook/send', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
@@ -1776,7 +1826,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     addActivity({ type: 'email', title: emailSubject, description: html, contact_id: id });
                     closeModals();
                     setEmailSubject(''); setEmailCc(''); setEmailBcc(''); setShowCc(false); setShowBcc(false);
-                    setShowTemplatePicker(false); setAuthScopeError(false);
+                    setShowTemplatePicker(false); setAuthScopeError(false); setShowProviderDropdown(false);
                     if (emailEditorRef.current) emailEditorRef.current.innerHTML = '';
                     setMainTab('activities');
                   } catch {
