@@ -749,7 +749,17 @@ export default function CompaniesPage() {
   const [showNewDropdown, setShowNewDropdown] = useState(false);
   const [showEditModal,   setShowEditModal]   = useState(false);
   const [editCompany,     setEditCompany]     = useState<Company | null>(null);
-  const [editName,        setEditName]        = useState('');
+  const [editForm,        setEditForm]        = useState<{
+    name: string; email: string; phone: string; mobile: string; address: string;
+    manager_name: string; industry: string; next_step: string; domain: string;
+    size: string; website: string; city: string; country: string;
+    annual_revenue: string; description: string;
+  }>({
+    name: '', email: '', phone: '', mobile: '', address: '',
+    manager_name: '', industry: '', next_step: '', domain: '',
+    size: '', website: '', city: '', country: '',
+    annual_revenue: '', description: '',
+  });
   const [addingToGroup,   setAddingToGroup]   = useState<string | null>(null);
 
   const [colorPickerGroup,     setColorPickerGroup]     = useState<string | null>(null);
@@ -1004,13 +1014,42 @@ export default function CompaniesPage() {
     return await updateCompany(id, data as Parameters<typeof updateCompany>[1]);
   }, [updateCompany]);
 
-  const openEdit = (c: Company) => { setEditCompany(c); setEditName(c.name); setShowEditModal(true); };
+  const openEdit = (c: Company) => {
+    setEditCompany(c);
+    setEditForm({
+      name: c.name || '', email: (c as any).email || '', phone: c.phone || '',
+      mobile: (c as any).mobile || '', address: c.address || '',
+      manager_name: (c as any).manager_name || '', industry: c.industry || '',
+      next_step: (c as any).next_step || '', domain: c.domain || '',
+      size: c.size || '', website: c.website || '', city: c.city || '',
+      country: c.country || '', annual_revenue: c.annual_revenue ? String(c.annual_revenue) : '',
+      description: c.description || '',
+    });
+    setShowEditModal(true);
+  };
   const saveEdit = async () => {
+    if (!editForm.name.trim()) return;
+    const payload = {
+      name: editForm.name.trim(),
+      email: editForm.email || undefined,
+      phone: editForm.phone || undefined,
+      mobile: editForm.mobile || undefined,
+      address: editForm.address || undefined,
+      manager_name: editForm.manager_name || undefined,
+      industry: editForm.industry || undefined,
+      next_step: editForm.next_step || undefined,
+      domain: editForm.domain || undefined,
+      size: editForm.size || undefined,
+      website: editForm.website || undefined,
+      city: editForm.city || undefined,
+      country: editForm.country || undefined,
+      annual_revenue: editForm.annual_revenue ? Number(editForm.annual_revenue) : undefined,
+      description: editForm.description || undefined,
+    };
     if (!editCompany) {
-      if (!editName.trim()) return;
-      await createCompany({ name: editName.trim() } as Parameters<typeof createCompany>[0]);
+      await createCompany(payload as Parameters<typeof createCompany>[0]);
     } else {
-      await updateCompany(editCompany.id, { name: editName } as Parameters<typeof updateCompany>[1]);
+      await updateCompany(editCompany.id, payload as Parameters<typeof updateCompany>[1]);
     }
     setShowEditModal(false); setEditCompany(null);
   };
@@ -1034,7 +1073,7 @@ export default function CompaniesPage() {
         <div className="flex items-center gap-2">
           <div ref={newBtnRef} className="relative">
             <div className="flex items-center border border-[#FF7A59] rounded-[3px] overflow-hidden">
-              <button onClick={() => { setEditCompany(null); setEditName(''); setShowEditModal(true); }}
+              <button onClick={() => { setEditCompany(null); setEditForm({ name:'',email:'',phone:'',mobile:'',address:'',manager_name:'',industry:'',next_step:'',domain:'',size:'',website:'',city:'',country:'',annual_revenue:'',description:'' }); setShowEditModal(true); }}
                 className="px-4 py-1.5 text-sm font-bold text-white"
                 style={{ backgroundColor: '#FF7A59' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
@@ -1051,7 +1090,7 @@ export default function CompaniesPage() {
             </div>
             {showNewDropdown && (
               <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
-                <button onClick={() => { setEditCompany(null); setEditName(''); setShowEditModal(true); setShowNewDropdown(false); }}
+                <button onClick={() => { setEditCompany(null); setEditForm({ name:'',email:'',phone:'',mobile:'',address:'',manager_name:'',industry:'',next_step:'',domain:'',size:'',website:'',city:'',country:'',annual_revenue:'',description:'' }); setShowEditModal(true); setShowNewDropdown(false); }}
                   className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
                   <Building2 className="w-4 h-4 text-[#7C98B6]" /> New company
                 </button>
@@ -1139,36 +1178,146 @@ export default function CompaniesPage() {
         />
       )}
 
-      {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-          <div className="bg-white rounded-[3px] shadow-2xl w-96" style={{ border: '1px solid #DFE3EB' }}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#DFE3EB]">
-              <h2 className="text-sm font-bold text-[#2D3E50]">{editCompany ? 'Edit company' : 'New company'}</h2>
-              <button onClick={() => { setShowEditModal(false); setEditCompany(null); }}><X className="w-4 h-4 text-[#99ACC2]" /></button>
-            </div>
-            <div className="px-5 py-4">
-              <label className="block text-xs font-semibold text-[#425B76] uppercase tracking-wide mb-1.5">
-                Company name <span className="text-[#FF7A59]">*</span>
-              </label>
-              <input autoFocus value={editName} onChange={e => setEditName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setShowEditModal(false); }}
-                placeholder="Enter company name"
-                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50]"
-                onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
-            </div>
-            <div className="flex justify-end gap-2 px-5 py-4 border-t border-[#DFE3EB]">
-              <button onClick={() => { setShowEditModal(false); setEditCompany(null); }}
-                className="px-4 py-2 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">Cancel</button>
-              <button onClick={saveEdit} disabled={!editName.trim()}
-                className="px-5 py-2 text-sm font-bold text-white rounded-[3px] disabled:opacity-40"
-                style={{ backgroundColor: '#FF7A59' }}>
-                {editCompany ? 'Save' : 'Create'}
-              </button>
+      {showEditModal && (() => {
+        const ef = editForm;
+        const set = (k: keyof typeof editForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+          setEditForm(prev => ({ ...prev, [k]: e.target.value }));
+        const fieldCls = "w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] focus:border-[#FF7A59]";
+        const label = (text: string, required = false) => (
+          <label className="block text-xs font-semibold text-[#425B76] uppercase tracking-wide mb-1">
+            {text}{required && <span className="text-[#FF7A59] ml-0.5">*</span>}
+          </label>
+        );
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+            <div className="bg-white rounded-[3px] shadow-2xl w-[560px] max-w-[95vw] flex flex-col max-h-[90vh]" style={{ border: '1px solid #DFE3EB' }}>
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-[#DFE3EB] flex-shrink-0">
+                <h2 className="text-sm font-bold text-[#2D3E50]">{editCompany ? 'Edit company' : 'New company'}</h2>
+                <button onClick={() => { setShowEditModal(false); setEditCompany(null); }}>
+                  <X className="w-4 h-4 text-[#99ACC2]" />
+                </button>
+              </div>
+
+              {/* Scrollable body */}
+              <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+                {/* Company name */}
+                <div>
+                  {label('Company name', true)}
+                  <input autoFocus value={ef.name} onChange={set('name')}
+                    onKeyDown={e => { if (e.key === 'Escape') setShowEditModal(false); }}
+                    placeholder="Enter company name"
+                    className={fieldCls} />
+                </div>
+
+                {/* Row: Email + Phone */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    {label('Email')}
+                    <input type="email" value={ef.email} onChange={set('email')} placeholder="company@example.com" className={fieldCls} />
+                  </div>
+                  <div>
+                    {label('Phone')}
+                    <input type="tel" value={ef.phone} onChange={set('phone')} placeholder="+1 (555) 000-0000" className={fieldCls} />
+                  </div>
+                </div>
+
+                {/* Row: Mobile + Manager name */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    {label('Mobile')}
+                    <input type="tel" value={ef.mobile} onChange={set('mobile')} placeholder="+1 (555) 000-0000" className={fieldCls} />
+                  </div>
+                  <div>
+                    {label('Manager name')}
+                    <input value={ef.manager_name} onChange={set('manager_name')} placeholder="e.g. Jane Smith" className={fieldCls} />
+                  </div>
+                </div>
+
+                {/* Row: Industry + Size */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    {label('Industry')}
+                    <input value={ef.industry} onChange={set('industry')} placeholder="e.g. Technology" className={fieldCls} />
+                  </div>
+                  <div>
+                    {label('Company size')}
+                    <select value={ef.size} onChange={set('size')}
+                      className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] focus:border-[#FF7A59] bg-white">
+                      <option value="">Select size…</option>
+                      {['1-10','11-50','51-200','201-500','501-1000','1001-5000','5000+'].map(s => (
+                        <option key={s} value={s}>{s} employees</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Row: Domain + Website */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    {label('Domain')}
+                    <input value={ef.domain} onChange={set('domain')} placeholder="example.com" className={fieldCls} />
+                  </div>
+                  <div>
+                    {label('Website')}
+                    <input value={ef.website} onChange={set('website')} placeholder="https://example.com" className={fieldCls} />
+                  </div>
+                </div>
+
+                {/* Row: City + Country */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    {label('City')}
+                    <input value={ef.city} onChange={set('city')} placeholder="New York" className={fieldCls} />
+                  </div>
+                  <div>
+                    {label('Country')}
+                    <input value={ef.country} onChange={set('country')} placeholder="United States" className={fieldCls} />
+                  </div>
+                </div>
+
+                {/* Row: Address + Annual revenue */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    {label('Address')}
+                    <input value={ef.address} onChange={set('address')} placeholder="123 Main St" className={fieldCls} />
+                  </div>
+                  <div>
+                    {label('Annual revenue ($)')}
+                    <input type="number" value={ef.annual_revenue} onChange={set('annual_revenue')} placeholder="0" className={fieldCls} />
+                  </div>
+                </div>
+
+                {/* Next step */}
+                <div>
+                  {label('Next step')}
+                  <input value={ef.next_step} onChange={set('next_step')} placeholder="e.g. Schedule demo" className={fieldCls} />
+                </div>
+
+                {/* Notes */}
+                <div>
+                  {label('Notes')}
+                  <textarea value={ef.description} onChange={set('description')} placeholder="Add any notes…" rows={3}
+                    className="w-full px-3 py-2 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] focus:border-[#FF7A59] resize-none" />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-2 px-6 py-4 border-t border-[#DFE3EB] flex-shrink-0">
+                <button onClick={() => { setShowEditModal(false); setEditCompany(null); }}
+                  className="px-4 py-2 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">
+                  Cancel
+                </button>
+                <button onClick={saveEdit} disabled={!ef.name.trim()}
+                  className="px-5 py-2 text-sm font-bold text-white rounded-[3px] disabled:opacity-40"
+                  style={{ backgroundColor: '#FF7A59' }}>
+                  {editCompany ? 'Save' : 'Create'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {colorPickerGroup && (() => {
         const g = allGroups.find(g => g.id === colorPickerGroup); if (!g) return null;
