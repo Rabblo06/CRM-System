@@ -27,6 +27,7 @@ export interface Company {
   manager_name?: string;
   email_note?: string;
   next_step?: string;
+  status?: string;
   created_by?: string;
   created_at: string;
   updated_at: string;

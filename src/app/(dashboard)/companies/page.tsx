@@ -562,7 +562,7 @@ function CompanyRow({
 function GroupSection({
   group, companies, collapsed, onToggleCollapse, selectedIds, onSelect, onSelectAll,
   statuses, onStatusChange, priorities, onPriorityChange, onEdit, onDelete, onGroupAction,
-  onMoveToGroup, allGroups, addingToGroup, onStartAdd, onSaveAdd, onCancelAdd,
+  onMoveToGroup, allGroups, onStartAdd,
   triggerRename, onRenameComplete, visibleColumns, onToggleColumn, onFieldSave,
 }: {
   group: Group; companies: Company[]; collapsed: boolean;
@@ -574,10 +574,8 @@ function GroupSection({
   onEdit: (c: Company) => void; onDelete: (id: string) => void;
   onGroupAction: (action: string, groupId: string) => void;
   onMoveToGroup: (id: string, groupId: string) => void;
-  allGroups: Group[]; addingToGroup: string | null;
+  allGroups: Group[];
   onStartAdd: (groupId: string) => void;
-  onSaveAdd: (data: { name: string; domain: string; phone: string; industry: string }, groupId: string) => Promise<void>;
-  onCancelAdd: () => void;
   triggerRename?: string | null;
   onRenameComplete: (id: string, name: string) => void;
   visibleColumns: Set<ColumnId>;
@@ -698,14 +696,6 @@ function GroupSection({
               />
             ))}
 
-            {/* Inline add row */}
-            {addingToGroup === group.id && (
-              <InlineAddRow
-                onSave={(data) => onSaveAdd(data, group.id)}
-                onCancel={onCancelAdd}
-              />
-            )}
-
             {/* Add company button */}
             <tr>
               <td />
@@ -751,12 +741,12 @@ export default function CompaniesPage() {
   const [editCompany,     setEditCompany]     = useState<Company | null>(null);
   const [editForm,        setEditForm]        = useState<{
     name: string; email: string; phone: string; mobile: string; address: string;
-    manager_name: string; industry: string; next_step: string; domain: string;
+    manager_name: string; industry: string; status: string; next_step: string; domain: string;
     size: string; website: string; city: string; country: string;
     annual_revenue: string; description: string;
   }>({
     name: '', email: '', phone: '', mobile: '', address: '',
-    manager_name: '', industry: '', next_step: '', domain: '',
+    manager_name: '', industry: '', status: '', next_step: '', domain: '',
     size: '', website: '', city: '', country: '',
     annual_revenue: '', description: '',
   });
@@ -874,25 +864,6 @@ export default function CompaniesPage() {
     else nextMap[companyId] = targetGroupId;
     setGroupMap(nextMap); saveMap(nextMap);
   }, [groupMap, saveMap]);
-
-  /* ── Inline add company ── */
-  const handleSaveAdd = useCallback(async (
-    data: { name: string; domain: string; phone: string; industry: string },
-    groupId: string,
-  ) => {
-    const payload: Partial<Company> = {
-      name: data.name,
-      ...(data.domain && { domain: data.domain }),
-      ...(data.phone && { phone: data.phone }),
-      ...(data.industry && { industry: data.industry }),
-    };
-    const res = await createCompany(payload);
-    if (res?.data?.id && groupId !== 'all') {
-      const nextMap = { ...groupMap, [res.data.id]: groupId };
-      setGroupMap(nextMap); saveMap(nextMap);
-    }
-    setAddingToGroup(null);
-  }, [createCompany, groupMap, saveMap]);
 
   /* ── Group actions ── */
   const handleGroupAction = useCallback((action: string, groupId: string) => {
@@ -1014,19 +985,33 @@ export default function CompaniesPage() {
     return await updateCompany(id, data as Parameters<typeof updateCompany>[1]);
   }, [updateCompany]);
 
+  const EMPTY_FORM = {
+    name: '', email: '', phone: '', mobile: '', address: '',
+    manager_name: '', industry: '', status: '', next_step: '', domain: '',
+    size: '', website: '', city: '', country: '', annual_revenue: '', description: '',
+  };
+
   const openEdit = (c: Company) => {
     setEditCompany(c);
     setEditForm({
-      name: c.name || '', email: (c as any).email || '', phone: c.phone || '',
-      mobile: (c as any).mobile || '', address: c.address || '',
-      manager_name: (c as any).manager_name || '', industry: c.industry || '',
-      next_step: (c as any).next_step || '', domain: c.domain || '',
+      name: c.name || '', email: c.email || '', phone: c.phone || '',
+      mobile: c.mobile || '', address: c.address || '',
+      manager_name: c.manager_name || '', industry: c.industry || '',
+      status: c.status || '', next_step: c.next_step || '', domain: c.domain || '',
       size: c.size || '', website: c.website || '', city: c.city || '',
       country: c.country || '', annual_revenue: c.annual_revenue ? String(c.annual_revenue) : '',
       description: c.description || '',
     });
     setShowEditModal(true);
   };
+
+  const handleStartAdd = useCallback((groupId: string) => {
+    setAddingToGroup(groupId);
+    setEditCompany(null);
+    setEditForm({ name: '', email: '', phone: '', mobile: '', address: '', manager_name: '', industry: '', status: '', next_step: '', domain: '', size: '', website: '', city: '', country: '', annual_revenue: '', description: '' });
+    setShowEditModal(true);
+  }, []);
+
   const saveEdit = async () => {
     if (!editForm.name.trim()) return;
     const payload = {
@@ -1037,6 +1022,7 @@ export default function CompaniesPage() {
       address: editForm.address || undefined,
       manager_name: editForm.manager_name || undefined,
       industry: editForm.industry || undefined,
+      status: editForm.status || undefined,
       next_step: editForm.next_step || undefined,
       domain: editForm.domain || undefined,
       size: editForm.size || undefined,
@@ -1047,11 +1033,15 @@ export default function CompaniesPage() {
       description: editForm.description || undefined,
     };
     if (!editCompany) {
-      await createCompany(payload as Parameters<typeof createCompany>[0]);
+      const res = await createCompany(payload as Parameters<typeof createCompany>[0]);
+      if (res?.data?.id && addingToGroup && addingToGroup !== 'all') {
+        const nextMap = { ...groupMap, [res.data.id]: addingToGroup };
+        setGroupMap(nextMap); saveMap(nextMap);
+      }
     } else {
       await updateCompany(editCompany.id, payload as Parameters<typeof updateCompany>[1]);
     }
-    setShowEditModal(false); setEditCompany(null);
+    setShowEditModal(false); setEditCompany(null); setAddingToGroup(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -1073,7 +1063,7 @@ export default function CompaniesPage() {
         <div className="flex items-center gap-2">
           <div ref={newBtnRef} className="relative">
             <div className="flex items-center border border-[#FF7A59] rounded-[3px] overflow-hidden">
-              <button onClick={() => { setEditCompany(null); setEditForm({ name:'',email:'',phone:'',mobile:'',address:'',manager_name:'',industry:'',next_step:'',domain:'',size:'',website:'',city:'',country:'',annual_revenue:'',description:'' }); setShowEditModal(true); }}
+              <button onClick={() => { setEditCompany(null); setAddingToGroup(null); setEditForm(EMPTY_FORM); setShowEditModal(true); }}
                 className="px-4 py-1.5 text-sm font-bold text-white"
                 style={{ backgroundColor: '#FF7A59' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
@@ -1090,7 +1080,7 @@ export default function CompaniesPage() {
             </div>
             {showNewDropdown && (
               <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
-                <button onClick={() => { setEditCompany(null); setEditForm({ name:'',email:'',phone:'',mobile:'',address:'',manager_name:'',industry:'',next_step:'',domain:'',size:'',website:'',city:'',country:'',annual_revenue:'',description:'' }); setShowEditModal(true); setShowNewDropdown(false); }}
+                <button onClick={() => { setEditCompany(null); setAddingToGroup(null); setEditForm(EMPTY_FORM); setShowEditModal(true); setShowNewDropdown(false); }}
                   className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
                   <Building2 className="w-4 h-4 text-[#7C98B6]" /> New company
                 </button>
@@ -1145,10 +1135,7 @@ export default function CompaniesPage() {
             onGroupAction={handleGroupAction}
             onMoveToGroup={handleMoveToGroup}
             allGroups={allGroups}
-            addingToGroup={addingToGroup}
-            onStartAdd={setAddingToGroup}
-            onSaveAdd={handleSaveAdd}
-            onCancelAdd={() => setAddingToGroup(null)}
+            onStartAdd={handleStartAdd}
             triggerRename={triggerRenameGroup}
             visibleColumns={visibleColumns}
             onToggleColumn={handleToggleColumn}
@@ -1194,7 +1181,7 @@ export default function CompaniesPage() {
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-[#DFE3EB] flex-shrink-0">
                 <h2 className="text-sm font-bold text-[#2D3E50]">{editCompany ? 'Edit company' : 'New company'}</h2>
-                <button onClick={() => { setShowEditModal(false); setEditCompany(null); }}>
+                <button onClick={() => { setShowEditModal(false); setEditCompany(null); setAddingToGroup(null); }}>
                   <X className="w-4 h-4 text-[#99ACC2]" />
                 </button>
               </div>
@@ -1288,10 +1275,22 @@ export default function CompaniesPage() {
                   </div>
                 </div>
 
-                {/* Next step */}
-                <div>
-                  {label('Next step')}
-                  <input value={ef.next_step} onChange={set('next_step')} placeholder="e.g. Schedule demo" className={fieldCls} />
+                {/* Row: Status + Next step */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    {label('Status')}
+                    <select value={ef.status} onChange={set('status')}
+                      className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] focus:border-[#FF7A59] bg-white">
+                      <option value="">Select status…</option>
+                      {['Lead','Prospect','Active','Inactive','Customer','Partner','Vendor'].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    {label('Next step')}
+                    <input value={ef.next_step} onChange={set('next_step')} placeholder="e.g. Schedule demo" className={fieldCls} />
+                  </div>
                 </div>
 
                 {/* Notes */}
@@ -1304,7 +1303,7 @@ export default function CompaniesPage() {
 
               {/* Footer */}
               <div className="flex justify-end gap-2 px-6 py-4 border-t border-[#DFE3EB] flex-shrink-0">
-                <button onClick={() => { setShowEditModal(false); setEditCompany(null); }}
+                <button onClick={() => { setShowEditModal(false); setEditCompany(null); setAddingToGroup(null); }}
                   className="px-4 py-2 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">
                   Cancel
                 </button>
