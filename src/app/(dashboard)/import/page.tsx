@@ -49,6 +49,7 @@ const COMPANY_FIELDS = [
   { value: 'industry', label: 'Industry' },
   { value: 'size', label: 'Company Size' },
   { value: 'website', label: 'Website' },
+  { value: 'email', label: 'Email' },
   { value: 'phone', label: 'Phone' },
   { value: 'city', label: 'City' },
   { value: 'country', label: 'Country' },
@@ -76,29 +77,30 @@ const DEAL_FIELDS = [
   { value: '__custom__',   label: 'Create new field (use column name)' },
 ];
 
-const AUTO_MAP: Record<string, string> = {
-  'first name': 'first_name',
-  'firstname': 'first_name',
-  'last name': 'last_name',
-  'lastname': 'last_name',
-  'email': 'email',
-  'email address': 'email',
-  'phone': 'phone',
-  'phone number': 'phone',
-  'job title': 'job_title',
-  'title': 'job_title',
+const CONTACT_AUTO_MAP: Record<string, string> = {
+  'first name': 'first_name',   'firstname': 'first_name',
+  'last name': 'last_name',     'lastname': 'last_name',
+  'email': 'email',             'email address': 'email',
+  'phone': 'phone',             'phone number': 'phone',
+  'job title': 'job_title',     'title': 'job_title',
   'department': 'department',
-  'company': 'company',
-  'company name': 'company',
-  'name': 'name',
-  'source': 'source',
-  'lead source': 'source',
+  'company': 'company',         'company name': 'company',
+  'source': 'source',           'lead source': 'source',
   'city': 'city',
   'country': 'country',
   'notes': 'notes',
-  'industry': 'industry',
-  'size': 'size',
-  'website': 'website',
+};
+
+const COMPANY_AUTO_MAP: Record<string, string> = {
+  'name': 'name',               'company name': 'name',
+  'company': 'name',            'organization': 'name',
+  'industry': 'industry',       'sector': 'industry',
+  'size': 'size',               'company size': 'size',   'employees': 'size',
+  'website': 'website',         'url': 'website',         'web': 'website',
+  'email': 'email',             'email address': 'email',
+  'phone': 'phone',             'phone number': 'phone',  'telephone': 'phone',
+  'city': 'city',
+  'country': 'country',
 };
 
 const DEAL_AUTO_MAP: Record<string, string> = {
@@ -148,7 +150,7 @@ export default function ImportPage() {
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
   const [isDragging, setIsDragging] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [importResults, setImportResults] = useState<{ success: number; failed: number } | null>(null);
+  const [importResults, setImportResults] = useState<{ success: number; failed: number; errors: string[] } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const currentStepIndex = STEPS.findIndex((s) => s.id === step);
@@ -175,7 +177,10 @@ export default function ImportPage() {
           setFileRows(json);
 
           // Auto-map columns using the right map for the selected import type
-          const activeAutoMap = importType === 'deals' ? DEAL_AUTO_MAP : AUTO_MAP;
+          const activeAutoMap =
+            importType === 'deals'     ? DEAL_AUTO_MAP :
+            importType === 'companies' ? COMPANY_AUTO_MAP :
+            CONTACT_AUTO_MAP;
           const autoMapped: Record<string, string> = {};
           headers.forEach((h) => {
             const normalized = h.toLowerCase().trim();
@@ -205,8 +210,16 @@ export default function ImportPage() {
     setImporting(true);
     let success = 0;
     let failed = 0;
+    const errors: string[] = [];
 
-    for (const row of fileRows) {
+    const PRIORITY_MAP: Record<string, Deal['priority']> = {
+      low: 'low', medium: 'medium', high: 'high', urgent: 'urgent',
+      normal: 'medium', critical: 'urgent', '1': 'low', '2': 'medium', '3': 'high', '4': 'urgent',
+    };
+
+    for (let rowIdx = 0; rowIdx < fileRows.length; rowIdx++) {
+      const row = fileRows[rowIdx];
+      const rowNum = rowIdx + 1;
       try {
         const mapped: Record<string, string> = {};
         const customCols: Array<{ colName: string; value: string }> = [];
@@ -221,10 +234,14 @@ export default function ImportPage() {
         });
 
         if (importType === 'contacts') {
-          if (!mapped.first_name || !mapped.last_name) { failed++; continue; }
-          const { data: created } = await createContact({
-            first_name: mapped.first_name,
-            last_name: mapped.last_name,
+          if (!mapped.first_name && !mapped.last_name) {
+            failed++;
+            errors.push(`Row ${rowNum}: Missing required fields — map "First Name" and "Last Name" columns.`);
+            continue;
+          }
+          const { data: created, error: createError } = await createContact({
+            first_name: mapped.first_name || '(unknown)',
+            last_name: mapped.last_name || '(unknown)',
             email: mapped.email || undefined,
             phone: mapped.phone || undefined,
             job_title: mapped.job_title || undefined,
@@ -237,39 +254,53 @@ export default function ImportPage() {
             lifecycle_stage: (mapped.lifecycle_stage as any) || 'lead',
             is_active: true,
           });
-          if (created?.id) {
+          if (createError) {
+            failed++;
+            errors.push(`Row ${rowNum}: ${createError}`);
+            continue;
+          }
+          if (created?.id && customCols.length > 0) {
             for (const { colName, value } of customCols) {
-              await saveValue('contacts', created.id, colName, value);
+              await saveValue('contacts', created.id, colName, value).catch(() => {});
             }
           }
           success++;
+
         } else if (importType === 'companies') {
-          if (!mapped.name) { failed++; continue; }
-          const { data: created } = await createCompany({
+          if (!mapped.name) {
+            failed++;
+            errors.push(`Row ${rowNum}: Missing required field — map a column to "Company Name".`);
+            continue;
+          }
+          const { data: created, error: createError } = await createCompany({
             name: mapped.name,
             industry: mapped.industry || undefined,
             size: mapped.size || undefined,
             website: mapped.website || undefined,
+            email: mapped.email || undefined,
             phone: mapped.phone || undefined,
             city: mapped.city || undefined,
             country: mapped.country || undefined,
           });
-          if (created?.id) {
+          if (createError) {
+            failed++;
+            errors.push(`Row ${rowNum}: ${createError}`);
+            continue;
+          }
+          if (created?.id && customCols.length > 0) {
             for (const { colName, value } of customCols) {
-              await saveValue('companies', created.id, colName, value);
+              await saveValue('companies', created.id, colName, value).catch(() => {});
             }
           }
           success++;
+
         } else if (importType === 'deals') {
-          if (!mapped.title) { failed++; continue; }
-          const PRIORITY_MAP: Record<string, Deal['priority']> = {
-            low: 'low', medium: 'medium', high: 'high', urgent: 'urgent',
-            normal: 'medium', critical: 'urgent', '1': 'low', '2': 'medium', '3': 'high', '4': 'urgent',
-          };
+          // Flexible title: mapped title → account_name → "Imported Deal #N"
+          const title = mapped.title || mapped.account_name || `Imported Deal #${rowNum}`;
           const priority: Deal['priority'] =
             PRIORITY_MAP[(mapped.priority || '').toLowerCase().trim()] || 'medium';
-          const { data: created } = await createDeal({
-            title: mapped.title,
+          const { data: created, error: createError } = await createDeal({
+            title,
             amount: mapped.amount ? parseFloat(mapped.amount.replace(/[^0-9.]/g, '')) || 0 : 0,
             currency: 'USD',
             stage: mapped.stage || 'lead',
@@ -287,19 +318,26 @@ export default function ImportPage() {
             next_step:    mapped.next_step    || undefined,
             account_name: mapped.account_name || undefined,
           });
-          if (created?.id) {
+          if (createError) {
+            failed++;
+            errors.push(`Row ${rowNum}: ${createError}`);
+            continue;
+          }
+          if (created?.id && customCols.length > 0) {
             for (const { colName, value } of customCols) {
-              await saveValue('deals', created.id, colName, value);
+              await saveValue('deals', created.id, colName, value).catch(() => {});
             }
           }
           success++;
         }
-      } catch {
+      } catch (err: unknown) {
         failed++;
+        const msg = err instanceof Error ? err.message : 'Unexpected error';
+        errors.push(`Row ${rowNum}: ${msg}`);
       }
     }
 
-    setImportResults({ success, failed });
+    setImportResults({ success, failed, errors });
     setImporting(false);
     setStep('done');
   };
@@ -697,39 +735,75 @@ export default function ImportPage() {
         )}
 
         {/* Done step */}
-        {step === 'done' && importResults && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-8 h-8 text-green-400" />
-            </div>
-            <h2 className="text-xl font-bold text-[#2D3E50] mb-2">Import complete!</h2>
-            <p className="text-[#516F90] mb-6">Your {importType} have been imported successfully.</p>
-
-            <div className="flex justify-center gap-6 mb-8">
-              <div className="text-center p-4 bg-white border border-green-500/20 rounded-xl min-w-[100px]">
-                <p className="text-3xl font-bold text-green-400">{importResults.success}</p>
-                <p className="text-sm text-[#516F90]">Imported</p>
+        {step === 'done' && importResults && (() => {
+          const allFailed = importResults.success === 0 && importResults.failed > 0;
+          const viewLabel = importType === 'contacts' ? 'View contacts'
+            : importType === 'companies' ? 'View companies'
+            : 'View deals';
+          const viewHref = `/${importType}`;
+          return (
+            <div className="py-10">
+              <div className="text-center mb-8">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${allFailed ? 'bg-red-500/10' : 'bg-green-500/10'}`}>
+                  {allFailed
+                    ? <AlertCircle className="w-8 h-8 text-red-400" />
+                    : <CheckCircle2 className="w-8 h-8 text-green-400" />
+                  }
+                </div>
+                <h2 className="text-xl font-bold text-[#2D3E50] mb-2">
+                  {allFailed ? 'Import failed' : 'Import complete'}
+                </h2>
+                <p className="text-[#516F90]">
+                  {allFailed
+                    ? 'No records were imported. See the errors below.'
+                    : `${importResults.success} ${importType} imported successfully.`}
+                </p>
               </div>
-              {importResults.failed > 0 && (
-                <div className="text-center p-4 bg-white border border-red-500/20 rounded-xl min-w-[100px]">
-                  <p className="text-3xl font-bold text-red-400">{importResults.failed}</p>
-                  <p className="text-sm text-[#516F90]">Failed</p>
+
+              <div className="flex justify-center gap-6 mb-8">
+                {importResults.success > 0 && (
+                  <div className="text-center p-4 bg-white border border-green-500/20 rounded-xl min-w-[100px]">
+                    <p className="text-3xl font-bold text-green-400">{importResults.success}</p>
+                    <p className="text-sm text-[#516F90]">Imported</p>
+                  </div>
+                )}
+                {importResults.failed > 0 && (
+                  <div className="text-center p-4 bg-white border border-red-500/20 rounded-xl min-w-[100px]">
+                    <p className="text-3xl font-bold text-red-400">{importResults.failed}</p>
+                    <p className="text-sm text-[#516F90]">Failed</p>
+                  </div>
+                )}
+              </div>
+
+              {importResults.errors.length > 0 && (
+                <div className="max-w-xl mx-auto mb-8 bg-red-50 border border-red-200 rounded-xl p-4">
+                  <p className="text-sm font-semibold text-red-600 mb-2">
+                    {importResults.errors.length} row{importResults.errors.length > 1 ? 's' : ''} failed:
+                  </p>
+                  <ul className="space-y-1 max-h-48 overflow-y-auto">
+                    {importResults.errors.map((e, i) => (
+                      <li key={i} className="text-xs text-red-500 flex items-start gap-1.5">
+                        <X className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                        {e}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
-            </div>
 
-            <div className="flex justify-center gap-3">
-              <Button variant="outline" onClick={resetWizard}>
-                Import more records
-              </Button>
-              <Button asChild>
-                <a href={`/${importType}`}>
-                  View {importType}
-                </a>
-              </Button>
+              <div className="flex justify-center gap-3">
+                <Button variant="outline" onClick={resetWizard}>
+                  Import more records
+                </Button>
+                {!allFailed && (
+                  <Button asChild>
+                    <a href={viewHref}>{viewLabel}</a>
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
