@@ -48,6 +48,7 @@ import MakeCallModal from '@/components/calls/MakeCallModal';
 import CreateTaskModal from '@/components/tasks/CreateTaskModal';
 import ScheduleMeetingModal from '@/components/meetings/ScheduleMeetingModal';
 import type { Contact, EmailTemplate } from '@/types';
+import { CustomFieldsSection } from '@/components/CustomFieldsSection';
 
 function addBusinessDays(date: Date, days: number): Date {
   const result = new Date(date);
@@ -792,6 +793,8 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 </div>
               </div>
+
+              <CustomFieldsSection module="contacts" recordId={contact.id} />
 
               {/* Communication subscriptions */}
               <div className="bg-white border border-[#DFE3EB] rounded-xl p-5">

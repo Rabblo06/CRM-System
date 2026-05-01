@@ -20,6 +20,7 @@ import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useContacts, useCompanies, useDeals } from '@/hooks/useData';
+import { useCustomFields } from '@/hooks/useCustomFields';
 import type { Deal } from '@/types';
 
 type ImportType = 'contacts' | 'companies' | 'deals' | null;
@@ -40,6 +41,7 @@ const CONTACT_FIELDS = [
   { value: 'country', label: 'Country' },
   { value: 'notes', label: 'Notes' },
   { value: '__skip__', label: "Don't import this column" },
+  { value: '__custom__', label: 'Create new field (use column name)' },
 ];
 
 const COMPANY_FIELDS = [
@@ -51,6 +53,7 @@ const COMPANY_FIELDS = [
   { value: 'city', label: 'City' },
   { value: 'country', label: 'Country' },
   { value: '__skip__', label: "Don't import this column" },
+  { value: '__custom__', label: 'Create new field (use column name)' },
 ];
 
 const DEAL_FIELDS = [
@@ -70,6 +73,7 @@ const DEAL_FIELDS = [
   { value: 'next_step',    label: 'Next Step' },
   { value: 'description',  label: 'Activities Timeline' },
   { value: '__skip__',     label: "Don't import this column" },
+  { value: '__custom__',   label: 'Create new field (use column name)' },
 ];
 
 const AUTO_MAP: Record<string, string> = {
@@ -134,6 +138,7 @@ export default function ImportPage() {
   const { contacts, createContact } = useContacts();
   const { companies, createCompany } = useCompanies();
   const { createDeal } = useDeals();
+  const { saveValue } = useCustomFields();
 
   const [step, setStep] = useState<WizardStep>('type');
   const [importType, setImportType] = useState<ImportType>(null);
@@ -204,15 +209,20 @@ export default function ImportPage() {
     for (const row of fileRows) {
       try {
         const mapped: Record<string, string> = {};
+        const customCols: Array<{ colName: string; value: string }> = [];
+
         Object.entries(columnMapping).forEach(([col, field]) => {
-          if (field && field !== '__skip__' && row[col]) {
+          if (!field || field === '__skip__') return;
+          if (field === '__custom__') {
+            if (row[col]) customCols.push({ colName: col, value: String(row[col]) });
+          } else if (row[col]) {
             mapped[field] = String(row[col]);
           }
         });
 
         if (importType === 'contacts') {
           if (!mapped.first_name || !mapped.last_name) { failed++; continue; }
-          await createContact({
+          const { data: created } = await createContact({
             first_name: mapped.first_name,
             last_name: mapped.last_name,
             email: mapped.email || undefined,
@@ -227,10 +237,15 @@ export default function ImportPage() {
             lifecycle_stage: (mapped.lifecycle_stage as any) || 'lead',
             is_active: true,
           });
+          if (created?.id) {
+            for (const { colName, value } of customCols) {
+              await saveValue('contacts', created.id, colName, value);
+            }
+          }
           success++;
         } else if (importType === 'companies') {
           if (!mapped.name) { failed++; continue; }
-          await createCompany({
+          const { data: created } = await createCompany({
             name: mapped.name,
             industry: mapped.industry || undefined,
             size: mapped.size || undefined,
@@ -239,6 +254,11 @@ export default function ImportPage() {
             city: mapped.city || undefined,
             country: mapped.country || undefined,
           });
+          if (created?.id) {
+            for (const { colName, value } of customCols) {
+              await saveValue('companies', created.id, colName, value);
+            }
+          }
           success++;
         } else if (importType === 'deals') {
           if (!mapped.title) { failed++; continue; }
@@ -248,7 +268,7 @@ export default function ImportPage() {
           };
           const priority: Deal['priority'] =
             PRIORITY_MAP[(mapped.priority || '').toLowerCase().trim()] || 'medium';
-          await createDeal({
+          const { data: created } = await createDeal({
             title: mapped.title,
             amount: mapped.amount ? parseFloat(mapped.amount.replace(/[^0-9.]/g, '')) || 0 : 0,
             currency: 'USD',
@@ -267,6 +287,11 @@ export default function ImportPage() {
             next_step:    mapped.next_step    || undefined,
             account_name: mapped.account_name || undefined,
           });
+          if (created?.id) {
+            for (const { colName, value } of customCols) {
+              await saveValue('deals', created.id, colName, value);
+            }
+          }
           success++;
         }
       } catch {

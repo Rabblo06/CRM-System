@@ -240,3 +240,23 @@ export interface RevenueDataPoint {
   revenue: number;
   deals: number;
 }
+
+export interface CustomFieldDefinition {
+  id: string;
+  user_id: string;
+  module: 'contacts' | 'companies' | 'deals';
+  name: string;
+  key: string;
+  field_type: string;
+  created_at: string;
+}
+
+export interface CustomFieldValue {
+  id: string;
+  user_id: string;
+  module: 'contacts' | 'companies' | 'deals';
+  record_id: string;
+  field_key: string;
+  value: string;
+  created_at: string;
+}

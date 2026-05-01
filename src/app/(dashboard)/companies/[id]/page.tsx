@@ -34,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useCompanies, useContacts, useEmailTemplates, useTasks } from '@/hooks/useData';
 import type { EmailTemplate } from '@/types';
+import { CustomFieldsSection } from '@/components/CustomFieldsSection';
 import { supabase } from '@/lib/supabase';
 import { useEmailSync } from '@/hooks/useEmailSync';
 import { getInitials, formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
@@ -482,6 +483,8 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 )}
               </div>
+              <CustomFieldsSection module="companies" recordId={company.id} />
+
               <div className="bg-white border border-[#DFE3EB] rounded-xl p-5">
                 <h2 className="text-sm font-semibold text-[#2D3E50] mb-3">Associated contacts ({companyContacts.length})</h2>
                 {companyContacts.length === 0 ? (
