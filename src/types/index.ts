@@ -91,6 +91,15 @@ export interface Deal {
   owner_id?: string;
   owner?: User;
   description?: string;
+  email?: string;
+  phone?: string;
+  mobile?: string;
+  position?: string;
+  address?: string;
+  manager_name?: string;
+  email_note?: string;
+  next_step?: string;
+  account_name?: string;
   is_won?: boolean;
   closed_at?: string;
   created_by?: string;

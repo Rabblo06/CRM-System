@@ -19,7 +19,8 @@ import {
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useContacts, useCompanies } from '@/hooks/useData';
+import { useContacts, useCompanies, useDeals } from '@/hooks/useData';
+import type { Deal } from '@/types';
 
 type ImportType = 'contacts' | 'companies' | 'deals' | null;
 type WizardStep = 'type' | 'upload' | 'map' | 'review' | 'done';
@@ -52,6 +53,25 @@ const COMPANY_FIELDS = [
   { value: '__skip__', label: "Don't import this column" },
 ];
 
+const DEAL_FIELDS = [
+  { value: 'title',        label: 'Deal Name',         required: true },
+  { value: 'amount',       label: 'Deals Value' },
+  { value: 'stage',        label: 'Stage' },
+  { value: 'priority',     label: 'Priority' },
+  { value: 'close_date',   label: 'Close Date' },
+  { value: 'account_name', label: 'Accounts' },
+  { value: 'email',        label: 'Email' },
+  { value: 'phone',        label: 'Phone Number' },
+  { value: 'mobile',       label: 'Mobile No' },
+  { value: 'position',     label: 'Position' },
+  { value: 'address',      label: 'Address' },
+  { value: 'manager_name', label: 'Name of Manager' },
+  { value: 'email_note',   label: 'Emailnote' },
+  { value: 'next_step',    label: 'Next Step' },
+  { value: 'description',  label: 'Activities Timeline' },
+  { value: '__skip__',     label: "Don't import this column" },
+];
+
 const AUTO_MAP: Record<string, string> = {
   'first name': 'first_name',
   'firstname': 'first_name',
@@ -77,6 +97,32 @@ const AUTO_MAP: Record<string, string> = {
   'website': 'website',
 };
 
+const DEAL_AUTO_MAP: Record<string, string> = {
+  'deal name': 'title',   'dealname': 'title',    'name': 'title',
+  'deal': 'title',        'opportunity': 'title',
+  'amount': 'amount',     'value': 'amount',      'deal value': 'amount',
+  'deals value': 'amount','revenue': 'amount',    'price': 'amount',
+  'stage': 'stage',       'pipeline stage': 'stage',
+  'priority': 'priority',
+  'close date': 'close_date', 'closing date': 'close_date',
+  'closedate': 'close_date',  'expected close': 'close_date',
+  'account': 'account_name',  'accounts': 'account_name',
+  'company': 'account_name',  'company name': 'account_name',
+  'organization': 'account_name',
+  'email': 'email',           'email address': 'email',
+  'phone': 'phone',           'phone number': 'phone',   'telephone': 'phone',
+  'mobile': 'mobile',         'mobile no': 'mobile',     'mobile number': 'mobile',
+  'cell': 'mobile',
+  'position': 'position',     'job title': 'position',   'role': 'position',
+  'address': 'address',       'street address': 'address',
+  'manager': 'manager_name',  'manager name': 'manager_name',
+  'name of manager': 'manager_name',
+  'email note': 'email_note', 'emailnote': 'email_note',
+  'next step': 'next_step',   'nextstep': 'next_step',   'next action': 'next_step',
+  'activities': 'description','activities timeline': 'description',
+  'notes': 'description',     'description': 'description', 'comments': 'description',
+};
+
 const STEPS: { id: WizardStep; label: string }[] = [
   { id: 'type', label: 'Select type' },
   { id: 'upload', label: 'Upload file' },
@@ -87,6 +133,7 @@ const STEPS: { id: WizardStep; label: string }[] = [
 export default function ImportPage() {
   const { contacts, createContact } = useContacts();
   const { companies, createCompany } = useCompanies();
+  const { createDeal } = useDeals();
 
   const [step, setStep] = useState<WizardStep>('type');
   const [importType, setImportType] = useState<ImportType>(null);
@@ -101,7 +148,10 @@ export default function ImportPage() {
 
   const currentStepIndex = STEPS.findIndex((s) => s.id === step);
 
-  const availableFields = importType === 'companies' ? COMPANY_FIELDS : CONTACT_FIELDS;
+  const availableFields =
+    importType === 'companies' ? COMPANY_FIELDS :
+    importType === 'deals'     ? DEAL_FIELDS :
+    CONTACT_FIELDS;
 
   const handleFileSelect = (selectedFile: File) => {
     setFile(selectedFile);
@@ -119,12 +169,13 @@ export default function ImportPage() {
           setFileHeaders(headers);
           setFileRows(json);
 
-          // Auto-map columns
+          // Auto-map columns using the right map for the selected import type
+          const activeAutoMap = importType === 'deals' ? DEAL_AUTO_MAP : AUTO_MAP;
           const autoMapped: Record<string, string> = {};
           headers.forEach((h) => {
             const normalized = h.toLowerCase().trim();
-            if (AUTO_MAP[normalized]) {
-              autoMapped[h] = AUTO_MAP[normalized];
+            if (activeAutoMap[normalized]) {
+              autoMapped[h] = activeAutoMap[normalized];
             } else {
               autoMapped[h] = '__skip__';
             }
@@ -189,6 +240,34 @@ export default function ImportPage() {
             country: mapped.country || undefined,
           });
           success++;
+        } else if (importType === 'deals') {
+          if (!mapped.title) { failed++; continue; }
+          const PRIORITY_MAP: Record<string, Deal['priority']> = {
+            low: 'low', medium: 'medium', high: 'high', urgent: 'urgent',
+            normal: 'medium', critical: 'urgent', '1': 'low', '2': 'medium', '3': 'high', '4': 'urgent',
+          };
+          const priority: Deal['priority'] =
+            PRIORITY_MAP[(mapped.priority || '').toLowerCase().trim()] || 'medium';
+          await createDeal({
+            title: mapped.title,
+            amount: mapped.amount ? parseFloat(mapped.amount.replace(/[^0-9.]/g, '')) || 0 : 0,
+            currency: 'USD',
+            stage: mapped.stage || 'lead',
+            priority,
+            probability: 0,
+            close_date:   mapped.close_date   || undefined,
+            description:  mapped.description  || undefined,
+            email:        mapped.email        || undefined,
+            phone:        mapped.phone        || undefined,
+            mobile:       mapped.mobile       || undefined,
+            position:     mapped.position     || undefined,
+            address:      mapped.address      || undefined,
+            manager_name: mapped.manager_name || undefined,
+            email_note:   mapped.email_note   || undefined,
+            next_step:    mapped.next_step    || undefined,
+            account_name: mapped.account_name || undefined,
+          });
+          success++;
         }
       } catch {
         failed++;
@@ -211,13 +290,23 @@ export default function ImportPage() {
   };
 
   const downloadTemplate = () => {
-    const headers = importType === 'companies'
-      ? ['Company Name', 'Industry', 'Size', 'Website', 'Phone', 'City', 'Country']
-      : ['First Name', 'Last Name', 'Email', 'Phone', 'Job Title', 'Department', 'Company', 'City', 'Country'];
+    let headers: string[];
+    let sample: string[][];
 
-    const sample = importType === 'companies'
-      ? [['Acme Corp', 'Technology', '51-200', 'https://acme.com', '+1 555 000 0000', 'San Francisco', 'USA']]
-      : [['John', 'Doe', 'john.doe@example.com', '+1 555 123 4567', 'Sales Manager', 'Sales', 'Acme Corp', 'New York', 'USA']];
+    if (importType === 'companies') {
+      headers = ['Company Name', 'Industry', 'Size', 'Website', 'Phone', 'City', 'Country'];
+      sample  = [['Acme Corp', 'Technology', '51-200', 'https://acme.com', '+1 555 000 0000', 'San Francisco', 'USA']];
+    } else if (importType === 'deals') {
+      headers = ['Deal Name', 'Deals Value', 'Stage', 'Priority', 'Close Date', 'Accounts',
+                 'Email', 'Phone Number', 'Mobile No', 'Position', 'Address',
+                 'Name of Manager', 'Emailnote', 'Next Step', 'Activities Timeline'];
+      sample  = [['New Software License', '15000', 'lead', 'medium', '2026-06-30', 'Acme Corp',
+                  'john@acme.com', '+1 555 123 4567', '+1 555 987 6543', 'Sales Manager', '123 Main St',
+                  'Jane Smith', 'Discussed pricing', 'Follow up next week', 'Initial call completed']];
+    } else {
+      headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Job Title', 'Department', 'Company', 'City', 'Country'];
+      sample  = [['John', 'Doe', 'john.doe@example.com', '+1 555 123 4567', 'Sales Manager', 'Sales', 'Acme Corp', 'New York', 'USA']];
+    }
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...sample]);
     const wb = XLSX.utils.book_new();
