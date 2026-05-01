@@ -206,6 +206,12 @@ export default function ImportPage() {
     if (droppedFile) handleFileSelect(droppedFile);
   };
 
+  // Detect if a create* hook fell back to a localStorage fake ID instead of a real Supabase UUID.
+  // Deals fake IDs: 'deal-${timestamp}', Companies: 'comp-${timestamp}'.
+  // Real Supabase rows always have UUID format.
+  const isRealUUID = (id: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
   const handleImport = async () => {
     setImporting(true);
     let success = 0;
@@ -282,12 +288,12 @@ export default function ImportPage() {
             city: mapped.city || undefined,
             country: mapped.country || undefined,
           });
-          if (createError) {
+          if (createError || !created?.id || !isRealUUID(created.id)) {
             failed++;
-            errors.push(`Row ${rowNum}: ${createError}`);
+            errors.push(`Row ${rowNum}: ${createError || 'Database error — a required column may be missing. Run the SQL migration in Supabase.'}`);
             continue;
           }
-          if (created?.id && customCols.length > 0) {
+          if (customCols.length > 0) {
             for (const { colName, value } of customCols) {
               await saveValue('companies', created.id, colName, value).catch(() => {});
             }
@@ -318,12 +324,12 @@ export default function ImportPage() {
             next_step:    mapped.next_step    || undefined,
             account_name: mapped.account_name || undefined,
           });
-          if (createError) {
+          if (createError || !created?.id || !isRealUUID(created.id)) {
             failed++;
-            errors.push(`Row ${rowNum}: ${createError}`);
+            errors.push(`Row ${rowNum}: ${createError || 'Database error — run the SQL migration to add missing deal columns (email, phone, mobile, position, address, manager_name, email_note, next_step, account_name).'}`);
             continue;
           }
-          if (created?.id && customCols.length > 0) {
+          if (customCols.length > 0) {
             for (const { colName, value } of customCols) {
               await saveValue('deals', created.id, colName, value).catch(() => {});
             }
