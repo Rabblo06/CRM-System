@@ -214,10 +214,20 @@ export function KanbanBoard({
     [deals, localDeals, resolvedStages, onUpdateDeal]
   );
 
-  const dealsByStage = resolvedStages.reduce((acc, stage) => {
-    acc[stage.id] = localDeals.filter((d) => d.stage === stage.id);
-    return acc;
-  }, {} as Record<string, Deal[]>);
+  const dealsByStage = useMemo(() => {
+    const map: Record<string, Deal[]> = {};
+    resolvedStages.forEach((s) => { map[s.id] = []; });
+    localDeals.forEach((deal) => {
+      if (map[deal.stage] !== undefined) {
+        map[deal.stage].push(deal);
+      } else {
+        // Unrecognized stage (e.g. imported 'lead') → first column
+        const firstId = resolvedStages[0]?.id;
+        if (firstId) map[firstId].push(deal);
+      }
+    });
+    return map;
+  }, [localDeals, resolvedStages]);
 
   return (
     <DndContext

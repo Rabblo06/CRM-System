@@ -261,6 +261,18 @@ export default function DealsPage() {
     }
   }, []);
 
+  /* Auto-switch to board when deals exist (e.g. after import) but pipeline wasn't configured yet */
+  useEffect(() => {
+    if (loading || deals.length === 0 || view !== 'empty') return;
+    if (!localStorage.getItem(userKey('crm_pipeline_v2'))) {
+      localStorage.setItem(
+        userKey('crm_pipeline_v2'),
+        JSON.stringify({ pipelineName: 'Sales Pipeline', stages: DEFAULT_STAGES })
+      );
+    }
+    setView('board');
+  }, [loading, deals.length, view]);
+
   /* Close dropdown on outside click */
   useEffect(() => {
     const handler = (e: MouseEvent) => {

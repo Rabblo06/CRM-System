@@ -309,7 +309,7 @@ export default function ImportPage() {
             title,
             amount: mapped.amount ? parseFloat(mapped.amount.replace(/[^0-9.]/g, '')) || 0 : 0,
             currency: 'USD',
-            stage: mapped.stage || 'lead',
+            stage: mapped.stage || 'intro_call',
             priority,
             probability: 0,
             close_date:   mapped.close_date   || undefined,
