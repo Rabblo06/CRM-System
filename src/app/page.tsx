@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -78,27 +78,27 @@ export default function SplashPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f6f9fc] flex flex-col">
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col">
       {/* ── NAV ──────────────────────────────────── */}
-      <nav className="sticky top-0 z-40 bg-white border-b border-[#dfe3eb]">
+      <nav className="sticky top-0 z-40 bg-white border-b border-[#EBEBEB]">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2.5">
             <div
               className="w-8 h-8 rounded-[3px] flex items-center justify-center"
-              style={{ backgroundColor: '#ff7a59' }}
+              style={{ backgroundColor: '#4762D5' }}
             >
               <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="font-bold text-[#2d3e50] text-base">CRM Pro</span>
+            <span className="font-bold text-[#333333] text-base">CRM Pro</span>
           </div>
 
           {/* Nav links */}
           <div className="hidden md:flex items-center gap-6">
             {['Features', 'Pricing', 'Docs'].map((l) => (
-              <a key={l} href="#" className="text-sm text-[#516f90] hover:text-[#2d3e50] font-medium transition-colors">{l}</a>
+              <a key={l} href="#" className="text-sm text-[#666666] hover:text-[#333333] font-medium transition-colors">{l}</a>
             ))}
           </div>
 
@@ -106,16 +106,16 @@ export default function SplashPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => router.push('/login')}
-              className="px-4 py-2 text-sm font-semibold text-[#425b76] hover:text-[#2d3e50] transition-colors"
+              className="px-4 py-2 text-sm font-semibold text-[#555555] hover:text-[#333333] transition-colors"
             >
               Sign in
             </button>
             <button
               onClick={() => router.push('/login')}
               className="px-4 py-2 text-sm font-bold text-white rounded-[3px] transition-colors"
-              style={{ backgroundColor: '#ff7a59' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ff8f73')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ff7a59')}
+              style={{ backgroundColor: '#4762D5' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#3A52C0')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#4762D5')}
             >
               Get started free
             </button>
@@ -128,23 +128,23 @@ export default function SplashPage() {
         {/* Badge */}
         <div
           className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-6 border transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}
-          style={{ backgroundColor: '#fff3f0', borderColor: '#ffd5cc', color: '#ff7a59' }}
+          style={{ backgroundColor: '#EEF0FB', borderColor: '#C7CEFB', color: '#4762D5' }}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-[#ff7a59] animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#4762D5] animate-pulse" />
           Now with AI-powered activity summaries
         </div>
 
         {/* Headline */}
         <h1
-          className={`text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#2d3e50] leading-tight max-w-3xl mb-5 transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#333333] leading-tight max-w-3xl mb-5 transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
         >
           Grow your revenue<br />
-          <span style={{ color: '#ff7a59' }}>faster than ever.</span>
+          <span style={{ color: '#4762D5' }}>faster than ever.</span>
         </h1>
 
         {/* Sub */}
         <p
-          className={`text-base md:text-lg text-[#516f90] max-w-xl mb-8 leading-relaxed transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`text-base md:text-lg text-[#666666] max-w-xl mb-8 leading-relaxed transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
         >
           CRM Pro gives your sales team contacts, pipeline, meetings,
           email templates, and analytics — all in one clean workspace.
@@ -157,15 +157,15 @@ export default function SplashPage() {
           <button
             onClick={() => router.push('/login')}
             className="px-8 py-3.5 text-sm font-bold text-white rounded-[3px] shadow-md transition-all hover:shadow-lg"
-            style={{ backgroundColor: '#ff7a59' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ff8f73')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ff7a59')}
+            style={{ backgroundColor: '#4762D5' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#3A52C0')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#4762D5')}
           >
             Start for free — no card needed
           </button>
           <button
             onClick={() => router.push('/dashboard')}
-            className="px-8 py-3.5 text-sm font-bold text-[#425b76] rounded-[3px] bg-white border border-[#cbd6e2] hover:bg-[#f6f9fc] transition-colors"
+            className="px-8 py-3.5 text-sm font-bold text-[#555555] rounded-[3px] bg-white border border-[#EBEBEB] hover:bg-[#FAFAFA] transition-colors"
           >
             View live demo →
           </button>
@@ -173,19 +173,19 @@ export default function SplashPage() {
 
         {/* Trust line */}
         <p
-          className={`mt-4 text-xs text-[#7c98b6] transition-all duration-700 delay-[400ms] ${mounted ? 'opacity-100' : 'opacity-0'}`}
+          className={`mt-4 text-xs text-[#999999] transition-all duration-700 delay-[400ms] ${mounted ? 'opacity-100' : 'opacity-0'}`}
         >
           Trusted by 500+ sales teams · GDPR compliant · SOC 2 ready
         </p>
       </section>
 
       {/* ── STATS BAR ────────────────────────────── */}
-      <section className="bg-white border-y border-[#dfe3eb] py-8">
+      <section className="bg-white border-y border-[#EBEBEB] py-8">
         <div className="max-w-4xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6">
           {STATS.map((s) => (
             <div key={s.label} className="text-center">
-              <p className="text-2xl font-extrabold text-[#2d3e50]">{s.value}</p>
-              <p className="text-xs text-[#7c98b6] mt-0.5 font-medium">{s.label}</p>
+              <p className="text-2xl font-extrabold text-[#333333]">{s.value}</p>
+              <p className="text-xs text-[#999999] mt-0.5 font-medium">{s.label}</p>
             </div>
           ))}
         </div>
@@ -194,10 +194,10 @@ export default function SplashPage() {
       {/* ── FEATURES GRID ────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-16">
         <div className="text-center mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold text-[#2d3e50] mb-3">
+          <h2 className="text-2xl md:text-3xl font-bold text-[#333333] mb-3">
             Everything your team needs
           </h2>
-          <p className="text-sm text-[#516f90] max-w-lg mx-auto">
+          <p className="text-sm text-[#666666] max-w-lg mx-auto">
             No plug-ins, no add-ons. Every feature is included — out of the box.
           </p>
         </div>
@@ -206,55 +206,55 @@ export default function SplashPage() {
           {FEATURES.map((f, i) => (
             <div
               key={f.title}
-              className={`bg-white border border-[#dfe3eb] rounded-[3px] p-6 hover:shadow-md hover:border-[#cbd6e2] transition-all duration-300 group`}
+              className={`bg-white border border-[#EBEBEB] rounded-[3px] p-6 hover:shadow-md hover:border-[#EBEBEB] transition-all duration-300 group`}
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div
-                className="w-9 h-9 rounded-[3px] flex items-center justify-center mb-4 transition-colors group-hover:bg-[#fff3f0]"
-                style={{ backgroundColor: '#f6f9fc', color: '#ff7a59' }}
+                className="w-9 h-9 rounded-[3px] flex items-center justify-center mb-4 transition-colors group-hover:bg-[#EEF0FB]"
+                style={{ backgroundColor: '#FAFAFA', color: '#4762D5' }}
               >
                 {f.icon}
               </div>
-              <h3 className="text-sm font-bold text-[#2d3e50] mb-1.5">{f.title}</h3>
-              <p className="text-xs text-[#516f90] leading-relaxed">{f.desc}</p>
+              <h3 className="text-sm font-bold text-[#333333] mb-1.5">{f.title}</h3>
+              <p className="text-xs text-[#666666] leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── BOTTOM CTA ───────────────────────────── */}
-      <section className="py-16 px-6 text-center" style={{ backgroundColor: '#2d3e50' }}>
+      <section className="py-16 px-6 text-center" style={{ backgroundColor: '#333333' }}>
         <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
           Ready to close more deals?
         </h2>
-        <p className="text-sm mb-7" style={{ color: '#7c98b6' }}>
+        <p className="text-sm mb-7" style={{ color: '#999999' }}>
           Create your free account in 30 seconds. No credit card required.
         </p>
         <button
           onClick={() => router.push('/login')}
           className="px-10 py-3.5 text-sm font-bold text-white rounded-[3px] transition-all hover:brightness-110"
-          style={{ backgroundColor: '#ff7a59' }}
+          style={{ backgroundColor: '#4762D5' }}
         >
           Get started — it&apos;s free
         </button>
       </section>
 
       {/* ── FOOTER ───────────────────────────────── */}
-      <footer className="bg-white border-t border-[#dfe3eb] py-6 px-6">
+      <footer className="bg-white border-t border-[#EBEBEB] py-6 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-[3px] flex items-center justify-center" style={{ backgroundColor: '#ff7a59' }}>
+            <div className="w-6 h-6 rounded-[3px] flex items-center justify-center" style={{ backgroundColor: '#4762D5' }}>
               <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-xs font-bold text-[#2d3e50]">CRM Pro</span>
+            <span className="text-xs font-bold text-[#333333]">CRM Pro</span>
           </div>
-          <p className="text-xs text-[#7c98b6]">© 2026 CRM Pro. All rights reserved.</p>
+          <p className="text-xs text-[#999999]">© 2026 CRM Pro. All rights reserved.</p>
           <div className="flex gap-4">
-            <a href="/privacy" className="text-xs text-[#7c98b6] hover:text-[#425b76] transition-colors">Privacy</a>
-            <a href="/terms" className="text-xs text-[#7c98b6] hover:text-[#425b76] transition-colors">Terms</a>
-            <a href="#" className="text-xs text-[#7c98b6] hover:text-[#425b76] transition-colors">Security</a>
+            <a href="/privacy" className="text-xs text-[#999999] hover:text-[#555555] transition-colors">Privacy</a>
+            <a href="/terms" className="text-xs text-[#999999] hover:text-[#555555] transition-colors">Terms</a>
+            <a href="#" className="text-xs text-[#999999] hover:text-[#555555] transition-colors">Security</a>
           </div>
         </div>
       </footer>

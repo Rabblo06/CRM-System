@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
@@ -16,7 +16,7 @@ const TabsList = React.forwardRef<
       'inline-flex h-9 items-center justify-center rounded-lg p-1 text-xs',
       className
     )}
-    style={{ backgroundColor: '#F0F3F7', color: '#516F90' }}
+    style={{ backgroundColor: '#F1F1F1', color: '#666666' }}
     {...props}
   />
 ));
@@ -29,7 +29,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      'inline-flex items-center justify-center whitespace-nowrap rounded px-3 py-1.5 text-xs font-medium transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-[#2D3E50] data-[state=active]:shadow-sm text-[#516F90]',
+      'inline-flex items-center justify-center whitespace-nowrap rounded px-3 py-1.5 text-xs font-medium transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-[#333333] data-[state=active]:shadow-sm text-[#666666]',
       className
     )}
     {...props}

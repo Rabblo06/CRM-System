@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
@@ -35,16 +35,16 @@ interface TicketItem {
 
 /* ─── Config ─────────────────────────────────────────────── */
 const COLS: { id: Status; label: string; color: string; bg: string; icon: React.ElementType }[] = [
-  { id: 'new',             label: 'New',                 color: '#0091AE', bg: '#E5F5F8', icon: AlertCircle   },
-  { id: 'waiting_contact', label: 'Waiting on contact',  color: '#F5C26B', bg: '#FEF9EE', icon: Clock         },
-  { id: 'waiting_us',      label: 'Waiting on us',       color: '#FF7A59', bg: '#FFF3F0', icon: MessageSquare  },
-  { id: 'closed',          label: 'Closed',              color: '#7C98B6', bg: '#F0F3F7', icon: CheckCircle2  },
+  { id: 'new',             label: 'New',                 color: '#4762D5', bg: '#E5F5F8', icon: AlertCircle   },
+  { id: 'waiting_contact', label: 'Waiting on contact',  color: '#E8882A', bg: '#FEF9EE', icon: Clock         },
+  { id: 'waiting_us',      label: 'Waiting on us',       color: '#4762D5', bg: '#EEF0FB', icon: MessageSquare  },
+  { id: 'closed',          label: 'Closed',              color: '#999999', bg: '#F1F1F1', icon: CheckCircle2  },
 ];
 
 const PRIORITY_CFG: Record<Priority, { label: string; color: string; bg: string }> = {
-  low:    { label: 'Low',    color: '#7C98B6', bg: '#F0F3F7' },
-  medium: { label: 'Medium', color: '#F5C26B', bg: '#FEF9EE' },
-  high:   { label: 'High',   color: '#FF7A59', bg: '#FFF3F0' },
+  low:    { label: 'Low',    color: '#999999', bg: '#F1F1F1' },
+  medium: { label: 'Medium', color: '#E8882A', bg: '#FEF9EE' },
+  high:   { label: 'High',   color: '#4762D5', bg: '#EEF0FB' },
   urgent: { label: 'Urgent', color: '#ffffff', bg: '#FF5A5F' },
 };
 
@@ -64,7 +64,7 @@ function getInitials(name: string): string {
   return name.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
 }
 
-const AVATAR_COLORS = ['#FF7A59', '#0091AE', '#00BDA5', '#F5C26B', '#425B76', '#6366f1', '#10b981'];
+const AVATAR_COLORS = ['#4762D5', '#4762D5', '#4CAF8E', '#E8882A', '#555555', '#6366f1', '#10b981'];
 function avatarColor(name: string): string {
   const idx = name.charCodeAt(0) % AVATAR_COLORS.length;
   return AVATAR_COLORS[idx];
@@ -121,14 +121,14 @@ function CreateTicketModal({ onSave, onClose, contacts, companies }: CreateTicke
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
         className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh]"
-        style={{ border: '1px solid #DFE3EB' }}
+        style={{ border: '1px solid #EBEBEB' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: '#DFE3EB' }}>
-          <h2 className="text-base font-semibold" style={{ color: '#2D3E50' }}>Create Ticket</h2>
-          <button onClick={onClose} className="p-1.5 rounded hover:bg-[#F0F3F7]">
-            <X className="w-4 h-4" style={{ color: '#7C98B6' }} />
+        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: '#EBEBEB' }}>
+          <h2 className="text-base font-semibold" style={{ color: '#333333' }}>Create Ticket</h2>
+          <button onClick={onClose} className="p-1.5 rounded hover:bg-[#F1F1F1]">
+            <X className="w-4 h-4" style={{ color: '#999999' }} />
           </button>
         </div>
 
@@ -136,7 +136,7 @@ function CreateTicketModal({ onSave, onClose, contacts, companies }: CreateTicke
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           {/* Subject */}
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: '#516F90' }}>Ticket Name *</label>
+            <label className="block text-xs font-medium mb-1" style={{ color: '#666666' }}>Ticket Name *</label>
             <Input
               value={subject}
               onChange={e => setSubject(e.target.value)}
@@ -149,23 +149,23 @@ function CreateTicketModal({ onSave, onClose, contacts, companies }: CreateTicke
           {/* Status + Priority */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: '#516F90' }}>Status</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: '#666666' }}>Status</label>
               <select
                 value={status}
                 onChange={e => setStatus(e.target.value as Status)}
                 className="w-full text-sm border rounded-md px-3 py-2 bg-white"
-                style={{ borderColor: '#DFE3EB', color: '#2D3E50' }}
+                style={{ borderColor: '#EBEBEB', color: '#333333' }}
               >
                 {COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: '#516F90' }}>Priority</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: '#666666' }}>Priority</label>
               <select
                 value={priority}
                 onChange={e => setPriority(e.target.value as Priority)}
                 className="w-full text-sm border rounded-md px-3 py-2 bg-white"
-                style={{ borderColor: '#DFE3EB', color: '#2D3E50' }}
+                style={{ borderColor: '#EBEBEB', color: '#333333' }}
               >
                 {(Object.keys(PRIORITY_CFG) as Priority[]).map(p => (
                   <option key={p} value={p}>{PRIORITY_CFG[p].label}</option>
@@ -177,18 +177,18 @@ function CreateTicketModal({ onSave, onClose, contacts, companies }: CreateTicke
           {/* Source + Owner */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: '#516F90' }}>Source</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: '#666666' }}>Source</label>
               <select
                 value={source}
                 onChange={e => setSource(e.target.value)}
                 className="w-full text-sm border rounded-md px-3 py-2 bg-white"
-                style={{ borderColor: '#DFE3EB', color: '#2D3E50' }}
+                style={{ borderColor: '#EBEBEB', color: '#333333' }}
               >
                 {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: '#516F90' }}>Ticket Owner</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: '#666666' }}>Ticket Owner</label>
               <Input
                 value={ownerName}
                 onChange={e => setOwnerName(e.target.value)}
@@ -200,14 +200,14 @@ function CreateTicketModal({ onSave, onClose, contacts, companies }: CreateTicke
 
           {/* Contact */}
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: '#516F90' }}>
+            <label className="block text-xs font-medium mb-1" style={{ color: '#666666' }}>
               <User className="inline w-3 h-3 mr-1" />Associate Contact
             </label>
             <select
               value={contactId}
               onChange={e => setContactId(e.target.value)}
               className="w-full text-sm border rounded-md px-3 py-2 bg-white"
-              style={{ borderColor: '#DFE3EB', color: contactId ? '#2D3E50' : '#99ACC2' }}
+              style={{ borderColor: '#EBEBEB', color: contactId ? '#333333' : '#B3B3B3' }}
             >
               <option value="">No contact</option>
               {contacts.map(c => (
@@ -218,14 +218,14 @@ function CreateTicketModal({ onSave, onClose, contacts, companies }: CreateTicke
 
           {/* Company */}
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: '#516F90' }}>
+            <label className="block text-xs font-medium mb-1" style={{ color: '#666666' }}>
               <Building2 className="inline w-3 h-3 mr-1" />Associate Company
             </label>
             <select
               value={companyId}
               onChange={e => setCompanyId(e.target.value)}
               className="w-full text-sm border rounded-md px-3 py-2 bg-white"
-              style={{ borderColor: '#DFE3EB', color: companyId ? '#2D3E50' : '#99ACC2' }}
+              style={{ borderColor: '#EBEBEB', color: companyId ? '#333333' : '#B3B3B3' }}
             >
               <option value="">No company</option>
               {companies.map(c => (
@@ -236,22 +236,22 @@ function CreateTicketModal({ onSave, onClose, contacts, companies }: CreateTicke
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: '#516F90' }}>Description</label>
+            <label className="block text-xs font-medium mb-1" style={{ color: '#666666' }}>Description</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Describe the issue in detail..."
               rows={3}
               className="w-full text-sm border rounded-md px-3 py-2 resize-none"
-              style={{ borderColor: '#DFE3EB', color: '#2D3E50' }}
-              onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; e.currentTarget.style.outline = 'none'; }}
-              onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }}
+              style={{ borderColor: '#EBEBEB', color: '#333333' }}
+              onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; e.currentTarget.style.outline = 'none'; }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }}
             />
           </div>
         </form>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t" style={{ borderColor: '#DFE3EB' }}>
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t" style={{ borderColor: '#EBEBEB' }}>
           <Button variant="outline" size="sm" className="text-xs" onClick={onClose}>Cancel</Button>
           <Button size="sm" className="text-xs gap-1.5" onClick={handleSubmit as unknown as React.MouseEventHandler<HTMLButtonElement>}>
             <Plus className="w-3.5 h-3.5" />
@@ -284,19 +284,19 @@ function TicketDetail({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
         className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4"
-        style={{ border: '1px solid #DFE3EB' }}
+        style={{ border: '1px solid #EBEBEB' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between px-6 py-4 border-b" style={{ borderColor: '#DFE3EB' }}>
+        <div className="flex items-start justify-between px-6 py-4 border-b" style={{ borderColor: '#EBEBEB' }}>
           <div className="flex-1 min-w-0 pr-4">
-            <p className="text-xs font-mono mb-1" style={{ color: '#99ACC2' }}>
+            <p className="text-xs font-mono mb-1" style={{ color: '#B3B3B3' }}>
               {ticket.id.startsWith('tkt_') ? `#${ticket.id.slice(-6).toUpperCase()}` : ticket.id}
             </p>
-            <h2 className="text-sm font-semibold leading-snug" style={{ color: '#2D3E50' }}>{ticket.subject}</h2>
+            <h2 className="text-sm font-semibold leading-snug" style={{ color: '#333333' }}>{ticket.subject}</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded hover:bg-[#F0F3F7] flex-shrink-0">
-            <X className="w-4 h-4" style={{ color: '#7C98B6' }} />
+          <button onClick={onClose} className="p-1.5 rounded hover:bg-[#F1F1F1] flex-shrink-0">
+            <X className="w-4 h-4" style={{ color: '#999999' }} />
           </button>
         </div>
 
@@ -315,44 +315,44 @@ function TicketDetail({
           </div>
 
           {ticket.description && (
-            <p className="text-sm" style={{ color: '#516F90' }}>{ticket.description}</p>
+            <p className="text-sm" style={{ color: '#666666' }}>{ticket.description}</p>
           )}
 
           {/* Meta grid */}
-          <div className="space-y-2 text-xs border-t pt-4" style={{ borderColor: '#DFE3EB' }}>
+          <div className="space-y-2 text-xs border-t pt-4" style={{ borderColor: '#EBEBEB' }}>
             {ticket.contact_name && (
               <div className="flex justify-between">
-                <span style={{ color: '#7C98B6' }}>Contact</span>
-                <span style={{ color: '#2D3E50' }} className="font-medium">{ticket.contact_name}</span>
+                <span style={{ color: '#999999' }}>Contact</span>
+                <span style={{ color: '#333333' }} className="font-medium">{ticket.contact_name}</span>
               </div>
             )}
             {ticket.company_name && (
               <div className="flex justify-between">
-                <span style={{ color: '#7C98B6' }}>Company</span>
-                <span style={{ color: '#2D3E50' }} className="font-medium">{ticket.company_name}</span>
+                <span style={{ color: '#999999' }}>Company</span>
+                <span style={{ color: '#333333' }} className="font-medium">{ticket.company_name}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span style={{ color: '#7C98B6' }}>Owner</span>
-              <span style={{ color: '#2D3E50' }} className="font-medium">{ticket.owner_name || '—'}</span>
+              <span style={{ color: '#999999' }}>Owner</span>
+              <span style={{ color: '#333333' }} className="font-medium">{ticket.owner_name || '—'}</span>
             </div>
             <div className="flex justify-between">
-              <span style={{ color: '#7C98B6' }}>Source</span>
-              <span style={{ color: '#2D3E50' }}>{ticket.source}</span>
+              <span style={{ color: '#999999' }}>Source</span>
+              <span style={{ color: '#333333' }}>{ticket.source}</span>
             </div>
             <div className="flex justify-between">
-              <span style={{ color: '#7C98B6' }}>Created</span>
-              <span style={{ color: '#2D3E50' }}>{fmtDate(ticket.created_at)}</span>
+              <span style={{ color: '#999999' }}>Created</span>
+              <span style={{ color: '#333333' }}>{fmtDate(ticket.created_at)}</span>
             </div>
             <div className="flex justify-between">
-              <span style={{ color: '#7C98B6' }}>Updated</span>
-              <span style={{ color: '#2D3E50' }}>{fmtDate(ticket.updated_at)}</span>
+              <span style={{ color: '#999999' }}>Updated</span>
+              <span style={{ color: '#333333' }}>{fmtDate(ticket.updated_at)}</span>
             </div>
           </div>
 
           {/* Move to */}
           <div>
-            <p className="text-xs font-medium mb-1.5" style={{ color: '#516F90' }}>Move to pipeline stage</p>
+            <p className="text-xs font-medium mb-1.5" style={{ color: '#666666' }}>Move to pipeline stage</p>
             <div className="flex flex-wrap gap-1.5">
               {COLS.map(c => (
                 <button
@@ -373,11 +373,11 @@ function TicketDetail({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t" style={{ borderColor: '#DFE3EB' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-t" style={{ borderColor: '#EBEBEB' }}>
           <button
             onClick={() => { onDelete(ticket.id); onClose(); }}
-            className="text-xs font-medium px-3 py-1.5 rounded-md hover:bg-[#FFF3F0] transition-colors"
-            style={{ color: '#FF7A59' }}
+            className="text-xs font-medium px-3 py-1.5 rounded-md hover:bg-[#EEF0FB] transition-colors"
+            style={{ color: '#4762D5' }}
           >
             Delete ticket
           </button>
@@ -410,20 +410,20 @@ function KanbanCard({
       onDragStart={() => onDragStart(ticket.id)}
       onClick={() => onClick(ticket)}
       className="bg-white border rounded-xl p-3.5 cursor-pointer hover:shadow-md transition-all group select-none"
-      style={{ borderColor: '#DFE3EB' }}
+      style={{ borderColor: '#EBEBEB' }}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <p className="text-xs font-medium leading-snug flex-1" style={{ color: '#2D3E50' }}>{ticket.subject}</p>
+        <p className="text-xs font-medium leading-snug flex-1" style={{ color: '#333333' }}>{ticket.subject}</p>
         <button
-          className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-[#F0F3F7] flex-shrink-0 transition-opacity"
+          className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-[#F1F1F1] flex-shrink-0 transition-opacity"
           onClick={e => { e.stopPropagation(); onClick(ticket); }}
         >
-          <MoreHorizontal className="w-3.5 h-3.5" style={{ color: '#99ACC2' }} />
+          <MoreHorizontal className="w-3.5 h-3.5" style={{ color: '#B3B3B3' }} />
         </button>
       </div>
 
       {ticket.contact_name && (
-        <p className="text-xs mb-2 truncate" style={{ color: '#7C98B6' }}>
+        <p className="text-xs mb-2 truncate" style={{ color: '#999999' }}>
           <User className="inline w-3 h-3 mr-1" />{ticket.contact_name}
           {ticket.company_name && ` · ${ticket.company_name}`}
         </p>
@@ -438,7 +438,7 @@ function KanbanCard({
         </span>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs" style={{ color: '#B0C1D4' }}>
+          <span className="text-xs" style={{ color: '#D6D6D6' }}>
             <Calendar className="inline w-3 h-3 mr-0.5" />
             {new Date(ticket.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>
@@ -610,29 +610,29 @@ export default function TicketsPage() {
   }, {} as Record<Status, number>);
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: '#F6F9FC' }}>
+    <div className="flex flex-col h-full" style={{ backgroundColor: '#FAFAFA' }}>
       {/* ── Top bar ─────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-white" style={{ borderColor: '#DFE3EB' }}>
+      <div className="flex items-center justify-between px-6 py-4 border-b bg-white" style={{ borderColor: '#EBEBEB' }}>
         <div>
-          <h1 className="text-lg font-semibold" style={{ color: '#2D3E50' }}>Tickets</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#7C98B6' }}>
+          <h1 className="text-lg font-semibold" style={{ color: '#333333' }}>Tickets</h1>
+          <p className="text-xs mt-0.5" style={{ color: '#999999' }}>
             {tickets.length} total · {tickets.filter(t => t.status !== 'closed').length} open
           </p>
         </div>
         <div className="flex items-center gap-2">
           {/* View toggle */}
-          <div className="flex items-center border rounded-lg overflow-hidden" style={{ borderColor: '#DFE3EB' }}>
+          <div className="flex items-center border rounded-lg overflow-hidden" style={{ borderColor: '#EBEBEB' }}>
             <button
               onClick={() => setView('board')}
               className="px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5"
-              style={{ backgroundColor: view === 'board' ? '#2D3E50' : '#fff', color: view === 'board' ? '#fff' : '#516F90' }}
+              style={{ backgroundColor: view === 'board' ? '#333333' : '#fff', color: view === 'board' ? '#fff' : '#666666' }}
             >
               <LayoutGrid className="w-3.5 h-3.5" />Board
             </button>
             <button
               onClick={() => setView('table')}
               className="px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5"
-              style={{ backgroundColor: view === 'table' ? '#2D3E50' : '#fff', color: view === 'table' ? '#fff' : '#516F90' }}
+              style={{ backgroundColor: view === 'table' ? '#333333' : '#fff', color: view === 'table' ? '#fff' : '#666666' }}
             >
               <LayoutList className="w-3.5 h-3.5" />Table
             </button>
@@ -645,9 +645,9 @@ export default function TicketsPage() {
       </div>
 
       {/* ── Filter bar ──────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-6 py-2.5 bg-white border-b" style={{ borderColor: '#DFE3EB' }}>
+      <div className="flex items-center gap-2 px-6 py-2.5 bg-white border-b" style={{ borderColor: '#EBEBEB' }}>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: '#99ACC2' }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: '#B3B3B3' }} />
           <Input
             placeholder="Search tickets..."
             value={search}
@@ -660,8 +660,8 @@ export default function TicketsPage() {
         <div className="relative">
           <button
             onClick={() => setShowFilters(f => !f)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-lg font-medium transition-colors hover:bg-[#F6F9FC]"
-            style={{ borderColor: '#DFE3EB', color: '#516F90' }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-lg font-medium transition-colors hover:bg-[#FAFAFA]"
+            style={{ borderColor: '#EBEBEB', color: '#666666' }}
           >
             <Tag className="w-3.5 h-3.5" />
             {priorityFilter === 'all' ? 'Priority' : PRIORITY_CFG[priorityFilter].label}
@@ -670,14 +670,14 @@ export default function TicketsPage() {
           {showFilters && (
             <div
               className="absolute top-full left-0 mt-1 bg-white border rounded-xl shadow-lg z-20 py-1 min-w-[130px]"
-              style={{ borderColor: '#DFE3EB' }}
+              style={{ borderColor: '#EBEBEB' }}
             >
               {(['all', 'low', 'medium', 'high', 'urgent'] as const).map(p => (
                 <button
                   key={p}
                   onClick={() => { setPriority(p); setShowFilters(false); }}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-[#F6F9FC] transition-colors"
-                  style={{ color: p === priorityFilter ? '#FF7A59' : '#516F90', fontWeight: p === priorityFilter ? 600 : 400 }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-[#FAFAFA] transition-colors"
+                  style={{ color: p === priorityFilter ? '#4762D5' : '#666666', fontWeight: p === priorityFilter ? 600 : 400 }}
                 >
                   {p === 'all' ? 'All priorities' : PRIORITY_CFG[p].label}
                 </button>
@@ -689,14 +689,14 @@ export default function TicketsPage() {
         {/* Sort */}
         <button
           onClick={() => setSortBy(s => s === 'created_at' ? 'updated_at' : s === 'updated_at' ? 'priority' : 'created_at')}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-lg font-medium transition-colors hover:bg-[#F6F9FC]"
-          style={{ borderColor: '#DFE3EB', color: '#516F90' }}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-lg font-medium transition-colors hover:bg-[#FAFAFA]"
+          style={{ borderColor: '#EBEBEB', color: '#666666' }}
         >
           <ArrowUpDown className="w-3.5 h-3.5" />
           {sortBy === 'created_at' ? 'Created' : sortBy === 'updated_at' ? 'Updated' : 'Priority'}
         </button>
 
-        {loading && <Loader2 className="w-4 h-4 animate-spin ml-2" style={{ color: '#99ACC2' }} />}
+        {loading && <Loader2 className="w-4 h-4 animate-spin ml-2" style={{ color: '#B3B3B3' }} />}
       </div>
 
       {/* ── Content ─────────────────────────────────────── */}
@@ -735,7 +735,7 @@ export default function TicketsPage() {
                   {/* Drop zone */}
                   <div
                     className="flex-1 p-2 space-y-2 overflow-y-auto"
-                    style={{ backgroundColor: '#F0F3F7', minHeight: 200 }}
+                    style={{ backgroundColor: '#F1F1F1', minHeight: 200 }}
                   >
                     {colTickets.length === 0 && (
                       <div
@@ -759,7 +759,7 @@ export default function TicketsPage() {
                   <button
                     onClick={() => setShowCreate(true)}
                     className="flex items-center gap-1.5 px-4 py-2.5 text-xs transition-colors hover:bg-white/60"
-                    style={{ backgroundColor: '#F0F3F7', color: '#7C98B6' }}
+                    style={{ backgroundColor: '#F1F1F1', color: '#999999' }}
                   >
                     <Plus className="w-3.5 h-3.5" />Add ticket
                   </button>
@@ -771,19 +771,19 @@ export default function TicketsPage() {
       ) : (
         /* ── Table view ── */
         <div className="flex-1 overflow-auto p-6">
-          <div className="bg-white border rounded-xl overflow-hidden" style={{ borderColor: '#DFE3EB' }}>
+          <div className="bg-white border rounded-xl overflow-hidden" style={{ borderColor: '#EBEBEB' }}>
             {/* Summary row */}
-            <div className="grid grid-cols-4 border-b" style={{ borderColor: '#DFE3EB' }}>
+            <div className="grid grid-cols-4 border-b" style={{ borderColor: '#EBEBEB' }}>
               {COLS.map(col => {
                 const Icon = col.icon;
                 return (
-                  <div key={col.id} className="flex items-center gap-2 px-5 py-3" style={{ borderRight: '1px solid #DFE3EB' }}>
+                  <div key={col.id} className="flex items-center gap-2 px-5 py-3" style={{ borderRight: '1px solid #EBEBEB' }}>
                     <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: col.bg }}>
                       <Icon className="w-3 h-3" style={{ color: col.color }} />
                     </div>
                     <div>
-                      <p className="text-xs font-medium" style={{ color: '#516F90' }}>{col.label}</p>
-                      <p className="text-lg font-bold" style={{ color: '#2D3E50' }}>{counts[col.id]}</p>
+                      <p className="text-xs font-medium" style={{ color: '#666666' }}>{col.label}</p>
+                      <p className="text-lg font-bold" style={{ color: '#333333' }}>{counts[col.id]}</p>
                     </div>
                   </div>
                 );
@@ -792,13 +792,13 @@ export default function TicketsPage() {
 
             <table className="w-full">
               <thead>
-                <tr style={{ backgroundColor: '#F6F9FC', borderBottom: '1px solid #DFE3EB' }}>
-                  <th className="text-left px-5 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Ticket</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Contact / Company</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Priority</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Status</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Owner</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Created</th>
+                <tr style={{ backgroundColor: '#FAFAFA', borderBottom: '1px solid #EBEBEB' }}>
+                  <th className="text-left px-5 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Ticket</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Contact / Company</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Priority</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Owner</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Created</th>
                   <th className="px-4 py-3 w-8" />
                 </tr>
               </thead>
@@ -810,24 +810,24 @@ export default function TicketsPage() {
                   return (
                     <tr
                       key={ticket.id}
-                      className="cursor-pointer transition-colors hover:bg-[#F6F9FC]"
-                      style={{ borderTop: i > 0 ? '1px solid #DFE3EB' : undefined }}
+                      className="cursor-pointer transition-colors hover:bg-[#FAFAFA]"
+                      style={{ borderTop: i > 0 ? '1px solid #EBEBEB' : undefined }}
                       onClick={() => setSelected(ticket)}
                     >
                       <td className="px-5 py-3">
-                        <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>{ticket.subject}</p>
+                        <p className="text-xs font-medium" style={{ color: '#333333' }}>{ticket.subject}</p>
                         {ticket.description && (
-                          <p className="text-xs mt-0.5 truncate max-w-xs" style={{ color: '#99ACC2' }}>{ticket.description}</p>
+                          <p className="text-xs mt-0.5 truncate max-w-xs" style={{ color: '#B3B3B3' }}>{ticket.description}</p>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         {ticket.contact_name ? (
                           <>
-                            <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>{ticket.contact_name}</p>
-                            {ticket.company_name && <p className="text-xs" style={{ color: '#7C98B6' }}>{ticket.company_name}</p>}
+                            <p className="text-xs font-medium" style={{ color: '#333333' }}>{ticket.contact_name}</p>
+                            {ticket.company_name && <p className="text-xs" style={{ color: '#999999' }}>{ticket.company_name}</p>}
                           </>
                         ) : (
-                          <span className="text-xs" style={{ color: '#B0C1D4' }}>—</span>
+                          <span className="text-xs" style={{ color: '#D6D6D6' }}>—</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -848,15 +848,15 @@ export default function TicketsPage() {
                             style={{ backgroundColor: avatarColor(ticket.owner_name), fontSize: 9, fontWeight: 700 }}>
                             {getInitials(ticket.owner_name || 'Me')}
                           </div>
-                          <span className="text-xs" style={{ color: '#2D3E50' }}>{ticket.owner_name || 'Me'}</span>
+                          <span className="text-xs" style={{ color: '#333333' }}>{ticket.owner_name || 'Me'}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs" style={{ color: '#7C98B6' }}>{fmtDate(ticket.created_at)}</span>
+                        <span className="text-xs" style={{ color: '#999999' }}>{fmtDate(ticket.created_at)}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <button className="p-1 rounded hover:bg-[#F0F3F7]" onClick={e => e.stopPropagation()}>
-                          <MoreHorizontal className="w-4 h-4" style={{ color: '#99ACC2' }} />
+                        <button className="p-1 rounded hover:bg-[#F1F1F1]" onClick={e => e.stopPropagation()}>
+                          <MoreHorizontal className="w-4 h-4" style={{ color: '#B3B3B3' }} />
                         </button>
                       </td>
                     </tr>
@@ -865,8 +865,8 @@ export default function TicketsPage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={7} className="text-center py-16">
-                      <Ticket className="w-8 h-8 mx-auto mb-2" style={{ color: '#DFE3EB' }} />
-                      <p className="text-sm" style={{ color: '#7C98B6' }}>No tickets found</p>
+                      <Ticket className="w-8 h-8 mx-auto mb-2" style={{ color: '#EBEBEB' }} />
+                      <p className="text-sm" style={{ color: '#999999' }}>No tickets found</p>
                     </td>
                   </tr>
                 )}

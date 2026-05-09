@@ -1,21 +1,46 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F6F9FC;
-  --foreground: #2D3E50;
-  --card: #ffffff;
-  --card-foreground: #2D3E50;
-  --border: #DFE3EB;
-  --input: #DFE3EB;
-  --primary: #FF7A59;
-  --primary-foreground: #ffffff;
-  --secondary: #F6F9FC;
-  --secondary-foreground: #2D3E50;
-  --muted: #F0F3F7;
-  --muted-foreground: #7C98B6;
-  --accent: #425B76;
-  --accent-foreground: #ffffff;
-  --ring: #FF7A59;
+  /* Twenty CRM design tokens */
+  --background: #FAFAFA;
+  --background-primary: #FFFFFF;
+  --background-secondary: #FCFCFC;
+  --background-tertiary: #F1F1F1;
+  --background-quaternary: #EBEBEB;
+
+  --foreground: #333333;
+  --card: #FFFFFF;
+  --card-foreground: #333333;
+
+  --border: #EBEBEB;
+  --border-strong: #D6D6D6;
+  --border-light: #F1F1F1;
+  --input: #EBEBEB;
+
+  /* Accent: Twenty indigo-blue */
+  --primary: #4762D5;
+  --primary-hover: #3A52C0;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #F1F1F1;
+  --secondary-foreground: #333333;
+
+  --muted: #F1F1F1;
+  --muted-foreground: #999999;
+
+  --accent: #EBEBEB;
+  --accent-foreground: #333333;
+
+  --destructive: #D45353;
+  --destructive-foreground: #FFFFFF;
+
+  --ring: #4762D5;
+
+  /* Text hierarchy */
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --text-light: #B3B3B3;
 }
 
 body {
@@ -27,21 +52,21 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar — Twenty style */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F6F9FC;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD6E2;
-  border-radius: 3px;
+  background: #D6D6D6;
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #99ACC2;
+  background: #B3B3B3;
 }

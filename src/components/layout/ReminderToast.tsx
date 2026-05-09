@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Bell, X } from 'lucide-react';
 import { useReminderPoller } from '@/hooks/useReminderPoller';
@@ -16,20 +16,20 @@ export function ReminderToast() {
     <>
       {/* Task reminder toast */}
       {latestReminder && (
-        <div className="fixed bottom-6 right-6 z-[9999] flex items-start gap-3 bg-white border border-[#FF7A59] rounded-xl shadow-xl p-4 max-w-sm animate-in slide-in-from-bottom-4">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF3F0' }}>
-            <Bell className="w-4 h-4 text-[#FF7A59]" />
+        <div className="fixed bottom-6 right-6 z-[9999] flex items-start gap-3 bg-white border border-[#4762D5] rounded-xl shadow-xl p-4 max-w-sm animate-in slide-in-from-bottom-4">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#EEF0FB' }}>
+            <Bell className="w-4 h-4 text-[#4762D5]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-[#2D3E50]">Task Reminder</p>
-            <p className="text-xs text-[#516F90] mt-0.5 truncate">{latestReminder.title}</p>
+            <p className="text-xs font-semibold text-[#333333]">Task Reminder</p>
+            <p className="text-xs text-[#666666] mt-0.5 truncate">{latestReminder.title}</p>
             {notifications.length > 1 && (
-              <p className="text-[11px] text-[#7C98B6] mt-0.5">
+              <p className="text-[11px] text-[#999999] mt-0.5">
                 +{notifications.length - 1} more reminder{notifications.length > 2 ? 's' : ''}
               </p>
             )}
           </div>
-          <button onClick={dismissReminder} className="text-[#99ACC2] hover:text-[#516F90] flex-shrink-0 mt-0.5">
+          <button onClick={dismissReminder} className="text-[#B3B3B3] hover:text-[#666666] flex-shrink-0 mt-0.5">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -38,18 +38,18 @@ export function ReminderToast() {
       {/* Follow-up auto-task toast — offset above reminder toast if both show */}
       {latestFollowUp && (
         <div
-          className="fixed right-6 z-[9999] flex items-start gap-3 bg-white border border-[#0091AE] rounded-xl shadow-xl p-4 max-w-sm animate-in slide-in-from-bottom-4"
+          className="fixed right-6 z-[9999] flex items-start gap-3 bg-white border border-[#4762D5] rounded-xl shadow-xl p-4 max-w-sm animate-in slide-in-from-bottom-4"
           style={{ bottom: latestReminder ? '5.5rem' : '1.5rem' }}
         >
           <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#E8F7FA' }}>
-            <Bell className="w-4 h-4" style={{ color: '#0091AE' }} />
+            <Bell className="w-4 h-4" style={{ color: '#4762D5' }} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-[#2D3E50]">Follow-up Task Created</p>
-            <p className="text-xs text-[#516F90] mt-0.5 truncate">No reply to: &quot;{latestFollowUp.subject}&quot;</p>
-            <p className="text-[11px] text-[#7C98B6] mt-0.5">Check your Tasks page</p>
+            <p className="text-xs font-semibold text-[#333333]">Follow-up Task Created</p>
+            <p className="text-xs text-[#666666] mt-0.5 truncate">No reply to: &quot;{latestFollowUp.subject}&quot;</p>
+            <p className="text-[11px] text-[#999999] mt-0.5">Check your Tasks page</p>
           </div>
-          <button onClick={dismissFollowUp} className="text-[#99ACC2] hover:text-[#516F90] flex-shrink-0 mt-0.5">
+          <button onClick={dismissFollowUp} className="text-[#B3B3B3] hover:text-[#666666] flex-shrink-0 mt-0.5">
             <X className="w-4 h-4" />
           </button>
         </div>

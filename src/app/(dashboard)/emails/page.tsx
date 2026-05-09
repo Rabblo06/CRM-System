@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Plus, Mail, Edit, Trash2, Copy, CheckCircle2 } from 'lucide-react';
@@ -88,7 +88,7 @@ function TemplateForm({
               rows={12}
               required
             />
-            <p className="text-xs" style={{ color: '#7C98B6' }}>
+            <p className="text-xs" style={{ color: '#999999' }}>
               Available variables: {'{{first_name}}'}, {'{{last_name}}'}, {'{{company_name}}'}, {'{{sender_name}}'}
             </p>
           </div>
@@ -118,7 +118,7 @@ export default function EmailsPage() {
   };
 
   return (
-    <div className="p-6 space-y-4" style={{ backgroundColor: '#F6F9FC', minHeight: '100%' }}>
+    <div className="p-6 space-y-4" style={{ backgroundColor: '#FAFAFA', minHeight: '100%' }}>
       <PageHeader title="Email Templates" description={`${templates.length} templates`}>
         <Button size="sm" onClick={() => setShowForm(true)} className="gap-1.5">
           <Plus className="w-3.5 h-3.5" />
@@ -128,24 +128,24 @@ export default function EmailsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-7 w-7 border-2 border-t-transparent" style={{ borderColor: '#FF7A59', borderTopColor: 'transparent' }} />
+          <div className="animate-spin rounded-full h-7 w-7 border-2 border-t-transparent" style={{ borderColor: '#4762D5', borderTopColor: 'transparent' }} />
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {templates.map((template) => (
             <div
               key={template.id}
-              className="bg-white border border-[#DFE3EB] rounded-xl p-5 hover:border-[#CBD6E2] transition-colors group"
+              className="bg-white border border-[#EBEBEB] rounded-xl p-5 hover:border-[#EBEBEB] transition-colors group"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FFF3F0' }}>
-                    <Mail className="w-4 h-4" style={{ color: '#FF7A59' }} />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#EEF0FB' }}>
+                    <Mail className="w-4 h-4" style={{ color: '#4762D5' }} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold" style={{ color: '#2D3E50' }}>{template.name}</h3>
+                    <h3 className="text-sm font-semibold" style={{ color: '#333333' }}>{template.name}</h3>
                     {template.category && (
-                      <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F0F3F7', color: '#516F90' }}>
+                      <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F1F1F1', color: '#666666' }}>
                         {template.category}
                       </span>
                     )}
@@ -153,27 +153,27 @@ export default function EmailsPage() {
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    className="p-1.5 rounded hover:bg-[#F0F3F7] transition-colors"
+                    className="p-1.5 rounded hover:bg-[#F1F1F1] transition-colors"
                     onClick={() => handleCopy(template.body, template.id)}
-                    style={{ color: '#516F90' }}
+                    style={{ color: '#666666' }}
                   >
                     {copied === template.id ? (
-                      <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#00BDA5' }} />
+                      <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#4CAF8E' }} />
                     ) : (
                       <Copy className="w-3.5 h-3.5" />
                     )}
                   </button>
                   <button
-                    className="p-1.5 rounded hover:bg-[#F0F3F7] transition-colors"
+                    className="p-1.5 rounded hover:bg-[#F1F1F1] transition-colors"
                     onClick={() => { setEditingTemplate(template); setShowForm(true); }}
-                    style={{ color: '#516F90' }}
+                    style={{ color: '#666666' }}
                   >
                     <Edit className="w-3.5 h-3.5" />
                   </button>
                   <button
                     className="p-1.5 rounded hover:bg-[#FFF0EE] transition-colors"
                     onClick={() => deleteTemplate(template.id)}
-                    style={{ color: '#99ACC2' }}
+                    style={{ color: '#B3B3B3' }}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -181,13 +181,13 @@ export default function EmailsPage() {
               </div>
 
               <div className="mb-2">
-                <p className="text-xs mb-0.5" style={{ color: '#7C98B6' }}>Subject</p>
-                <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>{template.subject}</p>
+                <p className="text-xs mb-0.5" style={{ color: '#999999' }}>Subject</p>
+                <p className="text-xs font-medium" style={{ color: '#333333' }}>{template.subject}</p>
               </div>
 
               <div>
-                <p className="text-xs mb-0.5" style={{ color: '#7C98B6' }}>Preview</p>
-                <p className="text-xs line-clamp-3 whitespace-pre-line" style={{ color: '#516F90' }}>
+                <p className="text-xs mb-0.5" style={{ color: '#999999' }}>Preview</p>
+                <p className="text-xs line-clamp-3 whitespace-pre-line" style={{ color: '#666666' }}>
                   {template.body.substring(0, 150)}...
                 </p>
               </div>
@@ -195,7 +195,7 @@ export default function EmailsPage() {
               <button
                 onClick={() => setPreviewTemplate(template)}
                 className="mt-3 text-xs font-medium hover:underline transition-colors"
-                style={{ color: '#FF7A59' }}
+                style={{ color: '#4762D5' }}
               >
                 View full template →
               </button>
@@ -212,13 +212,13 @@ export default function EmailsPage() {
               <DialogTitle>{previewTemplate.name}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
-              <div className="rounded-lg p-4" style={{ backgroundColor: '#F6F9FC', border: '1px solid #DFE3EB' }}>
-                <p className="text-xs mb-1" style={{ color: '#7C98B6' }}>Subject</p>
-                <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>{previewTemplate.subject}</p>
+              <div className="rounded-lg p-4" style={{ backgroundColor: '#FAFAFA', border: '1px solid #EBEBEB' }}>
+                <p className="text-xs mb-1" style={{ color: '#999999' }}>Subject</p>
+                <p className="text-xs font-medium" style={{ color: '#333333' }}>{previewTemplate.subject}</p>
               </div>
-              <div className="rounded-lg p-4" style={{ backgroundColor: '#F6F9FC', border: '1px solid #DFE3EB' }}>
-                <p className="text-xs mb-2" style={{ color: '#7C98B6' }}>Body</p>
-                <pre className="text-xs whitespace-pre-wrap font-sans" style={{ color: '#2D3E50' }}>
+              <div className="rounded-lg p-4" style={{ backgroundColor: '#FAFAFA', border: '1px solid #EBEBEB' }}>
+                <p className="text-xs mb-2" style={{ color: '#999999' }}>Body</p>
+                <pre className="text-xs whitespace-pre-wrap font-sans" style={{ color: '#333333' }}>
                   {previewTemplate.body}
                 </pre>
               </div>

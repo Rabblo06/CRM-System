@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { use, useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
@@ -73,7 +73,7 @@ const ACTIVITY_ICONS: Record<string, React.ReactNode> = {
   meeting: <Video className="w-3.5 h-3.5 text-purple-400" />,
   note: <StickyNote className="w-3.5 h-3.5 text-yellow-400" />,
   task: <CheckSquare className="w-3.5 h-3.5 text-orange-400" />,
-  deal_created: <Briefcase className="w-3.5 h-3.5 text-[#FF7A59]" />,
+  deal_created: <Briefcase className="w-3.5 h-3.5 text-[#4762D5]" />,
 };
 
 export default function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -230,7 +230,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
   if (!company) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-[#516F90]">Company not found</p>
+        <p className="text-[#666666]">Company not found</p>
         <Link href="/companies">
           <Button variant="outline" className="mt-4">Back to Companies</Button>
         </Link>
@@ -241,20 +241,20 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
   return (
     <div className="flex flex-col h-full">
       {/* Top bar */}
-      <div className="flex items-center gap-3 px-6 py-3 border-b border-[#DFE3EB]">
-        <Link href="/companies" className="inline-flex items-center gap-1.5 text-[#516F90] hover:text-[#2D3E50] text-sm">
+      <div className="flex items-center gap-3 px-6 py-3 border-b border-[#EBEBEB]">
+        <Link href="/companies" className="inline-flex items-center gap-1.5 text-[#666666] hover:text-[#333333] text-sm">
           <ArrowLeft className="w-4 h-4" />
           Companies
         </Link>
-        <span className="text-[#99ACC2]">/</span>
-        <span className="text-sm text-[#2D3E50] font-medium">{company.name}</span>
+        <span className="text-[#B3B3B3]">/</span>
+        <span className="text-sm text-[#333333] font-medium">{company.name}</span>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
         {/* LEFT SIDEBAR */}
-        <div className="w-80 flex-shrink-0 border-r border-[#DFE3EB] overflow-y-auto">
+        <div className="w-80 flex-shrink-0 border-r border-[#EBEBEB] overflow-y-auto">
           {/* Company header */}
-          <div className="p-5 border-b border-[#DFE3EB]">
+          <div className="p-5 border-b border-[#EBEBEB]">
             <div className="flex items-center gap-3 mb-3">
               {company.domain ? (
                 <img
@@ -265,14 +265,14 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                 />
               ) : null}
               <div
-                className="w-12 h-12 bg-[#FFF3F0] rounded-xl flex items-center justify-center flex-shrink-0"
+                className="w-12 h-12 bg-[#EEF0FB] rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ display: company.domain ? 'none' : 'flex' }}
               >
-                <Building2 className="w-6 h-6 text-[#FF7A59]" />
+                <Building2 className="w-6 h-6 text-[#4762D5]" />
               </div>
               <div>
-                <h1 className="text-base font-bold text-[#2D3E50]">{company.name}</h1>
-                {company.industry && <p className="text-sm text-[#516F90]">{company.industry}</p>}
+                <h1 className="text-base font-bold text-[#333333]">{company.name}</h1>
+                {company.industry && <p className="text-sm text-[#666666]">{company.industry}</p>}
               </div>
             </div>
             <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs h-7">
@@ -281,7 +281,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Action buttons */}
-          <div className="px-4 py-3 border-b border-[#DFE3EB]">
+          <div className="px-4 py-3 border-b border-[#EBEBEB]">
             <div className="grid grid-cols-5 gap-1">
               {[
                 { icon: <StickyNote className="w-4 h-4" />, label: 'Note', tab: 'note' as ActivityTab },
@@ -304,8 +304,8 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                   }}
                   className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg text-xs transition-colors ${
                     activeButton === tab
-                      ? 'bg-[#FFF3F0] text-[#FF7A59]'
-                      : 'text-[#516F90] hover:bg-[#F0F3F7] hover:text-[#2D3E50]'
+                      ? 'bg-[#EEF0FB] text-[#4762D5]'
+                      : 'text-[#666666] hover:bg-[#F1F1F1] hover:text-[#333333]'
                   }`}
                 >
                   {icon}
@@ -316,26 +316,26 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Company info accordion */}
-          <div className="border-b border-[#DFE3EB]">
+          <div className="border-b border-[#EBEBEB]">
             <button
               onClick={() => toggleSection('company_info')}
-              className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-[#2D3E50] hover:bg-[#F0F3F7]"
+              className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-[#333333] hover:bg-[#F1F1F1]"
             >
               <span>Company information</span>
-              {expandedSections.has('company_info') ? <ChevronDown className="w-4 h-4 text-[#516F90]" /> : <ChevronRight className="w-4 h-4 text-[#516F90]" />}
+              {expandedSections.has('company_info') ? <ChevronDown className="w-4 h-4 text-[#666666]" /> : <ChevronRight className="w-4 h-4 text-[#666666]" />}
             </button>
             {expandedSections.has('company_info') && (
               <div className="px-4 pb-4 space-y-3">
                 {company.email && (
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Email</p>
-                    <p className="text-sm text-[#2D3E50] flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-[#7C98B6]" />{company.email}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Email</p>
+                    <p className="text-sm text-[#333333] flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-[#999999]" />{company.email}</p>
                   </div>
                 )}
                 {company.website && (
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Website</p>
-                    <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm text-[#FF7A59] hover:text-[#425B76] flex items-center gap-1">
+                    <p className="text-xs text-[#999999] mb-0.5">Website</p>
+                    <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm text-[#4762D5] hover:text-[#555555] flex items-center gap-1">
                       <Globe className="w-3.5 h-3.5" />
                       {company.website.replace(/^https?:\/\//, '')}
                       <ExternalLink className="w-3 h-3" />
@@ -344,37 +344,37 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                 )}
                 {company.phone && (
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Phone</p>
-                    <p className="text-sm text-[#2D3E50] flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-[#7C98B6]" />{company.phone}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Phone</p>
+                    <p className="text-sm text-[#333333] flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-[#999999]" />{company.phone}</p>
                   </div>
                 )}
                 {company.size && (
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Company size</p>
-                    <p className="text-sm text-[#2D3E50] flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-[#7C98B6]" />{company.size} employees</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Company size</p>
+                    <p className="text-sm text-[#333333] flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-[#999999]" />{company.size} employees</p>
                   </div>
                 )}
                 {(company.city || company.country) && (
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Location</p>
-                    <p className="text-sm text-[#2D3E50] flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-[#7C98B6]" />{[company.city, company.country].filter(Boolean).join(', ')}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Location</p>
+                    <p className="text-sm text-[#333333] flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-[#999999]" />{[company.city, company.country].filter(Boolean).join(', ')}</p>
                   </div>
                 )}
                 {company.annual_revenue && (
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Annual revenue</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Annual revenue</p>
                     <p className="text-sm text-green-400 font-medium flex items-center gap-1.5"><DollarSign className="w-3.5 h-3.5" />{formatCurrency(company.annual_revenue)}</p>
                   </div>
                 )}
                 {company.description && (
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">About</p>
-                    <p className="text-xs text-[#516F90]">{company.description}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">About</p>
+                    <p className="text-xs text-[#666666]">{company.description}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-xs text-[#7C98B6] mb-0.5">Created date</p>
-                  <p className="text-xs text-[#516F90]">{formatDate(company.created_at)}</p>
+                  <p className="text-xs text-[#999999] mb-0.5">Created date</p>
+                  <p className="text-xs text-[#666666]">{formatDate(company.created_at)}</p>
                 </div>
               </div>
             )}
@@ -384,15 +384,15 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
         {/* CENTER */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Main tabs */}
-          <div className="flex border-b border-[#DFE3EB] bg-white px-2 flex-shrink-0">
+          <div className="flex border-b border-[#EBEBEB] bg-white px-2 flex-shrink-0">
             {(['about', 'activities', 'revenue'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setMainTab(tab)}
                 className={`px-6 py-3 text-sm font-medium capitalize border-b-2 transition-colors ${
                   mainTab === tab
-                    ? 'border-[#2D3E50] text-[#2D3E50]'
-                    : 'border-transparent text-[#516F90] hover:text-[#2D3E50]'
+                    ? 'border-[#333333] text-[#333333]'
+                    : 'border-transparent text-[#666666] hover:text-[#333333]'
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -406,99 +406,99 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
           {/* ── ABOUT TAB ── */}
           {mainTab === 'about' && (
             <div className="space-y-4">
-              <div className="bg-white border border-[#DFE3EB] rounded-xl p-5">
-                <h2 className="text-sm font-semibold text-[#2D3E50] mb-4">Company profile</h2>
+              <div className="bg-white border border-[#EBEBEB] rounded-xl p-5">
+                <h2 className="text-sm font-semibold text-[#333333] mb-4">Company profile</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Company name</p>
-                    <p className="text-sm text-[#2D3E50]">{company.name || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Company name</p>
+                    <p className="text-sm text-[#333333]">{company.name || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Domain</p>
-                    <p className="text-sm text-[#2D3E50]">{company.domain || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Domain</p>
+                    <p className="text-sm text-[#333333]">{company.domain || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Industry</p>
-                    <p className="text-sm text-[#2D3E50]">{company.industry || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Industry</p>
+                    <p className="text-sm text-[#333333]">{company.industry || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Company size</p>
-                    <p className="text-sm text-[#2D3E50]">{company.size ? `${company.size} employees` : '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Company size</p>
+                    <p className="text-sm text-[#333333]">{company.size ? `${company.size} employees` : '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Email</p>
-                    <p className="text-sm text-[#2D3E50]">{company.email || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Email</p>
+                    <p className="text-sm text-[#333333]">{company.email || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Phone</p>
-                    <p className="text-sm text-[#2D3E50]">{company.phone || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Phone</p>
+                    <p className="text-sm text-[#333333]">{company.phone || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Mobile</p>
-                    <p className="text-sm text-[#2D3E50]">{company.mobile || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Mobile</p>
+                    <p className="text-sm text-[#333333]">{company.mobile || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Website</p>
-                    <p className="text-sm text-[#2D3E50]">{company.website || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Website</p>
+                    <p className="text-sm text-[#333333]">{company.website || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">City</p>
-                    <p className="text-sm text-[#2D3E50]">{company.city || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">City</p>
+                    <p className="text-sm text-[#333333]">{company.city || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Country</p>
-                    <p className="text-sm text-[#2D3E50]">{company.country || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Country</p>
+                    <p className="text-sm text-[#333333]">{company.country || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Address</p>
-                    <p className="text-sm text-[#2D3E50]">{company.address || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Address</p>
+                    <p className="text-sm text-[#333333]">{company.address || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Manager</p>
-                    <p className="text-sm text-[#2D3E50]">{company.manager_name || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Manager</p>
+                    <p className="text-sm text-[#333333]">{company.manager_name || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Status</p>
-                    <p className="text-sm text-[#2D3E50] capitalize">{company.status || '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Status</p>
+                    <p className="text-sm text-[#333333] capitalize">{company.status || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Annual revenue</p>
-                    <p className="text-sm text-[#2D3E50]">{company.annual_revenue ? `$${company.annual_revenue.toLocaleString()}` : '—'}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Annual revenue</p>
+                    <p className="text-sm text-[#333333]">{company.annual_revenue ? `$${company.annual_revenue.toLocaleString()}` : '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Create date</p>
-                    <p className="text-sm text-[#2D3E50]">{formatDate(company.created_at)}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Create date</p>
+                    <p className="text-sm text-[#333333]">{formatDate(company.created_at)}</p>
                   </div>
                   {company.next_step && (
                   <div className="col-span-2">
-                    <p className="text-xs text-[#7C98B6] mb-0.5">Next step</p>
-                    <p className="text-sm text-[#2D3E50]">{company.next_step}</p>
+                    <p className="text-xs text-[#999999] mb-0.5">Next step</p>
+                    <p className="text-sm text-[#333333]">{company.next_step}</p>
                   </div>
                   )}
                 </div>
                 {company.description && (
-                  <div className="mt-4 pt-4 border-t border-[#DFE3EB]">
-                    <p className="text-xs text-[#7C98B6] mb-1">About</p>
-                    <p className="text-sm text-[#516F90]">{company.description}</p>
+                  <div className="mt-4 pt-4 border-t border-[#EBEBEB]">
+                    <p className="text-xs text-[#999999] mb-1">About</p>
+                    <p className="text-sm text-[#666666]">{company.description}</p>
                   </div>
                 )}
               </div>
               <CustomFieldsSection module="companies" recordId={company.id} />
 
-              <div className="bg-white border border-[#DFE3EB] rounded-xl p-5">
-                <h2 className="text-sm font-semibold text-[#2D3E50] mb-3">Associated contacts ({companyContacts.length})</h2>
+              <div className="bg-white border border-[#EBEBEB] rounded-xl p-5">
+                <h2 className="text-sm font-semibold text-[#333333] mb-3">Associated contacts ({companyContacts.length})</h2>
                 {companyContacts.length === 0 ? (
-                  <p className="text-xs text-[#7C98B6]">No contacts associated yet.</p>
+                  <p className="text-xs text-[#999999]">No contacts associated yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {companyContacts.map((c) => (
-                      <Link key={c.id} href={`/contacts/${c.id}`} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#F0F3F7] transition-colors">
-                        <div className="w-7 h-7 rounded-full bg-[#FFF3F0] flex items-center justify-center text-[#FF7A59] text-xs font-bold flex-shrink-0">
+                      <Link key={c.id} href={`/contacts/${c.id}`} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#F1F1F1] transition-colors">
+                        <div className="w-7 h-7 rounded-full bg-[#EEF0FB] flex items-center justify-center text-[#4762D5] text-xs font-bold flex-shrink-0">
                           {c.first_name[0]}{c.last_name[0]}
                         </div>
                         <div>
-                          <p className="text-xs font-medium text-[#2D3E50]">{c.first_name} {c.last_name}</p>
-                          <p className="text-xs text-[#7C98B6]">{c.job_title || c.email || ''}</p>
+                          <p className="text-xs font-medium text-[#333333]">{c.first_name} {c.last_name}</p>
+                          <p className="text-xs text-[#999999]">{c.job_title || c.email || ''}</p>
                         </div>
                       </Link>
                     ))}
@@ -512,8 +512,8 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
           {mainTab === 'activities' && (
           <div>
             {/* Activity input */}
-            <div className="bg-white border border-[#DFE3EB] rounded-xl mb-6">
-              <div className="flex border-b border-[#DFE3EB]">
+            <div className="bg-white border border-[#EBEBEB] rounded-xl mb-6">
+              <div className="flex border-b border-[#EBEBEB]">
                 {[
                   { id: 'note', label: 'Note', icon: <StickyNote className="w-3.5 h-3.5" /> },
                   { id: 'email', label: 'Email', icon: <Mail className="w-3.5 h-3.5" /> },
@@ -533,8 +533,8 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                     }}
                     className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors ${
                       activeButton === id
-                        ? 'border-[#FF7A59] text-[#2D3E50]'
-                        : 'border-transparent text-[#516F90] hover:text-[#2D3E50]'
+                        ? 'border-[#4762D5] text-[#333333]'
+                        : 'border-transparent text-[#666666] hover:text-[#333333]'
                     }`}
                   >
                     {icon}
@@ -548,7 +548,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                 <div className="p-4">
                   <button
                     onClick={openNote}
-                    className="w-full text-left text-sm text-[#99ACC2] px-3 py-3 bg-[#F6F9FC] border border-[#DFE3EB] rounded-lg hover:border-[#CBD6E2] transition-colors"
+                    className="w-full text-left text-sm text-[#B3B3B3] px-3 py-3 bg-[#FAFAFA] border border-[#EBEBEB] rounded-lg hover:border-[#EBEBEB] transition-colors"
                   >
                     Start typing to leave a note...
                   </button>
@@ -560,7 +560,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                 <div className="p-4">
                   <button
                     onClick={openEmail}
-                    className="w-full text-left text-sm text-[#99ACC2] px-3 py-3 bg-[#F6F9FC] border border-[#DFE3EB] rounded-lg hover:border-[#CBD6E2] transition-colors"
+                    className="w-full text-left text-sm text-[#B3B3B3] px-3 py-3 bg-[#FAFAFA] border border-[#EBEBEB] rounded-lg hover:border-[#EBEBEB] transition-colors"
                   >
                     Compose an email about {company.name}...
                   </button>
@@ -570,11 +570,11 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
               {/* Call tab */}
               {activeTab === 'call' && (
                 <div className="p-4 space-y-2">
-                  <div className="flex items-center gap-2 p-3 bg-[#F6F9FC] rounded-lg border border-[#DFE3EB]">
+                  <div className="flex items-center gap-2 p-3 bg-[#FAFAFA] rounded-lg border border-[#EBEBEB]">
                     <PhoneCall className="w-4 h-4 text-green-400" />
                     <div>
-                      <p className="text-sm font-medium text-[#2D3E50]">Log a call</p>
-                      <p className="text-xs text-[#516F90]">{company.phone || 'No phone number'}</p>
+                      <p className="text-sm font-medium text-[#333333]">Log a call</p>
+                      <p className="text-xs text-[#666666]">{company.phone || 'No phone number'}</p>
                     </div>
                   </div>
                   <Textarea
@@ -582,7 +582,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                     rows={3}
                     value={callNotes}
                     onChange={(e) => setCallNotes(e.target.value)}
-                    className="resize-none text-sm bg-[#F6F9FC] border-[#DFE3EB]"
+                    className="resize-none text-sm bg-[#FAFAFA] border-[#EBEBEB]"
                   />
                   <div className="flex justify-end">
                     <Button
@@ -601,10 +601,10 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
               {/* Task tab */}
               {activeTab === 'task' && (
                 <div className="p-4 space-y-2">
-                  <Input placeholder="Task title..." value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} className="h-8 text-sm bg-[#F6F9FC] border-[#DFE3EB]" />
+                  <Input placeholder="Task title..." value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} className="h-8 text-sm bg-[#FAFAFA] border-[#EBEBEB]" />
                   <div className="grid grid-cols-2 gap-2">
-                    <Input type="date" value={taskDate} onChange={(e) => setTaskDate(e.target.value)} className="h-8 text-sm bg-[#F6F9FC] border-[#DFE3EB]" />
-                    <select value={taskPriority} onChange={(e) => setTaskPriority(e.target.value)} className="h-8 text-sm bg-[#F0F3F7] border border-[#DFE3EB] rounded-md px-2 text-[#516F90]">
+                    <Input type="date" value={taskDate} onChange={(e) => setTaskDate(e.target.value)} className="h-8 text-sm bg-[#FAFAFA] border-[#EBEBEB]" />
+                    <select value={taskPriority} onChange={(e) => setTaskPriority(e.target.value)} className="h-8 text-sm bg-[#F1F1F1] border border-[#EBEBEB] rounded-md px-2 text-[#666666]">
                       <option value="low">Low priority</option>
                       <option value="medium">Medium priority</option>
                       <option value="high">High priority</option>
@@ -649,10 +649,10 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
               {/* Meet tab */}
               {activeTab === 'meet' && (
                 <div className="p-4 space-y-2">
-                  <Input placeholder="Meeting title..." value={meetTitle} onChange={(e) => setMeetTitle(e.target.value)} className="h-8 text-sm bg-[#F6F9FC] border-[#DFE3EB]" />
+                  <Input placeholder="Meeting title..." value={meetTitle} onChange={(e) => setMeetTitle(e.target.value)} className="h-8 text-sm bg-[#FAFAFA] border-[#EBEBEB]" />
                   <div className="grid grid-cols-2 gap-2">
-                    <Input type="datetime-local" value={meetDate} onChange={(e) => setMeetDate(e.target.value)} className="h-8 text-sm bg-[#F6F9FC] border-[#DFE3EB]" />
-                    <Input placeholder="Location or video link" value={meetLocation} onChange={(e) => setMeetLocation(e.target.value)} className="h-8 text-sm bg-[#F6F9FC] border-[#DFE3EB]" />
+                    <Input type="datetime-local" value={meetDate} onChange={(e) => setMeetDate(e.target.value)} className="h-8 text-sm bg-[#FAFAFA] border-[#EBEBEB]" />
+                    <Input placeholder="Location or video link" value={meetLocation} onChange={(e) => setMeetLocation(e.target.value)} className="h-8 text-sm bg-[#FAFAFA] border-[#EBEBEB]" />
                   </div>
                   <div className="flex justify-end">
                     <Button
@@ -673,7 +673,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
             {/* Activity Timeline */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[#2D3E50]">Activity</h3>
+                <h3 className="text-sm font-semibold text-[#333333]">Activity</h3>
                 <div className="flex items-center gap-1">
                   {[
                     { value: 'all', label: 'All' },
@@ -688,8 +688,8 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                       onClick={() => setActivityFilter(value as typeof activityFilter)}
                       className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
                         activityFilter === value
-                          ? 'bg-[#2D3E50] text-white'
-                          : 'text-[#516F90] hover:bg-[#F0F3F7]'
+                          ? 'bg-[#333333] text-white'
+                          : 'text-[#666666] hover:bg-[#F1F1F1]'
                       }`}
                     >{label}</button>
                   ))}
@@ -712,7 +712,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                 const gmailEmails = gmailConnected ? getEmailsForCompany(id) : [];
                 const hasGmail = (activityFilter === 'all' || activityFilter === 'email') && gmailEmails.length > 0;
                 if (filtered.length === 0 && !hasGmail) return (
-                  <div className="text-center py-10 text-[#7C98B6]">
+                  <div className="text-center py-10 text-[#999999]">
                     <Clock className="w-6 h-6 mx-auto mb-2 opacity-30" />
                     <p className="text-sm">No {activityFilter === 'all' ? '' : activityFilter + ' '}activity yet</p>
                   </div>
@@ -720,18 +720,18 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                 return filtered.length > 0 ? (
                   <div className="space-y-3">
                     {filtered.map((activity) => (
-                      <div key={activity.id} className={`flex gap-3 p-3.5 rounded-lg border ${ACTIVITY_COLORS[activity.type] || 'bg-white border-[#DFE3EB]'}`}>
-                        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#F0F3F7] flex items-center justify-center">
+                      <div key={activity.id} className={`flex gap-3 p-3.5 rounded-lg border ${ACTIVITY_COLORS[activity.type] || 'bg-white border-[#EBEBEB]'}`}>
+                        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#F1F1F1] flex items-center justify-center">
                           {ACTIVITY_ICONS[activity.type]}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm font-medium text-[#2D3E50]">{activity.title}</p>
-                            <span className="text-xs text-[#7C98B6] flex-shrink-0">{activity.created_at ? formatRelativeTime(activity.created_at) : ''}</span>
+                            <p className="text-sm font-medium text-[#333333]">{activity.title}</p>
+                            <span className="text-xs text-[#999999] flex-shrink-0">{activity.created_at ? formatRelativeTime(activity.created_at) : ''}</span>
                           </div>
                           {activity.description && (
                             <p
-                              className="text-xs text-[#516F90] mt-1 [&_b]:font-bold [&_i]:italic [&_u]:underline"
+                              className="text-xs text-[#666666] mt-1 [&_b]:font-bold [&_i]:italic [&_u]:underline"
                               dangerouslySetInnerHTML={{ __html: activity.description }}
                             />
                           )}
@@ -748,29 +748,29 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
           {/* ── REVENUE TAB ── */}
           {mainTab === 'revenue' && (
             <div className="space-y-4">
-              <div className="bg-white border border-[#DFE3EB] rounded-xl p-5">
-                <h2 className="text-sm font-semibold text-[#2D3E50] mb-4">Revenue opportunities</h2>
+              <div className="bg-white border border-[#EBEBEB] rounded-xl p-5">
+                <h2 className="text-sm font-semibold text-[#333333] mb-4">Revenue opportunities</h2>
                 {companyDeals.length === 0 ? (
-                  <div className="text-center py-8 text-[#7C98B6]">
+                  <div className="text-center py-8 text-[#999999]">
                     <Briefcase className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     <p className="text-sm">No deals associated with this company yet.</p>
-                    <button className="mt-2 text-xs text-[#FF7A59] hover:underline">+ Create deal</button>
+                    <button className="mt-2 text-xs text-[#4762D5] hover:underline">+ Create deal</button>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {companyDeals.map((deal) => (
-                      <div key={deal.id} className="p-3.5 rounded-lg border border-[#DFE3EB] bg-[#F6F9FC]">
+                      <div key={deal.id} className="p-3.5 rounded-lg border border-[#EBEBEB] bg-[#FAFAFA]">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium text-[#2D3E50]">{deal.title}</p>
+                          <p className="text-sm font-medium text-[#333333]">{deal.title}</p>
                           <span className="text-sm font-semibold text-green-500">${deal.amount.toLocaleString()}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs text-[#516F90] capitalize">{deal.stage.replace(/_/g, ' ')}</span>
-                          <span className="text-[#DFE3EB]">·</span>
-                          <span className="text-xs text-[#516F90]">{deal.probability}% probability</span>
+                          <span className="text-xs text-[#666666] capitalize">{deal.stage.replace(/_/g, ' ')}</span>
+                          <span className="text-[#EBEBEB]">·</span>
+                          <span className="text-xs text-[#666666]">{deal.probability}% probability</span>
                         </div>
-                        <div className="mt-2 bg-[#DFE3EB] rounded-full h-1.5">
-                          <div className="bg-[#FF7A59] h-1.5 rounded-full" style={{ width: `${deal.probability}%` }} />
+                        <div className="mt-2 bg-[#EBEBEB] rounded-full h-1.5">
+                          <div className="bg-[#4762D5] h-1.5 rounded-full" style={{ width: `${deal.probability}%` }} />
                         </div>
                       </div>
                     ))}
@@ -785,31 +785,31 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
         </div> {/* end CENTER flex col */}
 
         {/* RIGHT SIDEBAR */}
-        <div className="w-72 flex-shrink-0 border-l border-[#DFE3EB] overflow-y-auto">
+        <div className="w-72 flex-shrink-0 border-l border-[#EBEBEB] overflow-y-auto">
           <div className="p-4 space-y-1">
             {/* Contacts */}
-            <div className="border-b border-[#DFE3EB] pb-1">
+            <div className="border-b border-[#EBEBEB] pb-1">
               <div className="flex items-center justify-between py-2.5">
-                <button onClick={() => toggleSection('contacts')} className="flex items-center gap-2 text-sm font-medium text-[#2D3E50] hover:text-[#FF7A59]">
-                  {expandedSections.has('contacts') ? <ChevronDown className="w-4 h-4 text-[#516F90]" /> : <ChevronRight className="w-4 h-4 text-[#516F90]" />}
-                  Contacts <span className="text-xs text-[#7C98B6]">({companyContacts.length})</span>
+                <button onClick={() => toggleSection('contacts')} className="flex items-center gap-2 text-sm font-medium text-[#333333] hover:text-[#4762D5]">
+                  {expandedSections.has('contacts') ? <ChevronDown className="w-4 h-4 text-[#666666]" /> : <ChevronRight className="w-4 h-4 text-[#666666]" />}
+                  Contacts <span className="text-xs text-[#999999]">({companyContacts.length})</span>
                 </button>
-                <button className="text-[#FF7A59] hover:text-[#425B76]"><Plus className="w-3.5 h-3.5" /></button>
+                <button className="text-[#4762D5] hover:text-[#555555]"><Plus className="w-3.5 h-3.5" /></button>
               </div>
               {expandedSections.has('contacts') && (
                 <div className="pb-3 space-y-1.5">
                   {companyContacts.length === 0 ? (
-                    <p className="text-xs text-[#7C98B6] px-1">No contacts yet</p>
+                    <p className="text-xs text-[#999999] px-1">No contacts yet</p>
                   ) : companyContacts.map((contact) => (
-                    <Link key={contact.id} href={`/contacts/${contact.id}`} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#F0F3F7] transition-colors group">
+                    <Link key={contact.id} href={`/contacts/${contact.id}`} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#F1F1F1] transition-colors group">
                       <Avatar className="w-7 h-7 flex-shrink-0">
-                        <AvatarFallback className="text-xs bg-[#FFF3F0] text-[#FF7A59]">
+                        <AvatarFallback className="text-xs bg-[#EEF0FB] text-[#4762D5]">
                           {getInitials(`${contact.first_name} ${contact.last_name}`)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-[#2D3E50] group-hover:text-[#FF7A59] truncate">{contact.first_name} {contact.last_name}</p>
-                        <p className="text-xs text-[#7C98B6] truncate">{contact.job_title || 'Contact'}</p>
+                        <p className="text-xs font-medium text-[#333333] group-hover:text-[#4762D5] truncate">{contact.first_name} {contact.last_name}</p>
+                        <p className="text-xs text-[#999999] truncate">{contact.job_title || 'Contact'}</p>
                       </div>
                     </Link>
                   ))}
@@ -818,30 +818,30 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* Deals */}
-            <div className="border-b border-[#DFE3EB] pb-1">
+            <div className="border-b border-[#EBEBEB] pb-1">
               <div className="flex items-center justify-between py-2.5">
-                <button onClick={() => toggleSection('deals')} className="flex items-center gap-2 text-sm font-medium text-[#2D3E50] hover:text-[#FF7A59]">
-                  {expandedSections.has('deals') ? <ChevronDown className="w-4 h-4 text-[#516F90]" /> : <ChevronRight className="w-4 h-4 text-[#516F90]" />}
-                  Deals <span className="text-xs text-[#7C98B6]">({companyDeals.length})</span>
+                <button onClick={() => toggleSection('deals')} className="flex items-center gap-2 text-sm font-medium text-[#333333] hover:text-[#4762D5]">
+                  {expandedSections.has('deals') ? <ChevronDown className="w-4 h-4 text-[#666666]" /> : <ChevronRight className="w-4 h-4 text-[#666666]" />}
+                  Deals <span className="text-xs text-[#999999]">({companyDeals.length})</span>
                 </button>
-                <button className="text-[#FF7A59] hover:text-[#425B76]"><Plus className="w-3.5 h-3.5" /></button>
+                <button className="text-[#4762D5] hover:text-[#555555]"><Plus className="w-3.5 h-3.5" /></button>
               </div>
               {expandedSections.has('deals') && (
                 <div className="pb-3 space-y-1.5">
                   {companyDeals.length === 0 ? (
-                    <p className="text-xs text-[#7C98B6] px-1">No deals yet</p>
+                    <p className="text-xs text-[#999999] px-1">No deals yet</p>
                   ) : companyDeals.map((deal) => (
-                    <div key={deal.id} className="p-2.5 rounded-lg bg-white border border-[#DFE3EB]">
-                      <p className="text-xs font-medium text-[#2D3E50]">{deal.title}</p>
+                    <div key={deal.id} className="p-2.5 rounded-lg bg-white border border-[#EBEBEB]">
+                      <p className="text-xs font-medium text-[#333333]">{deal.title}</p>
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-xs text-green-400">${deal.amount.toLocaleString()}</span>
-                        <span className="text-xs text-[#7C98B6] capitalize">{deal.stage.replace(/_/g, ' ')}</span>
+                        <span className="text-xs text-[#999999] capitalize">{deal.stage.replace(/_/g, ' ')}</span>
                       </div>
                       <div className="flex items-center gap-1 mt-1">
-                        <div className="flex-1 bg-[#DFE3EB] rounded-full h-1">
-                          <div className="bg-[#FF7A59] h-1 rounded-full" style={{ width: `${deal.probability}%` }} />
+                        <div className="flex-1 bg-[#EBEBEB] rounded-full h-1">
+                          <div className="bg-[#4762D5] h-1 rounded-full" style={{ width: `${deal.probability}%` }} />
                         </div>
-                        <span className="text-xs text-[#7C98B6]">{deal.probability}%</span>
+                        <span className="text-xs text-[#999999]">{deal.probability}%</span>
                       </div>
                     </div>
                   ))}
@@ -851,15 +851,15 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
 
             {/* About */}
             <div>
-              <button onClick={() => toggleSection('about')} className="flex items-center justify-between w-full py-2.5 text-sm font-medium text-[#2D3E50] hover:text-[#FF7A59]">
+              <button onClick={() => toggleSection('about')} className="flex items-center justify-between w-full py-2.5 text-sm font-medium text-[#333333] hover:text-[#4762D5]">
                 <span>About this company</span>
-                {expandedSections.has('about') ? <ChevronDown className="w-4 h-4 text-[#516F90]" /> : <ChevronRight className="w-4 h-4 text-[#516F90]" />}
+                {expandedSections.has('about') ? <ChevronDown className="w-4 h-4 text-[#666666]" /> : <ChevronRight className="w-4 h-4 text-[#666666]" />}
               </button>
               {expandedSections.has('about') && (
-                <div className="pb-3 text-xs text-[#516F90] space-y-1.5">
-                  {company.domain && <p>Domain: <span className="text-[#2D3E50]">{company.domain}</span></p>}
-                  <p>Created: <span className="text-[#2D3E50]">{formatDate(company.created_at)}</span></p>
-                  <p>Owner: <span className="text-[#2D3E50]">Sales Admin</span></p>
+                <div className="pb-3 text-xs text-[#666666] space-y-1.5">
+                  {company.domain && <p>Domain: <span className="text-[#333333]">{company.domain}</span></p>}
+                  <p>Created: <span className="text-[#333333]">{formatDate(company.created_at)}</span></p>
+                  <p>Owner: <span className="text-[#333333]">Sales Admin</span></p>
                 </div>
               )}
             </div>
@@ -942,24 +942,24 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
       {showNoteModal && (
         <div
           data-modal="note"
-          className="fixed z-50 w-[600px] max-w-[95vw] bg-white rounded-xl shadow-2xl border border-[#DFE3EB] flex flex-col select-none"
+          className="fixed z-50 w-[600px] max-w-[95vw] bg-white rounded-xl shadow-2xl border border-[#EBEBEB] flex flex-col select-none"
           style={modalPos ? { left: modalPos.x, top: modalPos.y } : { bottom: 24, left: '50%', transform: 'translateX(-50%)' }}
         >
-          <div onMouseDown={onDragStart} className="flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing text-[#99ACC2] hover:text-[#516F90]">
+          <div onMouseDown={onDragStart} className="flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing text-[#B3B3B3] hover:text-[#666666]">
             <MoreHorizontal className="w-5 h-5" />
           </div>
           <div className="flex items-center justify-between px-4 pb-2">
-            <span className="font-semibold text-sm text-[#2D3E50]">Note</span>
+            <span className="font-semibold text-sm text-[#333333]">Note</span>
             <div className="flex items-center gap-1">
-              <button className="p-1 rounded hover:bg-[#F0F3F7] text-[#516F90]"><ExternalLink className="w-4 h-4" /></button>
-              <button onClick={() => { closeModals(); setNoteText(''); setNoteTodo(false); }} className="p-1 rounded hover:bg-[#F0F3F7] text-[#516F90]">
+              <button className="p-1 rounded hover:bg-[#F1F1F1] text-[#666666]"><ExternalLink className="w-4 h-4" /></button>
+              <button onClick={() => { closeModals(); setNoteText(''); setNoteTodo(false); }} className="p-1 rounded hover:bg-[#F1F1F1] text-[#666666]">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
-          <div className="px-4 pb-2 flex items-center gap-1.5 text-xs text-[#516F90]">
+          <div className="px-4 pb-2 flex items-center gap-1.5 text-xs text-[#666666]">
             <span>For</span>
-            <span className="bg-[#F0F3F7] text-[#2D3E50] px-2 py-0.5 rounded-full font-medium">{company.name}</span>
+            <span className="bg-[#F1F1F1] text-[#333333] px-2 py-0.5 rounded-full font-medium">{company.name}</span>
           </div>
           <div className="px-4">
             <div
@@ -968,10 +968,10 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
               suppressContentEditableWarning
               onInput={(e) => setNoteText((e.target as HTMLDivElement).innerText)}
               data-placeholder="Start typing to leave a note..."
-              className="w-full min-h-[120px] text-sm text-[#2D3E50] outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-[#99ACC2] empty:before:pointer-events-none"
+              className="w-full min-h-[120px] text-sm text-[#333333] outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-[#B3B3B3] empty:before:pointer-events-none"
             />
           </div>
-          <div className="px-4 py-2 border-t border-[#DFE3EB] flex items-center gap-1 text-[#516F90]">
+          <div className="px-4 py-2 border-t border-[#EBEBEB] flex items-center gap-1 text-[#666666]">
             {[
               { label: 'B', cmd: 'bold', style: 'font-bold' },
               { label: 'I', cmd: 'italic', style: 'italic' },
@@ -980,26 +980,26 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
               <button
                 key={label}
                 onMouseDown={(e) => { e.preventDefault(); applyFormat(cmd); }}
-                className={`w-6 h-6 text-xs rounded hover:bg-[#F0F3F7] ${style}`}
+                className={`w-6 h-6 text-xs rounded hover:bg-[#F1F1F1] ${style}`}
               >{label}</button>
             ))}
-            <div className="w-px h-4 bg-[#DFE3EB] mx-1" />
-            <button className="p-1 rounded hover:bg-[#F0F3F7]"><Mail className="w-3.5 h-3.5" /></button>
-            <button className="p-1 rounded hover:bg-[#F0F3F7]"><Tag className="w-3.5 h-3.5" /></button>
-            <button className="p-1 rounded hover:bg-[#F0F3F7]"><Plus className="w-3.5 h-3.5" /></button>
+            <div className="w-px h-4 bg-[#EBEBEB] mx-1" />
+            <button className="p-1 rounded hover:bg-[#F1F1F1]"><Mail className="w-3.5 h-3.5" /></button>
+            <button className="p-1 rounded hover:bg-[#F1F1F1]"><Tag className="w-3.5 h-3.5" /></button>
+            <button className="p-1 rounded hover:bg-[#F1F1F1]"><Plus className="w-3.5 h-3.5" /></button>
           </div>
-          <div className="px-4 py-2 border-t border-[#DFE3EB]">
-            <button className="text-xs text-[#516F90] flex items-center gap-1 hover:text-[#2D3E50]">
+          <div className="px-4 py-2 border-t border-[#EBEBEB]">
+            <button className="text-xs text-[#666666] flex items-center gap-1 hover:text-[#333333]">
               Associated with 1 record <ChevronDown className="w-3 h-3" />
             </button>
           </div>
-          <div className="px-4 py-2 border-t border-[#DFE3EB] flex items-center gap-2">
-            <input type="checkbox" id="co-note-todo" checked={noteTodo} onChange={(e) => setNoteTodo(e.target.checked)} className="rounded border-[#CBD6E2]" />
-            <label htmlFor="co-note-todo" className="text-xs text-[#516F90] cursor-pointer">
-              Create a <span className="font-medium text-[#2D3E50]">To-Do</span> task to follow up in 3 business days
+          <div className="px-4 py-2 border-t border-[#EBEBEB] flex items-center gap-2">
+            <input type="checkbox" id="co-note-todo" checked={noteTodo} onChange={(e) => setNoteTodo(e.target.checked)} className="rounded border-[#EBEBEB]" />
+            <label htmlFor="co-note-todo" className="text-xs text-[#666666] cursor-pointer">
+              Create a <span className="font-medium text-[#333333]">To-Do</span> task to follow up in 3 business days
             </label>
           </div>
-          <div className="px-4 py-3 border-t border-[#DFE3EB] flex justify-end">
+          <div className="px-4 py-3 border-t border-[#EBEBEB] flex justify-end">
             <Button
               size="sm"
               disabled={!noteText.trim()}
@@ -1036,21 +1036,21 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
       {showEmailModal && (
         <div
           data-modal="email"
-          className="fixed z-50 w-[600px] max-w-[95vw] bg-white rounded-xl shadow-2xl border border-[#DFE3EB] flex flex-col select-none overflow-hidden"
+          className="fixed z-50 w-[600px] max-w-[95vw] bg-white rounded-xl shadow-2xl border border-[#EBEBEB] flex flex-col select-none overflow-hidden"
           style={modalPos ? { left: modalPos.x, top: modalPos.y } : { bottom: 24, left: '50%', transform: 'translateX(-50%)' }}
         >
           {/* Header — drag handle */}
           <div
             onMouseDown={onDragStart}
-            className="flex items-center justify-between px-4 py-2.5 bg-[#F6F9FC] border-b border-[#DFE3EB] cursor-grab active:cursor-grabbing"
+            className="flex items-center justify-between px-4 py-2.5 bg-[#FAFAFA] border-b border-[#EBEBEB] cursor-grab active:cursor-grabbing"
           >
-            <span className="font-semibold text-sm text-[#2D3E50]">New Email Message</span>
+            <span className="font-semibold text-sm text-[#333333]">New Email Message</span>
             <div className="flex items-center gap-1.5">
               {/* Email provider selector — dropdown when both connected */}
               <div className="relative">
                 <button
                   onClick={() => (gmailConnected && outlookConnected) && setShowProviderDropdown(v => !v)}
-                  className="flex items-center gap-1.5 border border-[#DFE3EB] rounded-full px-2 py-1 bg-white hover:bg-[#F6F9FC]"
+                  className="flex items-center gap-1.5 border border-[#EBEBEB] rounded-full px-2 py-1 bg-white hover:bg-[#FAFAFA]"
                 >
                   {selectedProvider === 'outlook' ? (
                     <svg width="14" height="14" viewBox="0 0 48 48"><rect width="28" height="28" x="4" y="10" rx="2" fill="#0078D4"/><rect width="22" height="22" x="22" y="14" rx="2" fill="#50B0F0"/><text x="10" y="29" fill="white" fontSize="14" fontWeight="bold">O</text></svg>
@@ -1062,23 +1062,23 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                       <path d="M11.5 9H36.5L24 18.5 11.5 9z" fill="#FBBC04"/>
                     </svg>
                   )}
-                  <span className="text-xs text-[#516F90] max-w-[140px] truncate">{senderEmail || (selectedProvider === 'outlook' ? 'Outlook' : 'Gmail')}</span>
-                  {gmailConnected && outlookConnected && <ChevronDown className="w-3 h-3 text-[#516F90]" />}
+                  <span className="text-xs text-[#666666] max-w-[140px] truncate">{senderEmail || (selectedProvider === 'outlook' ? 'Outlook' : 'Gmail')}</span>
+                  {gmailConnected && outlookConnected && <ChevronDown className="w-3 h-3 text-[#666666]" />}
                 </button>
                 {showProviderDropdown && (
-                  <div className="absolute top-full right-0 mt-1 bg-white border border-[#DFE3EB] rounded-lg shadow-lg z-50 py-1 min-w-[200px]">
+                  <div className="absolute top-full right-0 mt-1 bg-white border border-[#EBEBEB] rounded-lg shadow-lg z-50 py-1 min-w-[200px]">
                     {gmailConnected && (
-                      <button onClick={() => { setSelectedProvider('gmail'); setShowProviderDropdown(false); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#F6F9FC] text-xs text-left">
+                      <button onClick={() => { setSelectedProvider('gmail'); setShowProviderDropdown(false); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#FAFAFA] text-xs text-left">
                         <svg width="14" height="14" viewBox="0 0 48 48" fill="none"><path d="M4.5 39h7V23.25L2 17.5V37a2 2 0 002 2h.5z" fill="#4285F4"/><path d="M36.5 39H44a2 2 0 002-2V17.5l-9.5 5.75z" fill="#34A853"/><path d="M36.5 9L24 18.5 11.5 9 2 15.5l9.5 5.75v14.75h15V21.25L36.5 15.5z" fill="#EA4335"/><path d="M11.5 9H36.5L24 18.5 11.5 9z" fill="#FBBC04"/></svg>
-                        <span className="text-[#2D3E50] truncate">{gmailEmail || 'Gmail'}</span>
-                        {selectedProvider === 'gmail' && <Check className="w-3 h-3 text-[#00BDA5] ml-auto flex-shrink-0" />}
+                        <span className="text-[#333333] truncate">{gmailEmail || 'Gmail'}</span>
+                        {selectedProvider === 'gmail' && <Check className="w-3 h-3 text-[#4CAF8E] ml-auto flex-shrink-0" />}
                       </button>
                     )}
                     {outlookConnected && (
-                      <button onClick={() => { setSelectedProvider('outlook'); setShowProviderDropdown(false); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#F6F9FC] text-xs text-left">
+                      <button onClick={() => { setSelectedProvider('outlook'); setShowProviderDropdown(false); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#FAFAFA] text-xs text-left">
                         <svg width="14" height="14" viewBox="0 0 48 48"><rect width="28" height="28" x="4" y="10" rx="2" fill="#0078D4"/><rect width="22" height="22" x="22" y="14" rx="2" fill="#50B0F0"/><text x="10" y="29" fill="white" fontSize="14" fontWeight="bold">O</text></svg>
-                        <span className="text-[#2D3E50] truncate">{outlookEmail || 'Outlook'}</span>
-                        {selectedProvider === 'outlook' && <Check className="w-3 h-3 text-[#00BDA5] ml-auto flex-shrink-0" />}
+                        <span className="text-[#333333] truncate">{outlookEmail || 'Outlook'}</span>
+                        {selectedProvider === 'outlook' && <Check className="w-3 h-3 text-[#4CAF8E] ml-auto flex-shrink-0" />}
                       </button>
                     )}
                   </div>
@@ -1086,43 +1086,43 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <button
                 onClick={() => { closeModals(); setEmailSubject(''); setEmailCc(''); setEmailBcc(''); setShowCc(false); setShowBcc(false); setEmailError(''); setShowProviderDropdown(false); if (emailEditorRef.current) emailEditorRef.current.innerHTML = ''; }}
-                className="p-1 rounded hover:bg-[#E8EDF5] text-[#516F90]"
+                className="p-1 rounded hover:bg-[#E8EDF5] text-[#666666]"
               ><X className="w-3.5 h-3.5" /></button>
             </div>
           </div>
 
           {/* To field */}
-          <div className="flex items-center px-4 py-2 border-b border-[#DFE3EB] gap-2">
-            <span className="text-xs text-[#516F90] w-8 flex-shrink-0">To</span>
+          <div className="flex items-center px-4 py-2 border-b border-[#EBEBEB] gap-2">
+            <span className="text-xs text-[#666666] w-8 flex-shrink-0">To</span>
             <div className="flex-1 flex items-center flex-wrap gap-1">
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${company.email ? 'bg-[#F0F3F7] text-[#2D3E50]' : 'bg-[#FFF3F0] text-[#FF7A59]'}`}>
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${company.email ? 'bg-[#F1F1F1] text-[#333333]' : 'bg-[#EEF0FB] text-[#4762D5]'}`}>
                 {company.email || `No email — edit ${company.name} to add one`}
               </span>
             </div>
-            <div className="flex items-center gap-3 text-xs text-[#7C98B6] flex-shrink-0">
+            <div className="flex items-center gap-3 text-xs text-[#999999] flex-shrink-0">
               <button
                 onClick={() => setShowCc(v => !v)}
-                className={`hover:text-[#516F90] font-medium ${showCc ? 'text-[#2D3E50]' : ''}`}
+                className={`hover:text-[#666666] font-medium ${showCc ? 'text-[#333333]' : ''}`}
               >Cc</button>
               <button
                 onClick={() => setShowBcc(v => !v)}
-                className={`hover:text-[#516F90] font-medium ${showBcc ? 'text-[#2D3E50]' : ''}`}
+                className={`hover:text-[#666666] font-medium ${showBcc ? 'text-[#333333]' : ''}`}
               >Bcc</button>
             </div>
           </div>
 
           {/* Cc field */}
           {showCc && (
-            <div className="flex items-center px-4 py-2 border-b border-[#DFE3EB] gap-2">
-              <span className="text-xs text-[#516F90] w-8 flex-shrink-0">Cc</span>
+            <div className="flex items-center px-4 py-2 border-b border-[#EBEBEB] gap-2">
+              <span className="text-xs text-[#666666] w-8 flex-shrink-0">Cc</span>
               <input
                 autoFocus
                 value={emailCc}
                 onChange={(e) => setEmailCc(e.target.value)}
                 placeholder="Add Cc recipients..."
-                className="flex-1 text-sm text-[#2D3E50] placeholder-[#99ACC2] outline-none bg-transparent"
+                className="flex-1 text-sm text-[#333333] placeholder-[#B3B3B3] outline-none bg-transparent"
               />
-              <button onClick={() => { setShowCc(false); setEmailCc(''); }} className="text-[#99ACC2] hover:text-[#516F90] flex-shrink-0">
+              <button onClick={() => { setShowCc(false); setEmailCc(''); }} className="text-[#B3B3B3] hover:text-[#666666] flex-shrink-0">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -1130,31 +1130,31 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
 
           {/* Bcc field */}
           {showBcc && (
-            <div className="flex items-center px-4 py-2 border-b border-[#DFE3EB] gap-2">
-              <span className="text-xs text-[#516F90] w-8 flex-shrink-0">Bcc</span>
+            <div className="flex items-center px-4 py-2 border-b border-[#EBEBEB] gap-2">
+              <span className="text-xs text-[#666666] w-8 flex-shrink-0">Bcc</span>
               <input
                 autoFocus={!showCc}
                 value={emailBcc}
                 onChange={(e) => setEmailBcc(e.target.value)}
                 placeholder="Add Bcc recipients..."
-                className="flex-1 text-sm text-[#2D3E50] placeholder-[#99ACC2] outline-none bg-transparent"
+                className="flex-1 text-sm text-[#333333] placeholder-[#B3B3B3] outline-none bg-transparent"
               />
-              <button onClick={() => { setShowBcc(false); setEmailBcc(''); }} className="text-[#99ACC2] hover:text-[#516F90] flex-shrink-0">
+              <button onClick={() => { setShowBcc(false); setEmailBcc(''); }} className="text-[#B3B3B3] hover:text-[#666666] flex-shrink-0">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
 
           {/* Subject field */}
-          <div className="flex items-center px-4 py-2 border-b border-[#DFE3EB] gap-2">
-            <span className="text-xs text-[#516F90] w-8 flex-shrink-0">Subject</span>
+          <div className="flex items-center px-4 py-2 border-b border-[#EBEBEB] gap-2">
+            <span className="text-xs text-[#666666] w-8 flex-shrink-0">Subject</span>
             <input
               value={emailSubject}
               onChange={(e) => setEmailSubject(e.target.value)}
               placeholder=""
-              className="flex-1 text-sm text-[#2D3E50] placeholder-[#99ACC2] outline-none bg-transparent"
+              className="flex-1 text-sm text-[#333333] placeholder-[#B3B3B3] outline-none bg-transparent"
             />
-            <button className="text-[10px] text-[#7C98B6] border border-[#DFE3EB] rounded px-1.5 py-0.5 hover:bg-[#F0F3F7] flex-shrink-0">{'{}'}</button>
+            <button className="text-[10px] text-[#999999] border border-[#EBEBEB] rounded px-1.5 py-0.5 hover:bg-[#F1F1F1] flex-shrink-0">{'{}'}</button>
           </div>
 
           {/* Body */}
@@ -1164,18 +1164,18 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
               contentEditable
               suppressContentEditableWarning
               data-placeholder="Write your email..."
-              className="w-full min-h-[160px] text-sm text-[#2D3E50] outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-[#99ACC2] [&_b]:font-bold [&_i]:italic [&_u]:underline"
+              className="w-full min-h-[160px] text-sm text-[#333333] outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-[#B3B3B3] [&_b]:font-bold [&_i]:italic [&_u]:underline"
             />
           </div>
 
           {/* Toolbar + footer */}
-          <div className="px-4 py-2.5 border-t border-[#DFE3EB] flex items-center justify-between gap-2">
+          <div className="px-4 py-2.5 border-t border-[#EBEBEB] flex items-center justify-between gap-2">
             <div className="flex items-center gap-0.5">
               {(['bold', 'italic', 'underline'] as const).map((cmd) => (
                 <button
                   key={cmd}
                   onMouseDown={(e) => { e.preventDefault(); emailEditorRef.current?.focus(); document.execCommand(cmd, false); }}
-                  className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#516F90] text-xs w-7 h-7 flex items-center justify-center"
+                  className="p-1.5 rounded hover:bg-[#F1F1F1] text-[#666666] text-xs w-7 h-7 flex items-center justify-center"
                 >
                   {cmd === 'bold' ? <b>B</b> : cmd === 'italic' ? <i>I</i> : <u>U</u>}
                 </button>
@@ -1186,38 +1186,38 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
               <div className="relative">
                 <button
                   onClick={() => setShowTemplatePicker(v => !v)}
-                  className="text-xs text-[#516F90] hover:text-[#2D3E50] whitespace-nowrap"
+                  className="text-xs text-[#666666] hover:text-[#333333] whitespace-nowrap"
                 >
                   Use template
                 </button>
                 {showTemplatePicker && (
-                  <div className="absolute bottom-full right-0 mb-2 bg-white border border-[#DFE3EB] rounded-lg shadow-xl z-50 overflow-hidden" style={{ width: 260 }}>
-                    <div className="px-3 py-2 border-b border-[#DFE3EB] flex items-center justify-between">
-                      <p className="text-xs font-semibold text-[#2D3E50]">Email Templates</p>
-                      <button onClick={() => setShowTemplatePicker(false)} className="text-[#99ACC2] hover:text-[#516F90]">
+                  <div className="absolute bottom-full right-0 mb-2 bg-white border border-[#EBEBEB] rounded-lg shadow-xl z-50 overflow-hidden" style={{ width: 260 }}>
+                    <div className="px-3 py-2 border-b border-[#EBEBEB] flex items-center justify-between">
+                      <p className="text-xs font-semibold text-[#333333]">Email Templates</p>
+                      <button onClick={() => setShowTemplatePicker(false)} className="text-[#B3B3B3] hover:text-[#666666]">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                     <div className="max-h-56 overflow-y-auto">
                       {emailTemplates.length === 0 ? (
                         <div className="px-3 py-4 text-center">
-                          <p className="text-xs text-[#7C98B6]">No templates yet.</p>
-                          <Link href="/emails" className="text-xs text-[#FF7A59] hover:underline">Create one in Email Templates</Link>
+                          <p className="text-xs text-[#999999]">No templates yet.</p>
+                          <Link href="/emails" className="text-xs text-[#4762D5] hover:underline">Create one in Email Templates</Link>
                         </div>
                       ) : (
                         emailTemplates.map((t) => (
                           <button
                             key={t.id}
                             onClick={() => applyTemplate(t)}
-                            className="w-full text-left px-3 py-2.5 hover:bg-[#F6F9FC] transition-colors border-b border-[#F0F3F7] last:border-0"
+                            className="w-full text-left px-3 py-2.5 hover:bg-[#FAFAFA] transition-colors border-b border-[#F1F1F1] last:border-0"
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <p className="text-xs font-medium text-[#2D3E50] truncate">{t.name}</p>
+                              <p className="text-xs font-medium text-[#333333] truncate">{t.name}</p>
                               {t.category && (
-                                <span className="text-[10px] text-[#7C98B6] bg-[#F0F3F7] px-1.5 py-0.5 rounded flex-shrink-0">{t.category}</span>
+                                <span className="text-[10px] text-[#999999] bg-[#F1F1F1] px-1.5 py-0.5 rounded flex-shrink-0">{t.category}</span>
                               )}
                             </div>
-                            <p className="text-[10px] text-[#99ACC2] mt-0.5 truncate">{t.subject}</p>
+                            <p className="text-[10px] text-[#B3B3B3] mt-0.5 truncate">{t.subject}</p>
                           </button>
                         ))
                       )}
@@ -1266,7 +1266,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                     setEmailSending(false);
                   }
                 }}
-                className="text-xs h-8 px-4 gap-1.5 bg-[#0091AE] hover:bg-[#007A8C] text-white border-0"
+                className="text-xs h-8 px-4 gap-1.5 bg-[#4762D5] hover:bg-[#007A8C] text-white border-0"
               >
                 <Send className="w-3 h-3" /> {emailSending ? 'Sending…' : 'Send email'}
               </Button>

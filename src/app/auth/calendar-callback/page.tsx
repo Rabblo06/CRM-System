@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -32,22 +32,22 @@ function CalendarCallbackInner() {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', gap: 12 }}>
       {status === 'error' ? (
         <>
-          <div style={{ width: 48, height: 48, borderRadius: '50%', backgroundColor: '#FFF3F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#FF7A59', fontSize: 22 }}>✕</span>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', backgroundColor: '#EEF0FB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#4762D5', fontSize: 22 }}>✕</span>
           </div>
-          <p style={{ color: '#FF7A59', fontWeight: 600, fontSize: 14 }}>Connection failed</p>
-          <p style={{ color: '#7C98B6', fontSize: 12 }}>Redirecting back to settings…</p>
+          <p style={{ color: '#4762D5', fontWeight: 600, fontSize: 14 }}>Connection failed</p>
+          <p style={{ color: '#999999', fontSize: 12 }}>Redirecting back to settings…</p>
         </>
       ) : status === 'done' ? (
         <>
           <div style={{ width: 48, height: 48, borderRadius: '50%', backgroundColor: '#E5F8F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#00BDA5', fontSize: 22 }}>✓</span>
+            <span style={{ color: '#4CAF8E', fontSize: 22 }}>✓</span>
           </div>
-          <p style={{ color: '#00BDA5', fontWeight: 600, fontSize: 14 }}>Calendar connected!</p>
-          <p style={{ color: '#7C98B6', fontSize: 12 }}>Taking you back to settings…</p>
+          <p style={{ color: '#4CAF8E', fontWeight: 600, fontSize: 14 }}>Calendar connected!</p>
+          <p style={{ color: '#999999', fontSize: 12 }}>Taking you back to settings…</p>
         </>
       ) : (
-        <p style={{ color: '#516f90', fontSize: 14 }}>Connecting calendar…</p>
+        <p style={{ color: '#666666', fontSize: 14 }}>Connecting calendar…</p>
       )}
     </div>
   );

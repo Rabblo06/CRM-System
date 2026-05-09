@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
 import { PageErrorBoundary } from "@/components/ui/error-boundary";
@@ -17,7 +17,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className="antialiased"
-        style={{ backgroundColor: '#F6F9FC', color: '#2D3E50' }}
+        style={{ backgroundColor: '#FAFAFA', color: '#333333' }}
         suppressHydrationWarning
       >
         <ToastProvider>

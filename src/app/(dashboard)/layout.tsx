@@ -78,9 +78,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   });
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#F6F9FC' }}>
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#FAFAFA' }}>
       <Sidebar />
-      <main className="flex-1 ml-64 overflow-y-auto flex flex-col" style={{ backgroundColor: '#F6F9FC' }}>
+      <main className="flex-1 overflow-y-auto flex flex-col" style={{ marginLeft: 220, backgroundColor: '#FAFAFA' }}>
         {children}
       </main>
       {/* Global reminder + follow-up toasts */}

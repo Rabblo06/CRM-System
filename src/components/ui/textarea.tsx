@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
@@ -8,22 +8,22 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         className={cn(
-          'flex min-h-[80px] w-full rounded border px-3 py-2 text-xs placeholder:text-[#99ACC2] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 resize-none',
+          'flex min-h-[80px] w-full rounded border px-3 py-2 text-xs placeholder:text-[#B3B3B3] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 resize-none',
           className
         )}
         style={{
-          borderColor: '#CBD6E2',
+          borderColor: '#EBEBEB',
           backgroundColor: '#ffffff',
-          color: '#2D3E50',
+          color: '#333333',
           ...style,
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = '#FF7A59';
+          e.currentTarget.style.borderColor = '#4762D5';
           e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,122,89,0.25)';
           onFocus?.(e);
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = '#CBD6E2';
+          e.currentTarget.style.borderColor = '#EBEBEB';
           e.currentTarget.style.boxShadow = '';
           onBlur?.(e);
         }}

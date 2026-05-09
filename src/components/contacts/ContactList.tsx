@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -146,12 +146,12 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
   const SortIcon = ({ col }: { col: SortKey }) =>
     sortKey === col ? (
       sortDir === 'asc' ? (
-        <ChevronUp className="w-3.5 h-3.5 text-[#FF7A59]" />
+        <ChevronUp className="w-3.5 h-3.5 text-[#4762D5]" />
       ) : (
-        <ChevronDown className="w-3.5 h-3.5 text-[#FF7A59]" />
+        <ChevronDown className="w-3.5 h-3.5 text-[#4762D5]" />
       )
     ) : (
-      <ArrowUpDown className="w-3.5 h-3.5 text-[#99ACC2] opacity-0 group-hover:opacity-100" />
+      <ArrowUpDown className="w-3.5 h-3.5 text-[#B3B3B3] opacity-0 group-hover:opacity-100" />
     );
 
   return (
@@ -159,22 +159,22 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
       {/* Main Table Area */}
       <div className="flex-1 min-w-0">
         {/* View Tabs */}
-        <div className="flex items-center gap-0 border-b border-[#DFE3EB] mb-0 overflow-x-auto">
+        <div className="flex items-center gap-0 border-b border-[#EBEBEB] mb-0 overflow-x-auto">
           {VIEW_TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => { setActiveTab(tab.id); setPage(1); }}
               className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-[#FF7A59] text-[#2D3E50]'
-                  : 'border-transparent text-[#516F90] hover:text-[#2D3E50] hover:border-[#DFE3EB]'
+                  ? 'border-[#4762D5] text-[#333333]'
+                  : 'border-transparent text-[#666666] hover:text-[#333333] hover:border-[#EBEBEB]'
               }`}
             >
               {tab.label}
             </button>
           ))}
           <div className="ml-auto flex items-center gap-1 px-3 py-2">
-            <button className="text-xs text-[#FF7A59] hover:text-[#425B76] font-medium px-2">
+            <button className="text-xs text-[#4762D5] hover:text-[#555555] font-medium px-2">
               + Add view
             </button>
           </div>
@@ -183,7 +183,7 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
         {/* Toolbar */}
         <div className="flex items-center gap-2 py-3 px-0.5">
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C98B6]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
             <Input
               placeholder="Search contacts..."
               value={searchQuery}
@@ -196,20 +196,20 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
             variant="outline"
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
-            className={`gap-1.5 h-8 text-xs ${showFilters ? 'bg-[#FFF3F0] border-[#FF7A59] text-[#FF7A59]' : ''}`}
+            className={`gap-1.5 h-8 text-xs ${showFilters ? 'bg-[#EEF0FB] border-[#4762D5] text-[#4762D5]' : ''}`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             Filters
             {hasFilters && (
-              <span className="bg-[#FF7A59] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center leading-none">
+              <span className="bg-[#4762D5] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center leading-none">
                 {[filterStatus, filterLifecycle, filterCountry].filter(Boolean).length}
               </span>
             )}
           </Button>
 
           {selectedIds.size > 0 && (
-            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-[#DFE3EB]">
-              <span className="text-xs text-[#516F90]">{selectedIds.size} selected</span>
+            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-[#EBEBEB]">
+              <span className="text-xs text-[#666666]">{selectedIds.size} selected</span>
               <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
                 <Mail className="w-3 h-3" /> Email
               </Button>
@@ -218,7 +218,7 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
               </Button>
               <button
                 onClick={() => setSelectedIds(new Set())}
-                className="text-[#7C98B6] hover:text-[#2D3E50]"
+                className="text-[#999999] hover:text-[#333333]"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -226,25 +226,25 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
           )}
 
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-[#7C98B6]">{filtered.length} contacts</span>
+            <span className="text-xs text-[#999999]">{filtered.length} contacts</span>
           </div>
         </div>
 
         {/* Table */}
-        <div className="rounded-lg border border-[#DFE3EB] overflow-hidden">
+        <div className="rounded-lg border border-[#EBEBEB] overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#DFE3EB] bg-[#F0F3F7]">
+              <tr className="border-b border-[#EBEBEB] bg-[#F1F1F1]">
                 <th className="w-10 px-3 py-3">
                   <input
                     type="checkbox"
                     checked={selectedIds.size === paginated.length && paginated.length > 0}
                     onChange={toggleAll}
-                    className="rounded border-[#CBD6E2] bg-[#F0F3F7] text-[#FF7A59] focus:ring-[#FF7A59] focus:ring-offset-0"
+                    className="rounded border-[#EBEBEB] bg-[#F1F1F1] text-[#4762D5] focus:ring-[#4762D5] focus:ring-offset-0"
                   />
                 </th>
                 <th
-                  className="text-left px-3 py-3 text-[#516F90] font-medium text-xs cursor-pointer group"
+                  className="text-left px-3 py-3 text-[#666666] font-medium text-xs cursor-pointer group"
                   onClick={() => toggleSort('name')}
                 >
                   <div className="flex items-center gap-1">
@@ -252,18 +252,18 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
                   </div>
                 </th>
                 <th
-                  className="text-left px-3 py-3 text-[#516F90] font-medium text-xs cursor-pointer group hidden md:table-cell"
+                  className="text-left px-3 py-3 text-[#666666] font-medium text-xs cursor-pointer group hidden md:table-cell"
                   onClick={() => toggleSort('company')}
                 >
                   <div className="flex items-center gap-1">
                     Company <SortIcon col="company" />
                   </div>
                 </th>
-                <th className="text-left px-3 py-3 text-[#516F90] font-medium text-xs hidden lg:table-cell">
+                <th className="text-left px-3 py-3 text-[#666666] font-medium text-xs hidden lg:table-cell">
                   Contact info
                 </th>
                 <th
-                  className="text-left px-3 py-3 text-[#516F90] font-medium text-xs cursor-pointer group"
+                  className="text-left px-3 py-3 text-[#666666] font-medium text-xs cursor-pointer group"
                   onClick={() => toggleSort('lead_status')}
                 >
                   <div className="flex items-center gap-1">
@@ -271,25 +271,25 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
                   </div>
                 </th>
                 <th
-                  className="text-left px-3 py-3 text-[#516F90] font-medium text-xs cursor-pointer group hidden xl:table-cell"
+                  className="text-left px-3 py-3 text-[#666666] font-medium text-xs cursor-pointer group hidden xl:table-cell"
                   onClick={() => toggleSort('lifecycle_stage')}
                 >
                   <div className="flex items-center gap-1">
                     Lifecycle stage <SortIcon col="lifecycle_stage" />
                   </div>
                 </th>
-                <th className="text-left px-3 py-3 text-[#516F90] font-medium text-xs hidden xl:table-cell">
+                <th className="text-left px-3 py-3 text-[#666666] font-medium text-xs hidden xl:table-cell">
                   Location
                 </th>
                 <th className="w-10 px-3 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#DFE3EB]">
+            <tbody className="divide-y divide-[#EBEBEB]">
               {paginated.map((contact) => (
                 <tr
                   key={contact.id}
-                  className={`hover:bg-[#F0F3F7] transition-colors group ${
-                    selectedIds.has(contact.id) ? 'bg-[#FFF3F0]' : ''
+                  className={`hover:bg-[#F1F1F1] transition-colors group ${
+                    selectedIds.has(contact.id) ? 'bg-[#EEF0FB]' : ''
                   }`}
                 >
                   <td className="px-3 py-3.5">
@@ -297,25 +297,25 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
                       type="checkbox"
                       checked={selectedIds.has(contact.id)}
                       onChange={() => toggleOne(contact.id)}
-                      className="rounded border-[#CBD6E2] bg-[#F0F3F7] text-[#FF7A59] focus:ring-[#FF7A59] focus:ring-offset-0"
+                      className="rounded border-[#EBEBEB] bg-[#F1F1F1] text-[#4762D5] focus:ring-[#4762D5] focus:ring-offset-0"
                     />
                   </td>
                   <td className="px-3 py-3.5">
                     <div className="flex items-center gap-2.5">
                       <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarFallback className="text-xs bg-[#FFF3F0] text-[#FF7A59]">
+                        <AvatarFallback className="text-xs bg-[#EEF0FB] text-[#4762D5]">
                           {getInitials(`${contact.first_name} ${contact.last_name}`)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <Link
                           href={`/contacts/${contact.id}`}
-                          className="font-medium text-[#2D3E50] hover:text-[#FF7A59] transition-colors text-sm"
+                          className="font-medium text-[#333333] hover:text-[#4762D5] transition-colors text-sm"
                         >
                           {contact.first_name} {contact.last_name}
                         </Link>
                         {contact.job_title && (
-                          <p className="text-xs text-[#7C98B6] truncate max-w-[180px]">{contact.job_title}</p>
+                          <p className="text-xs text-[#999999] truncate max-w-[180px]">{contact.job_title}</p>
                         )}
                       </div>
                     </div>
@@ -324,23 +324,23 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
                     {contact.company ? (
                       <Link
                         href={`/companies/${contact.company_id}`}
-                        className="flex items-center gap-1.5 text-[#516F90] hover:text-[#FF7A59] text-sm"
+                        className="flex items-center gap-1.5 text-[#666666] hover:text-[#4762D5] text-sm"
                       >
-                        <Building2 className="w-3.5 h-3.5 text-[#7C98B6] flex-shrink-0" />
+                        <Building2 className="w-3.5 h-3.5 text-[#999999] flex-shrink-0" />
                         <span className="truncate max-w-[160px]">{contact.company.name}</span>
                       </Link>
                     ) : (
-                      <span className="text-[#99ACC2] text-sm">—</span>
+                      <span className="text-[#B3B3B3] text-sm">—</span>
                     )}
                   </td>
                   <td className="px-3 py-3.5 hidden lg:table-cell">
                     <div className="space-y-0.5">
                       {contact.email && (
                         <div className="flex items-center gap-1.5">
-                          <Mail className="w-3 h-3 text-[#7C98B6] flex-shrink-0" />
+                          <Mail className="w-3 h-3 text-[#999999] flex-shrink-0" />
                           <a
                             href={`mailto:${contact.email}`}
-                            className="text-xs text-[#516F90] hover:text-[#FF7A59] truncate max-w-[180px]"
+                            className="text-xs text-[#666666] hover:text-[#4762D5] truncate max-w-[180px]"
                           >
                             {contact.email}
                           </a>
@@ -348,8 +348,8 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
                       )}
                       {contact.phone && (
                         <div className="flex items-center gap-1.5">
-                          <Phone className="w-3 h-3 text-[#7C98B6] flex-shrink-0" />
-                          <span className="text-xs text-[#516F90]">{contact.phone}</span>
+                          <Phone className="w-3 h-3 text-[#999999] flex-shrink-0" />
+                          <span className="text-xs text-[#666666]">{contact.phone}</span>
                         </div>
                       )}
                     </div>
@@ -362,12 +362,12 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
                     </span>
                   </td>
                   <td className="px-3 py-3.5 hidden xl:table-cell">
-                    <span className="text-xs text-[#516F90]">
+                    <span className="text-xs text-[#666666]">
                       {LIFECYCLE_STAGES.find((s) => s.value === contact.lifecycle_stage)?.label || contact.lifecycle_stage}
                     </span>
                   </td>
                   <td className="px-3 py-3.5 hidden xl:table-cell">
-                    <span className="text-xs text-[#7C98B6]">
+                    <span className="text-xs text-[#999999]">
                       {[contact.city, contact.country].filter(Boolean).join(', ') || '—'}
                     </span>
                   </td>
@@ -404,13 +404,13 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
             </tbody>
           </table>
           {paginated.length === 0 && (
-            <div className="text-center py-16 text-[#7C98B6]">
+            <div className="text-center py-16 text-[#999999]">
               <Users className="w-8 h-8 mx-auto mb-3 opacity-30" />
               <p className="text-sm">No contacts found</p>
               {(searchQuery || hasFilters) && (
                 <button
                   onClick={() => { setSearchQuery(''); clearFilters(); }}
-                  className="text-xs text-[#FF7A59] mt-2 hover:text-[#425B76]"
+                  className="text-xs text-[#4762D5] mt-2 hover:text-[#555555]"
                 >
                   Clear filters
                 </button>
@@ -420,7 +420,7 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between mt-4 text-xs text-[#7C98B6]">
+        <div className="flex items-center justify-between mt-4 text-xs text-[#999999]">
           <div className="flex items-center gap-2">
             <span>Rows per page:</span>
             <Select value={String(perPage)} onValueChange={(v) => { setPerPage(Number(v)); setPage(1); }}>
@@ -466,16 +466,16 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="w-72 ml-4 flex-shrink-0 bg-white border border-[#DFE3EB] rounded-lg p-4 h-fit sticky top-0">
+        <div className="w-72 ml-4 flex-shrink-0 bg-white border border-[#EBEBEB] rounded-lg p-4 h-fit sticky top-0">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-[#2D3E50]">Filters</h3>
+            <h3 className="text-sm font-semibold text-[#333333]">Filters</h3>
             <div className="flex items-center gap-2">
               {hasFilters && (
-                <button onClick={clearFilters} className="text-xs text-[#FF7A59] hover:text-[#425B76]">
+                <button onClick={clearFilters} className="text-xs text-[#4762D5] hover:text-[#555555]">
                   Clear all
                 </button>
               )}
-              <button onClick={() => setShowFilters(false)} className="text-[#516F90] hover:text-[#2D3E50]">
+              <button onClick={() => setShowFilters(false)} className="text-[#666666] hover:text-[#333333]">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -483,7 +483,7 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
 
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-[#516F90] mb-1.5 block">Lead status</label>
+              <label className="text-xs font-medium text-[#666666] mb-1.5 block">Lead status</label>
               <Select value={filterStatus || 'all'} onValueChange={(v) => setFilterStatus(v === 'all' ? '' : v)}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Any status" />
@@ -500,7 +500,7 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-[#516F90] mb-1.5 block">Lifecycle stage</label>
+              <label className="text-xs font-medium text-[#666666] mb-1.5 block">Lifecycle stage</label>
               <Select value={filterLifecycle || 'all'} onValueChange={(v) => setFilterLifecycle(v === 'all' ? '' : v)}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Any stage" />
@@ -515,7 +515,7 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-[#516F90] mb-1.5 block">Country</label>
+              <label className="text-xs font-medium text-[#666666] mb-1.5 block">Country</label>
               <Input
                 placeholder="Filter by country..."
                 value={filterCountry}
@@ -526,28 +526,28 @@ export function ContactList({ contacts, onEdit, onDelete }: ContactListProps) {
           </div>
 
           {hasFilters && (
-            <div className="mt-4 pt-4 border-t border-[#DFE3EB] space-y-1.5">
-              <p className="text-xs text-[#7C98B6] mb-2">Active filters:</p>
+            <div className="mt-4 pt-4 border-t border-[#EBEBEB] space-y-1.5">
+              <p className="text-xs text-[#999999] mb-2">Active filters:</p>
               {filterStatus && (
-                <div className="flex items-center gap-1.5 bg-[#FFF3F0] border border-[#FF7A59]/30 rounded px-2 py-1">
-                  <span className="text-xs text-[#FF7A59]">Status: {filterStatus}</span>
-                  <button onClick={() => setFilterStatus('')} className="ml-auto text-[#FF7A59]">
+                <div className="flex items-center gap-1.5 bg-[#EEF0FB] border border-[#4762D5]/30 rounded px-2 py-1">
+                  <span className="text-xs text-[#4762D5]">Status: {filterStatus}</span>
+                  <button onClick={() => setFilterStatus('')} className="ml-auto text-[#4762D5]">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
               )}
               {filterLifecycle && (
-                <div className="flex items-center gap-1.5 bg-[#FFF3F0] border border-[#FF7A59]/30 rounded px-2 py-1">
-                  <span className="text-xs text-[#FF7A59]">Stage: {filterLifecycle}</span>
-                  <button onClick={() => setFilterLifecycle('')} className="ml-auto text-[#FF7A59]">
+                <div className="flex items-center gap-1.5 bg-[#EEF0FB] border border-[#4762D5]/30 rounded px-2 py-1">
+                  <span className="text-xs text-[#4762D5]">Stage: {filterLifecycle}</span>
+                  <button onClick={() => setFilterLifecycle('')} className="ml-auto text-[#4762D5]">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
               )}
               {filterCountry && (
-                <div className="flex items-center gap-1.5 bg-[#FFF3F0] border border-[#FF7A59]/30 rounded px-2 py-1">
-                  <span className="text-xs text-[#FF7A59]">Country: {filterCountry}</span>
-                  <button onClick={() => setFilterCountry('')} className="ml-auto text-[#FF7A59]">
+                <div className="flex items-center gap-1.5 bg-[#EEF0FB] border border-[#4762D5]/30 rounded px-2 py-1">
+                  <span className="text-xs text-[#4762D5]">Country: {filterCountry}</span>
+                  <button onClick={() => setFilterCountry('')} className="ml-auto text-[#4762D5]">
                     <X className="w-3 h-3" />
                   </button>
                 </div>

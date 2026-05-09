@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -44,11 +44,11 @@ export function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-white border border-[#DFE3EB] rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-[#CBD6E2] transition-colors group shadow-sm"
+      className="bg-white border border-[#EBEBEB] rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-[#EBEBEB] transition-colors group shadow-sm"
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-2.5">
-        <h4 className="text-sm font-medium text-[#2D3E50] leading-snug flex-1">{deal.title}</h4>
+        <h4 className="text-sm font-medium text-[#333333] leading-snug flex-1">{deal.title}</h4>
         <div onClick={(e) => e.stopPropagation()}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -85,24 +85,24 @@ export function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
       {/* Company */}
       {deal.company && (
         <div className="flex items-center gap-1.5 mb-2">
-          <Building2 className="w-3 h-3 text-[#7C98B6]" />
-          <span className="text-xs text-[#516F90]">{deal.company.name}</span>
+          <Building2 className="w-3 h-3 text-[#999999]" />
+          <span className="text-xs text-[#666666]">{deal.company.name}</span>
         </div>
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#DFE3EB]">
+      <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#EBEBEB]">
         <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${getPriorityColor(deal.priority)}`}>
           {deal.priority.charAt(0).toUpperCase() + deal.priority.slice(1)}
         </span>
         {deal.close_date && (
-          <div className="flex items-center gap-1 text-xs text-[#7C98B6]">
+          <div className="flex items-center gap-1 text-xs text-[#999999]">
             <Calendar className="w-3 h-3" />
             {formatDate(deal.close_date)}
           </div>
         )}
         {!deal.close_date && (
-          <span className="text-xs text-[#99ACC2]">{daysInStage}d in stage</span>
+          <span className="text-xs text-[#B3B3B3]">{daysInStage}d in stage</span>
         )}
       </div>
     </div>

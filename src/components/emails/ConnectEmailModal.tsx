@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { X, Check, Loader2 } from 'lucide-react';
@@ -11,7 +11,7 @@ function EnvelopeIllustration() {
       <rect x="8" y="20" width="68" height="48" rx="4" fill="#E8EDF5" />
       <rect x="8" y="20" width="68" height="48" rx="4" stroke="#C8D3E5" strokeWidth="1.5" />
       <path d="M8 24l34 24 34-24" stroke="#A0B0C8" strokeWidth="1.5" strokeLinecap="round" />
-      <rect x="58" y="8" width="24" height="24" rx="12" fill="#00BDA5" />
+      <rect x="58" y="8" width="24" height="24" rx="12" fill="#4CAF8E" />
       <rect x="64" y="16" width="4" height="8" rx="2" fill="white" />
       <rect x="64" y="26" width="4" height="4" rx="2" fill="white" />
       <rect x="42" y="4" width="14" height="14" rx="7" fill="#FFB900" />
@@ -114,7 +114,7 @@ export function ConnectEmailModal({ onClose, onConnected }: ConnectEmailModalPro
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-[#99ACC2] hover:text-[#2D3E50] transition-colors"
+          className="absolute top-4 right-4 text-[#B3B3B3] hover:text-[#333333] transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -125,7 +125,7 @@ export function ConnectEmailModal({ onClose, onConnected }: ConnectEmailModalPro
         </div>
 
         {/* Title */}
-        <h2 className="text-center text-lg font-bold text-[#2D3E50] mb-4 leading-snug">
+        <h2 className="text-center text-lg font-bold text-[#333333] mb-4 leading-snug">
           Connect your email account to send emails<br />and track every interaction
         </h2>
 
@@ -136,9 +136,9 @@ export function ConnectEmailModal({ onClose, onConnected }: ConnectEmailModalPro
             'Send mass emails to up to 2,000 recipients a day',
             'Share email templates with teammates',
           ].map((item) => (
-            <li key={item} className="flex items-center gap-2.5 text-sm text-[#516F90]">
+            <li key={item} className="flex items-center gap-2.5 text-sm text-[#666666]">
               <span className="w-4 h-4 rounded-full bg-[#E5F8F6] flex items-center justify-center flex-shrink-0">
-                <Check className="w-2.5 h-2.5 text-[#00BDA5]" />
+                <Check className="w-2.5 h-2.5 text-[#4CAF8E]" />
               </span>
               {item}
             </li>
@@ -149,7 +149,7 @@ export function ConnectEmailModal({ onClose, onConnected }: ConnectEmailModalPro
         <div className="flex gap-3">
           <button
             onClick={() => setShowGmailSync(true)}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-[#DFE3EB] rounded-lg text-sm font-medium text-[#2D3E50] hover:bg-[#F6F9FC] transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-[#EBEBEB] rounded-lg text-sm font-medium text-[#333333] hover:bg-[#FAFAFA] transition-colors"
           >
             <GmailIcon />
             Gmail
@@ -157,7 +157,7 @@ export function ConnectEmailModal({ onClose, onConnected }: ConnectEmailModalPro
           <button
             onClick={handleOutlookConnect}
             disabled={outlookLoading}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-[#DFE3EB] rounded-lg text-sm font-medium text-[#2D3E50] hover:bg-[#F6F9FC] transition-colors disabled:opacity-60"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-[#EBEBEB] rounded-lg text-sm font-medium text-[#333333] hover:bg-[#FAFAFA] transition-colors disabled:opacity-60"
           >
             {outlookLoading
               ? <Loader2 className="w-4 h-4 animate-spin" />

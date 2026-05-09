@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Phone, Mail, Calendar, FileText, CheckSquare, TrendingUp, Users, Filter } from 'lucide-react';
@@ -24,8 +24,8 @@ const activityColors: Record<string, string> = {
   meeting: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
   note: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
   task: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
-  deal_created: 'text-[#FF7A59] bg-[#FFF3F0] border-[#FF7A59]/20',
-  deal_updated: 'text-[#FF7A59] bg-[#FFF3F0] border-[#FF7A59]/20',
+  deal_created: 'text-[#4762D5] bg-[#EEF0FB] border-[#4762D5]/20',
+  deal_updated: 'text-[#4762D5] bg-[#EEF0FB] border-[#4762D5]/20',
   contact_created: 'text-teal-400 bg-teal-400/10 border-teal-400/20',
 };
 
@@ -66,7 +66,7 @@ export default function ActivitiesPage() {
 
       {/* Filters */}
       <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-[#7C98B6]" />
+        <Filter className="w-4 h-4 text-[#999999]" />
         <div className="flex gap-1.5">
           {typeOptions.map((opt) => (
             <button
@@ -74,8 +74,8 @@ export default function ActivitiesPage() {
               onClick={() => setTypeFilter(opt.value)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 typeFilter === opt.value
-                  ? 'bg-[#FF7A59] text-[#2D3E50]'
-                  : 'bg-[#F0F3F7] text-[#516F90] hover:bg-[#F0F3F7] hover:text-[#2D3E50]'
+                  ? 'bg-[#4762D5] text-[#333333]'
+                  : 'bg-[#F1F1F1] text-[#666666] hover:bg-[#F1F1F1] hover:text-[#333333]'
               }`}
             >
               {opt.label}
@@ -92,12 +92,12 @@ export default function ActivitiesPage() {
         <div className="space-y-3">
           {filtered.map((activity) => {
             const Icon = activityIcons[activity.type] || FileText;
-            const colorClass = activityColors[activity.type] || 'text-[#516F90] bg-[#F0F3F7] border-[#DFE3EB]';
+            const colorClass = activityColors[activity.type] || 'text-[#666666] bg-[#F1F1F1] border-[#EBEBEB]';
 
             return (
               <div
                 key={activity.id}
-                className="bg-white border border-[#DFE3EB] rounded-xl p-4 flex items-start gap-4 hover:border-[#CBD6E2] transition-colors"
+                className="bg-white border border-[#EBEBEB] rounded-xl p-4 flex items-start gap-4 hover:border-[#EBEBEB] transition-colors"
               >
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${colorClass}`}>
                   <Icon size={16} />
@@ -105,26 +105,26 @@ export default function ActivitiesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-medium text-[#2D3E50] text-sm">{activity.title}</p>
+                      <p className="font-medium text-[#333333] text-sm">{activity.title}</p>
                       {activity.description && (
-                        <p className="text-sm text-[#516F90] mt-0.5">{activity.description}</p>
+                        <p className="text-sm text-[#666666] mt-0.5">{activity.description}</p>
                       )}
                       <div className="flex items-center gap-3 mt-1.5">
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${colorClass}`}>
                           {activityTypeLabels[activity.type] || activity.type}
                         </span>
                         {activity.contact && (
-                          <span className="text-xs text-[#7C98B6]">
+                          <span className="text-xs text-[#999999]">
                             {activity.contact.first_name} {activity.contact.last_name}
                           </span>
                         )}
                         {activity.deal && (
-                          <span className="text-xs text-[#7C98B6]">{activity.deal.title}</span>
+                          <span className="text-xs text-[#999999]">{activity.deal.title}</span>
                         )}
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-xs text-[#7C98B6]">
+                      <p className="text-xs text-[#999999]">
                         {formatRelativeTime(activity.completed_at || activity.created_at)}
                       </p>
                       {activity.is_completed && (
@@ -137,7 +137,7 @@ export default function ActivitiesPage() {
             );
           })}
           {filtered.length === 0 && (
-            <div className="text-center py-12 text-[#7C98B6]">No activities found</div>
+            <div className="text-center py-12 text-[#999999]">No activities found</div>
           )}
         </div>
       )}

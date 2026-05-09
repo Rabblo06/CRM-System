@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Plus, MessageSquare, Search, Edit2, Trash2, Copy, Check, Zap, Mail, Phone, X } from 'lucide-react';
@@ -61,10 +61,10 @@ const MOCK_TEMPLATES: MessageTemplate[] = [
 ];
 
 const channelConfig: Record<TemplateChannel, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  sms: { label: 'SMS', color: '#00BDA5', bg: '#E5F8F6', icon: MessageSquare },
+  sms: { label: 'SMS', color: '#4CAF8E', bg: '#E5F8F6', icon: MessageSquare },
   whatsapp: { label: 'WhatsApp', color: '#25D366', bg: '#E8FBF0', icon: MessageSquare },
-  email: { label: 'Email', color: '#0091AE', bg: '#E5F5F8', icon: Mail },
-  call_script: { label: 'Call Script', color: '#F5C26B', bg: '#FEF9EE', icon: Phone },
+  email: { label: 'Email', color: '#4762D5', bg: '#E5F5F8', icon: Mail },
+  call_script: { label: 'Call Script', color: '#E8882A', bg: '#FEF9EE', icon: Phone },
 };
 
 const VARIABLE_TAGS = ['{{first_name}}', '{{last_name}}', '{{company_name}}', '{{sender_name}}', '{{meeting_time}}', '{{calendar_link}}', '{{plan_name}}', '{{proposal_amount}}'];
@@ -111,12 +111,12 @@ export default function MessageTemplatesPage() {
   };
 
   return (
-    <div className="p-6 space-y-5" style={{ backgroundColor: '#F6F9FC', minHeight: '100%' }}>
+    <div className="p-6 space-y-5" style={{ backgroundColor: '#FAFAFA', minHeight: '100%' }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold" style={{ color: '#2D3E50' }}>Message Templates</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#7C98B6' }}>Reusable templates for SMS, WhatsApp, email, and calls</p>
+          <h1 className="text-lg font-semibold" style={{ color: '#333333' }}>Message Templates</h1>
+          <p className="text-xs mt-0.5" style={{ color: '#999999' }}>Reusable templates for SMS, WhatsApp, email, and calls</p>
         </div>
         <Button className="gap-1.5 text-xs" onClick={() => setShowEditor(true)}>
           <Plus className="w-3.5 h-3.5" />
@@ -127,7 +127,7 @@ export default function MessageTemplatesPage() {
       {/* Channel filter */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: '#99ACC2' }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: '#B3B3B3' }} />
           <Input
             placeholder="Search templates..."
             value={search}
@@ -145,9 +145,9 @@ export default function MessageTemplatesPage() {
                 onClick={() => setChannelFilter(c)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
                 style={{
-                  backgroundColor: channelFilter === c ? '#2D3E50' : '#ffffff',
-                  color: channelFilter === c ? '#ffffff' : '#516F90',
-                  border: '1px solid #DFE3EB',
+                  backgroundColor: channelFilter === c ? '#333333' : '#ffffff',
+                  color: channelFilter === c ? '#ffffff' : '#666666',
+                  border: '1px solid #EBEBEB',
                 }}
               >
                 {Icon && <Icon className="w-3 h-3" />}
@@ -165,51 +165,51 @@ export default function MessageTemplatesPage() {
           const Icon = cfg.icon;
           const isCopied = copiedId === tpl.id;
           return (
-            <div key={tpl.id} className="bg-white border border-[#DFE3EB] rounded-xl p-5 group hover:shadow-sm transition-shadow">
+            <div key={tpl.id} className="bg-white border border-[#EBEBEB] rounded-xl p-5 group hover:shadow-sm transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: cfg.bg }}>
                     <Icon className="w-4 h-4" style={{ color: cfg.color }} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold" style={{ color: '#2D3E50' }}>{tpl.name}</h3>
+                    <h3 className="text-sm font-semibold" style={{ color: '#333333' }}>{tpl.name}</h3>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: cfg.bg, color: cfg.color }}>
                         {cfg.label}
                       </span>
-                      <span className="text-xs" style={{ color: '#99ACC2' }}>Used {tpl.usage_count}x</span>
+                      <span className="text-xs" style={{ color: '#B3B3B3' }}>Used {tpl.usage_count}x</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => copyToClipboard(tpl.id, tpl.body)}
-                    className="p-1.5 rounded hover:bg-[#F0F3F7] transition-colors"
+                    className="p-1.5 rounded hover:bg-[#F1F1F1] transition-colors"
                     title="Copy body"
                   >
                     {isCopied
-                      ? <Check className="w-3.5 h-3.5" style={{ color: '#00BDA5' }} />
-                      : <Copy className="w-3.5 h-3.5" style={{ color: '#7C98B6' }} />
+                      ? <Check className="w-3.5 h-3.5" style={{ color: '#4CAF8E' }} />
+                      : <Copy className="w-3.5 h-3.5" style={{ color: '#999999' }} />
                     }
                   </button>
-                  <button className="p-1.5 rounded hover:bg-[#F0F3F7] transition-colors" title="Edit">
-                    <Edit2 className="w-3.5 h-3.5" style={{ color: '#7C98B6' }} />
+                  <button className="p-1.5 rounded hover:bg-[#F1F1F1] transition-colors" title="Edit">
+                    <Edit2 className="w-3.5 h-3.5" style={{ color: '#999999' }} />
                   </button>
                   <button
                     onClick={() => deleteTemplate(tpl.id)}
-                    className="p-1.5 rounded hover:bg-[#FFF3F0] transition-colors"
+                    className="p-1.5 rounded hover:bg-[#EEF0FB] transition-colors"
                     title="Delete"
                   >
-                    <Trash2 className="w-3.5 h-3.5" style={{ color: '#FF7A59' }} />
+                    <Trash2 className="w-3.5 h-3.5" style={{ color: '#4762D5' }} />
                   </button>
                 </div>
               </div>
 
               {tpl.subject && (
-                <p className="text-xs font-medium mb-1.5" style={{ color: '#425B76' }}>Subject: {tpl.subject}</p>
+                <p className="text-xs font-medium mb-1.5" style={{ color: '#555555' }}>Subject: {tpl.subject}</p>
               )}
 
-              <div className="rounded-lg p-3 text-xs leading-relaxed whitespace-pre-wrap line-clamp-4" style={{ backgroundColor: '#F6F9FC', color: '#516F90', fontFamily: 'inherit' }}>
+              <div className="rounded-lg p-3 text-xs leading-relaxed whitespace-pre-wrap line-clamp-4" style={{ backgroundColor: '#FAFAFA', color: '#666666', fontFamily: 'inherit' }}>
                 {tpl.body}
               </div>
 
@@ -221,7 +221,7 @@ export default function MessageTemplatesPage() {
                 return (
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {unique.map((v) => (
-                      <span key={v} className="text-xs px-1.5 py-0.5 rounded-md font-mono" style={{ backgroundColor: '#FFF3F0', color: '#FF7A59', border: '1px solid #FFD5CC' }}>
+                      <span key={v} className="text-xs px-1.5 py-0.5 rounded-md font-mono" style={{ backgroundColor: '#EEF0FB', color: '#4762D5', border: '1px solid #C7CEFB' }}>
                         {v}
                       </span>
                     ))}
@@ -229,15 +229,15 @@ export default function MessageTemplatesPage() {
                 );
               })()}
 
-              <div className="flex items-center justify-between mt-3 pt-3 border-t" style={{ borderColor: '#F0F3F7' }}>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t" style={{ borderColor: '#F1F1F1' }}>
                 <div className="flex flex-wrap gap-1">
                   {tpl.tags.map((tag) => (
-                    <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F0F3F7', color: '#7C98B6' }}>
+                    <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F1F1F1', color: '#999999' }}>
                       #{tag}
                     </span>
                   ))}
                 </div>
-                <span className="text-xs" style={{ color: '#99ACC2' }}>Created {tpl.created_at}</span>
+                <span className="text-xs" style={{ color: '#B3B3B3' }}>Created {tpl.created_at}</span>
               </div>
             </div>
           );
@@ -247,11 +247,11 @@ export default function MessageTemplatesPage() {
       {/* New template editor modal */}
       {showEditor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowEditor(false)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden" style={{ border: '1px solid #DFE3EB' }} onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: '#DFE3EB' }}>
-              <h2 className="text-base font-semibold" style={{ color: '#2D3E50' }}>New Message Template</h2>
-              <button onClick={() => setShowEditor(false)} className="p-1.5 rounded hover:bg-[#F0F3F7]">
-                <X className="w-4 h-4" style={{ color: '#7C98B6' }} />
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden" style={{ border: '1px solid #EBEBEB' }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: '#EBEBEB' }}>
+              <h2 className="text-base font-semibold" style={{ color: '#333333' }}>New Message Template</h2>
+              <button onClick={() => setShowEditor(false)} className="p-1.5 rounded hover:bg-[#F1F1F1]">
+                <X className="w-4 h-4" style={{ color: '#999999' }} />
               </button>
             </div>
 
@@ -265,7 +265,7 @@ export default function MessageTemplatesPage() {
                   <Label>Channel</Label>
                   <select
                     className="w-full rounded border px-3 py-2 text-sm"
-                    style={{ borderColor: '#CBD6E2', color: '#2D3E50' }}
+                    style={{ borderColor: '#EBEBEB', color: '#333333' }}
                     value={form.channel}
                     onChange={(e) => setForm(f => ({ ...f, channel: e.target.value as TemplateChannel }))}
                   >
@@ -286,29 +286,29 @@ export default function MessageTemplatesPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label>Body</Label>
-                  <span className="text-xs" style={{ color: '#99ACC2' }}>Use {'{{variable}}'} for personalization</span>
+                  <span className="text-xs" style={{ color: '#B3B3B3' }}>Use {'{{variable}}'} for personalization</span>
                 </div>
                 <textarea
-                  className="w-full rounded border px-3 py-2 text-sm resize-none placeholder:text-[#99ACC2]"
-                  style={{ borderColor: '#CBD6E2', color: '#2D3E50', minHeight: 140 }}
+                  className="w-full rounded border px-3 py-2 text-sm resize-none placeholder:text-[#B3B3B3]"
+                  style={{ borderColor: '#EBEBEB', color: '#333333', minHeight: 140 }}
                   placeholder="Write your template here..."
                   value={form.body}
                   onChange={(e) => setForm(f => ({ ...f, body: e.target.value }))}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = '#FF7A59'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255,122,89,0.15)'; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = '#CBD6E2'; e.currentTarget.style.boxShadow = ''; }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#4762D5'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255,122,89,0.15)'; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = '#EBEBEB'; e.currentTarget.style.boxShadow = ''; }}
                 />
               </div>
 
               {/* Variable insert shortcuts */}
               <div>
-                <p className="text-xs mb-2" style={{ color: '#7C98B6' }}>Insert variable:</p>
+                <p className="text-xs mb-2" style={{ color: '#999999' }}>Insert variable:</p>
                 <div className="flex flex-wrap gap-1.5">
                   {VARIABLE_TAGS.map((v) => (
                     <button
                       key={v}
                       onClick={() => setForm(f => ({ ...f, body: f.body + v }))}
-                      className="text-xs px-2 py-0.5 rounded-md font-mono transition-colors hover:bg-[#FFF3F0]"
-                      style={{ backgroundColor: '#FFF8F6', color: '#FF7A59', border: '1px solid #FFD5CC' }}
+                      className="text-xs px-2 py-0.5 rounded-md font-mono transition-colors hover:bg-[#EEF0FB]"
+                      style={{ backgroundColor: '#FFF8F6', color: '#4762D5', border: '1px solid #C7CEFB' }}
                     >
                       {v}
                     </button>
@@ -317,7 +317,7 @@ export default function MessageTemplatesPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
+            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t" style={{ borderColor: '#EBEBEB', backgroundColor: '#FAFAFA' }}>
               <Button variant="outline" size="sm" onClick={() => setShowEditor(false)}>Cancel</Button>
               <Button size="sm" onClick={saveTemplate} disabled={!form.name || !form.body}>
                 Save Template

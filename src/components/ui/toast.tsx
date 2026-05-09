@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, {
   createContext, useContext, useState, useCallback, useRef, useEffect,
@@ -125,11 +125,11 @@ const ICONS: Record<ToastType, React.ReactNode> = {
 };
 
 const BAR_COLOR: Record<ToastType, string> = {
-  success: '#00a38d',
-  error:   '#e8674a',
-  warning: '#d4a030',
-  info:    '#0091ae',
-  loading: '#425b76',
+  success: '#4CAF8E',
+  error:   '#D45353',
+  warning: '#E8882A',
+  info:    '#4762D5',
+  loading: '#666666',
 };
 
 function ToastCard({ toast: t, onDismiss }: { toast: ToastItem; onDismiss: (id: string) => void }) {
@@ -143,7 +143,7 @@ function ToastCard({ toast: t, onDismiss }: { toast: ToastItem; onDismiss: (id: 
   return (
     <div
       role="alert"
-      className="pointer-events-auto flex items-stretch rounded-[4px] shadow-lg overflow-hidden bg-white border border-[#dfe3eb]"
+      className="pointer-events-auto flex items-stretch rounded-[4px] shadow-lg overflow-hidden bg-white border border-[#EBEBEB]"
       style={{
         transform: show ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.97)',
         opacity: show ? 1 : 0,
@@ -161,16 +161,16 @@ function ToastCard({ toast: t, onDismiss }: { toast: ToastItem; onDismiss: (id: 
       {/* Text */}
       <div className="flex-1 px-3 py-2.5 min-w-0">
         {t.title && (
-          <p className="text-xs font-bold text-[#2d3e50] leading-snug mb-0.5">{t.title}</p>
+          <p className="text-xs font-bold text-[#333333] leading-snug mb-0.5">{t.title}</p>
         )}
-        <p className="text-xs text-[#425b76] leading-snug break-words">{t.message}</p>
+        <p className="text-xs text-[#555555] leading-snug break-words">{t.message}</p>
       </div>
 
       {/* Close */}
       <button
         type="button"
         onClick={() => onDismiss(t.id)}
-        className="flex-shrink-0 self-start mt-2.5 mr-2 text-[#7c98b6] hover:text-[#2d3e50] transition-colors"
+        className="flex-shrink-0 self-start mt-2.5 mr-2 text-[#999999] hover:text-[#333333] transition-colors"
         aria-label="Dismiss notification"
       >
         <X className="w-3.5 h-3.5" />

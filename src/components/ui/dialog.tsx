@@ -17,7 +17,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-50 bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      'fixed inset-0 z-50 bg-black/30 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
       className
     )}
     {...props}
@@ -34,15 +34,19 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 p-6 shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-xl',
+        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 p-6 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-md',
         className
       )}
-      style={{ backgroundColor: '#ffffff', border: '1px solid #DFE3EB' }}
+      style={{
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #EBEBEB',
+        boxShadow: '0px 8px 32px rgba(0,0,0,0.12)',
+      }}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded opacity-50 transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none">
-        <X className="h-4 w-4" style={{ color: '#516F90' }} />
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm p-1 opacity-50 transition-opacity hover:opacity-100 hover:bg-[#F1F1F1] focus:outline-none disabled:pointer-events-none">
+        <X className="h-3.5 w-3.5" style={{ color: '#666666' }} />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -51,7 +55,7 @@ const DialogContent = React.forwardRef<
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props} />
+  <div className={cn('flex flex-col space-y-1 text-center sm:text-left', className)} {...props} />
 );
 DialogHeader.displayName = 'DialogHeader';
 
@@ -69,8 +73,8 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-base font-semibold leading-none tracking-tight', className)}
-    style={{ color: '#2D3E50' }}
+    className={cn('text-sm font-semibold leading-none tracking-tight', className)}
+    style={{ color: '#333333' }}
     {...props}
   />
 ));
@@ -83,21 +87,13 @@ const DialogDescription = React.forwardRef<
   <DialogPrimitive.Description
     ref={ref}
     className={cn('text-xs', className)}
-    style={{ color: '#516F90' }}
+    style={{ color: '#666666' }}
     {...props}
   />
 ));
 DialogDescription.displayName = DialogPrimitive.Description.displayName;
 
 export {
-  Dialog,
-  DialogPortal,
-  DialogOverlay,
-  DialogClose,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
+  Dialog, DialogPortal, DialogOverlay, DialogClose, DialogTrigger,
+  DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
 };

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import {
@@ -198,19 +198,19 @@ export default function ScheduleMeetingModal({
     >
       <div
         className="bg-white rounded-lg shadow-2xl overflow-hidden flex flex-row"
-        style={{ width: 900, maxWidth: '96vw', maxHeight: '90vh', border: '1px solid #CBD6E2' }}
+        style={{ width: 900, maxWidth: '96vw', maxHeight: '90vh', border: '1px solid #EBEBEB' }}
         onClick={e => e.stopPropagation()}
       >
 
         {/* ══ LEFT PANEL — form ══════════════════════════════ */}
         <div
           className="flex flex-col overflow-y-auto flex-shrink-0"
-          style={{ width: 360, borderRight: '1px solid #DFE3EB' }}
+          style={{ width: 360, borderRight: '1px solid #EBEBEB' }}
         >
           {/* Header */}
           <div
             className="flex items-center px-5 py-3 flex-shrink-0"
-            style={{ backgroundColor: '#2D3E50' }}
+            style={{ backgroundColor: '#333333' }}
           >
             <span className="text-sm font-semibold text-white flex-1">Schedule</span>
             <button onClick={onClose} className="p-1 rounded hover:bg-white/10 text-white/70 hover:text-white">
@@ -222,30 +222,30 @@ export default function ScheduleMeetingModal({
             {/* User type */}
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-1.5 cursor-pointer">
-                <input type="radio" name="schedule-type" defaultChecked className="accent-[#0091AE]" />
-                <span className="text-xs font-medium" style={{ color: '#2D3E50' }}>User</span>
+                <input type="radio" name="schedule-type" defaultChecked className="accent-[#4762D5]" />
+                <span className="text-xs font-medium" style={{ color: '#333333' }}>User</span>
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer">
-                <input type="radio" name="schedule-type" className="accent-[#0091AE]" />
-                <span className="text-xs font-medium" style={{ color: '#2D3E50' }}>Meeting rotation</span>
+                <input type="radio" name="schedule-type" className="accent-[#4762D5]" />
+                <span className="text-xs font-medium" style={{ color: '#333333' }}>Meeting rotation</span>
               </label>
             </div>
 
             {/* Owner */}
             <div
               className="flex items-center justify-between px-3 py-2 rounded border text-xs cursor-default"
-              style={{ borderColor: '#DFE3EB', color: '#516F90', backgroundColor: '#F6F9FC' }}
+              style={{ borderColor: '#EBEBEB', color: '#666666', backgroundColor: '#FAFAFA' }}
             >
               <span className="truncate flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 flex-shrink-0" />
                 {userName} &lt;{userEmail}&gt;
               </span>
-              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#99ACC2' }} />
+              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#B3B3B3' }} />
             </div>
 
             {/* Title */}
             <div>
-              <label className="block text-xs font-semibold mb-1" style={{ color: '#516F90' }}>Title</label>
+              <label className="block text-xs font-semibold mb-1" style={{ color: '#666666' }}>Title</label>
               <input
                 type="text"
                 value={title}
@@ -253,54 +253,54 @@ export default function ScheduleMeetingModal({
                 placeholder="Meeting title..."
                 autoFocus
                 className="w-full border rounded px-3 py-1.5 text-sm outline-none transition-colors"
-                style={{ borderColor: '#CBD6E2', color: '#2D3E50' }}
-                onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }}
+                style={{ borderColor: '#EBEBEB', color: '#333333' }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }}
               />
             </div>
 
             {/* Dates */}
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-3">
-                <label className="block text-xs font-semibold mb-1" style={{ color: '#516F90' }}>Start date</label>
+                <label className="block text-xs font-semibold mb-1" style={{ color: '#666666' }}>Start date</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
                   className="w-full border rounded px-3 py-1.5 text-xs outline-none"
-                  style={{ borderColor: '#CBD6E2', color: '#2D3E50' }}
+                  style={{ borderColor: '#EBEBEB', color: '#333333' }}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: '#516F90' }}>Start time</label>
+                <label className="block text-xs font-semibold mb-1" style={{ color: '#666666' }}>Start time</label>
                 <input
                   type="time"
                   value={startTime}
                   onChange={e => { setStartTime(e.target.value); setEndTime(addMinutes(e.target.value, 30)); }}
                   className="w-full border rounded px-2 py-1.5 text-xs outline-none"
-                  style={{ borderColor: '#CBD6E2', color: '#2D3E50' }}
+                  style={{ borderColor: '#EBEBEB', color: '#333333' }}
                 />
               </div>
               <div className="col-span-2">
-                <label className="block text-xs font-semibold mb-1" style={{ color: '#516F90' }}>End time</label>
+                <label className="block text-xs font-semibold mb-1" style={{ color: '#666666' }}>End time</label>
                 <input
                   type="time"
                   value={endTime}
                   onChange={e => setEndTime(e.target.value)}
                   className="w-full border rounded px-2 py-1.5 text-xs outline-none"
-                  style={{ borderColor: '#CBD6E2', color: '#2D3E50' }}
+                  style={{ borderColor: '#EBEBEB', color: '#333333' }}
                 />
               </div>
             </div>
 
             {/* Attendees */}
             <div>
-              <p className="text-xs font-semibold mb-1" style={{ color: '#516F90' }}>Attendees</p>
+              <p className="text-xs font-semibold mb-1" style={{ color: '#666666' }}>Attendees</p>
               <div className="flex flex-wrap gap-1.5">
                 {contextName ? (
                   <button
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors hover:border-[#0091AE]"
-                    style={{ borderColor: '#DFE3EB', color: '#0091AE', backgroundColor: '#F6F9FC' }}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors hover:border-[#4762D5]"
+                    style={{ borderColor: '#EBEBEB', color: '#4762D5', backgroundColor: '#FAFAFA' }}
                   >
                     {contextName}
                     <ChevronDown className="w-3 h-3" />
@@ -308,7 +308,7 @@ export default function ScheduleMeetingModal({
                 ) : (
                   <button
                     className="text-xs font-medium"
-                    style={{ color: '#0091AE' }}
+                    style={{ color: '#4762D5' }}
                   >
                     + Add attendee
                   </button>
@@ -318,11 +318,11 @@ export default function ScheduleMeetingModal({
 
             {/* Location */}
             <div className="relative">
-              <p className="text-xs font-semibold mb-1" style={{ color: '#516F90' }}>Location</p>
+              <p className="text-xs font-semibold mb-1" style={{ color: '#666666' }}>Location</p>
               <button
                 onClick={() => setShowLocationPicker(v => !v)}
                 className="inline-flex items-center gap-1 text-xs font-medium"
-                style={{ color: '#0091AE' }}
+                style={{ color: '#4762D5' }}
               >
                 <MapPin className="w-3.5 h-3.5" />
                 {location || 'Select location'}
@@ -331,23 +331,23 @@ export default function ScheduleMeetingModal({
               {showLocationPicker && (
                 <div
                   className="absolute top-full left-0 mt-1 z-20 bg-white border rounded-lg shadow-lg py-1 min-w-[180px]"
-                  style={{ borderColor: '#DFE3EB' }}
+                  style={{ borderColor: '#EBEBEB' }}
                 >
                   {LOCATION_OPTIONS.map(opt => (
                     <button
                       key={opt}
                       onClick={() => { setLocation(opt); setShowLocationPicker(false); }}
-                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-[#F6F9FC] transition-colors"
-                      style={{ color: '#2D3E50' }}
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-[#FAFAFA] transition-colors"
+                      style={{ color: '#333333' }}
                     >
                       {opt}
                     </button>
                   ))}
-                  <div className="border-t mx-2 my-1" style={{ borderColor: '#DFE3EB' }} />
+                  <div className="border-t mx-2 my-1" style={{ borderColor: '#EBEBEB' }} />
                   <button
                     onClick={() => { setLocation(''); setShowLocationPicker(false); }}
-                    className="w-full text-left px-3 py-1.5 text-xs hover:bg-[#F6F9FC]"
-                    style={{ color: '#99ACC2' }}
+                    className="w-full text-left px-3 py-1.5 text-xs hover:bg-[#FAFAFA]"
+                    style={{ color: '#B3B3B3' }}
                   >
                     No location
                   </button>
@@ -356,17 +356,17 @@ export default function ScheduleMeetingModal({
             </div>
 
             {/* Divider */}
-            <div className="border-t" style={{ borderColor: '#DFE3EB' }} />
+            <div className="border-t" style={{ borderColor: '#EBEBEB' }} />
 
             {/* Reminder emails */}
             <div className="relative">
-              <p className="text-xs font-semibold mb-1.5" style={{ color: '#516F90' }}>Scheduled reminder emails</p>
+              <p className="text-xs font-semibold mb-1.5" style={{ color: '#666666' }}>Scheduled reminder emails</p>
               {reminders.map(r => (
-                <div key={r} className="flex items-center justify-between text-xs py-1" style={{ color: '#2D3E50' }}>
+                <div key={r} className="flex items-center justify-between text-xs py-1" style={{ color: '#333333' }}>
                   <span className="flex items-center gap-1.5">
-                    <Bell className="w-3 h-3 text-[#7C98B6]" />{r}
+                    <Bell className="w-3 h-3 text-[#999999]" />{r}
                   </span>
-                  <button onClick={() => removeReminder(r)} className="text-[#99ACC2] hover:text-[#516F90]">
+                  <button onClick={() => removeReminder(r)} className="text-[#B3B3B3] hover:text-[#666666]">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
@@ -374,7 +374,7 @@ export default function ScheduleMeetingModal({
               <button
                 onClick={() => setShowReminderPicker(v => !v)}
                 className="flex items-center gap-1 text-xs font-medium mt-1"
-                style={{ color: '#0091AE' }}
+                style={{ color: '#4762D5' }}
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add reminder
@@ -382,14 +382,14 @@ export default function ScheduleMeetingModal({
               {showReminderPicker && (
                 <div
                   className="absolute top-full left-0 mt-1 z-20 bg-white border rounded-lg shadow-lg py-1 min-w-[200px]"
-                  style={{ borderColor: '#DFE3EB' }}
+                  style={{ borderColor: '#EBEBEB' }}
                 >
                   {REMINDER_OPTIONS.filter(r => !reminders.includes(r)).map(r => (
                     <button
                       key={r}
                       onClick={() => addReminder(r)}
-                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-[#F6F9FC] transition-colors"
-                      style={{ color: '#2D3E50' }}
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-[#FAFAFA] transition-colors"
+                      style={{ color: '#333333' }}
                     >
                       {r}
                     </button>
@@ -399,26 +399,26 @@ export default function ScheduleMeetingModal({
             </div>
 
             {/* Divider */}
-            <div className="border-t" style={{ borderColor: '#DFE3EB' }} />
+            <div className="border-t" style={{ borderColor: '#EBEBEB' }} />
 
             {/* Attendee description */}
             <div>
-              <p className="text-xs font-semibold mb-1" style={{ color: '#516F90' }}>Attendee description</p>
+              <p className="text-xs font-semibold mb-1" style={{ color: '#666666' }}>Attendee description</p>
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Send a description to your attendees..."
                 rows={2}
                 className="w-full border rounded px-3 py-2 text-xs resize-none outline-none transition-colors"
-                style={{ borderColor: '#DFE3EB', color: '#2D3E50' }}
-                onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }}
+                style={{ borderColor: '#EBEBEB', color: '#333333' }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }}
               />
             </div>
 
             {/* Associated with */}
             {contextName && (
-              <button className="text-xs hover:underline" style={{ color: '#0091AE' }}>
+              <button className="text-xs hover:underline" style={{ color: '#4762D5' }}>
                 Associated with 1 record ▾
               </button>
             )}
@@ -428,7 +428,7 @@ export default function ScheduleMeetingModal({
               <button
                 onClick={() => setShowNoteArea(true)}
                 className="flex items-center gap-1 text-xs font-medium"
-                style={{ color: '#0091AE' }}
+                style={{ color: '#4762D5' }}
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add internal note
@@ -436,11 +436,11 @@ export default function ScheduleMeetingModal({
             ) : (
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs font-semibold" style={{ color: '#516F90' }}>
+                  <p className="text-xs font-semibold" style={{ color: '#666666' }}>
                     <FileText className="inline w-3 h-3 mr-1" />Internal note
                   </p>
                   <button onClick={() => { setShowNoteArea(false); setInternalNote(''); }}
-                    className="text-[#99ACC2] hover:text-[#516F90]">
+                    className="text-[#B3B3B3] hover:text-[#666666]">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
@@ -450,9 +450,9 @@ export default function ScheduleMeetingModal({
                   placeholder="Add an internal note (not sent to attendees)..."
                   rows={2}
                   className="w-full border rounded px-3 py-2 text-xs resize-none outline-none transition-colors"
-                  style={{ borderColor: '#DFE3EB', color: '#2D3E50' }}
-                  onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }}
+                  style={{ borderColor: '#EBEBEB', color: '#333333' }}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }}
                 />
               </div>
             )}
@@ -461,26 +461,26 @@ export default function ScheduleMeetingModal({
           {/* Footer */}
           <div
             className="px-5 py-3 flex items-center gap-3 border-t flex-shrink-0"
-            style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}
+            style={{ borderColor: '#EBEBEB', backgroundColor: '#FAFAFA' }}
           >
             <button
               onClick={handleSave}
               disabled={!title.trim()}
               className="flex-1 py-2 rounded text-sm font-semibold transition-colors"
               style={{
-                backgroundColor: title.trim() ? '#2D3E50' : '#DFE3EB',
-                color: title.trim() ? '#ffffff' : '#99ACC2',
+                backgroundColor: title.trim() ? '#333333' : '#EBEBEB',
+                color: title.trim() ? '#ffffff' : '#B3B3B3',
                 cursor: title.trim() ? 'pointer' : 'not-allowed',
               }}
               onMouseEnter={e => { if (title.trim()) (e.currentTarget as HTMLElement).style.backgroundColor = '#1a2b3c'; }}
-              onMouseLeave={e => { if (title.trim()) (e.currentTarget as HTMLElement).style.backgroundColor = '#2D3E50'; }}
+              onMouseLeave={e => { if (title.trim()) (e.currentTarget as HTMLElement).style.backgroundColor = '#333333'; }}
             >
               Schedule meeting
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded text-sm font-semibold border transition-colors hover:bg-[#F0F3F7]"
-              style={{ borderColor: '#DFE3EB', color: '#FF7A59' }}
+              className="px-4 py-2 rounded text-sm font-semibold border transition-colors hover:bg-[#F1F1F1]"
+              style={{ borderColor: '#EBEBEB', color: '#4762D5' }}
             >
               Cancel
             </button>
@@ -492,35 +492,35 @@ export default function ScheduleMeetingModal({
           {/* Calendar header */}
           <div
             className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
-            style={{ borderColor: '#DFE3EB' }}
+            style={{ borderColor: '#EBEBEB' }}
           >
             {/* Today + nav */}
             <div className="flex items-center gap-2">
               <button
                 onClick={goToday}
-                className="px-3 py-1 text-xs border rounded font-medium hover:bg-[#F0F3F7] transition-colors"
-                style={{ borderColor: '#CBD6E2', color: '#516F90' }}
+                className="px-3 py-1 text-xs border rounded font-medium hover:bg-[#F1F1F1] transition-colors"
+                style={{ borderColor: '#EBEBEB', color: '#666666' }}
               >
                 Today
               </button>
               <button
                 onClick={prevWeek}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#F0F3F7] transition-colors"
-                style={{ color: '#516F90' }}
+                className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#F1F1F1] transition-colors"
+                style={{ color: '#666666' }}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={nextWeek}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#F0F3F7] transition-colors"
-                style={{ color: '#516F90' }}
+                className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#F1F1F1] transition-colors"
+                style={{ color: '#666666' }}
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
 
             {/* Week label */}
-            <span className="text-sm font-semibold" style={{ color: '#2D3E50' }}>{weekLabel}</span>
+            <span className="text-sm font-semibold" style={{ color: '#333333' }}>{weekLabel}</span>
 
             {/* Controls */}
             <div className="flex items-center gap-4">
@@ -529,11 +529,11 @@ export default function ScheduleMeetingModal({
                   type="checkbox"
                   checked={hideWeekends}
                   onChange={e => setHideWeekends(e.target.checked)}
-                  className="accent-[#0091AE]"
+                  className="accent-[#4762D5]"
                 />
-                <span className="text-xs" style={{ color: '#516F90' }}>Hide weekends</span>
+                <span className="text-xs" style={{ color: '#666666' }}>Hide weekends</span>
               </label>
-              <span className="text-xs font-medium" style={{ color: '#0091AE' }}>
+              <span className="text-xs font-medium" style={{ color: '#4762D5' }}>
                 UTC {Intl.DateTimeFormat().resolvedOptions().timeZone}
               </span>
             </div>
@@ -542,7 +542,7 @@ export default function ScheduleMeetingModal({
           {/* Day header row */}
           <div
             className="flex border-b flex-shrink-0"
-            style={{ borderColor: '#DFE3EB' }}
+            style={{ borderColor: '#EBEBEB' }}
           >
             {/* Gutter */}
             <div className="flex-shrink-0" style={{ width: 56 }} />
@@ -552,17 +552,17 @@ export default function ScheduleMeetingModal({
                 <div
                   key={day.toISOString()}
                   className="flex-1 text-center py-2"
-                  style={{ borderLeft: '1px solid #DFE3EB' }}
+                  style={{ borderLeft: '1px solid #EBEBEB' }}
                 >
-                  <span className="text-xs font-medium" style={{ color: '#7C98B6' }}>
+                  <span className="text-xs font-medium" style={{ color: '#999999' }}>
                     {fmtDayName(day)}
                   </span>
                   <div className="flex justify-center mt-0.5">
                     <span
                       className="w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold"
                       style={todayDay
-                        ? { backgroundColor: '#FF7A59', color: '#fff' }
-                        : { color: '#2D3E50' }
+                        ? { backgroundColor: '#4762D5', color: '#fff' }
+                        : { color: '#333333' }
                       }
                     >
                       {day.getDate()}
@@ -588,7 +588,7 @@ export default function ScheduleMeetingModal({
                       {label && (
                         <span
                           className="absolute right-2 text-[10px]"
-                          style={{ color: '#99ACC2', top: -7, whiteSpace: 'nowrap' }}
+                          style={{ color: '#B3B3B3', top: -7, whiteSpace: 'nowrap' }}
                         >
                           {label}
                         </span>
@@ -605,7 +605,7 @@ export default function ScheduleMeetingModal({
                   <div
                     key={day.toISOString()}
                     className="flex-1"
-                    style={{ borderLeft: '1px solid #DFE3EB', position: 'relative' }}
+                    style={{ borderLeft: '1px solid #EBEBEB', position: 'relative' }}
                   >
                     {TIME_SLOTS.map((slot, i) => {
                       const selected = isSelected(day, slot);
@@ -617,7 +617,7 @@ export default function ScheduleMeetingModal({
                           style={{
                             height: SLOT_H,
                             backgroundColor: selected ? 'rgba(0,145,174,0.18)' : 'transparent',
-                            borderTop: isHour ? '1px solid #DFE3EB' : '1px solid #F0F3F7',
+                            borderTop: isHour ? '1px solid #EBEBEB' : '1px solid #F1F1F1',
                             cursor: 'pointer',
                             transition: 'background-color 0.1s',
                           }}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { X, Check } from 'lucide-react';
@@ -88,20 +88,20 @@ export function GmailConnectBanner() {
   if (sync.phase === 'syncing') {
     const pct = sync.total > 0 ? Math.min(100, Math.round((sync.synced / sync.total) * 100)) : 5;
     return (
-      <div className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 bg-white border border-[#DFE3EB] rounded-lg shadow-sm">
+      <div className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 bg-white border border-[#EBEBEB] rounded-lg shadow-sm">
         <div className="flex-1">
-          <p className="text-sm font-semibold text-[#2D3E50]">Syncing your emails ({pct}%)</p>
-          <p className="text-xs text-[#7C98B6] mt-0.5">
+          <p className="text-sm font-semibold text-[#333333]">Syncing your emails ({pct}%)</p>
+          <p className="text-xs text-[#999999] mt-0.5">
             {sync.synced} of {sync.total} emails synced. We&apos;ll ignore spam and promotional emails.
           </p>
-          <div className="mt-2 h-1 bg-[#F0F3F7] rounded-full overflow-hidden">
+          <div className="mt-2 h-1 bg-[#F1F1F1] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${pct}%`, backgroundColor: '#00a38d' }}
+              style={{ width: `${pct}%`, backgroundColor: '#4762D5' }}
             />
           </div>
         </div>
-        <button onClick={() => setSync({ phase: 'idle' })} className="text-[#99ACC2] hover:text-[#425B76]">
+        <button onClick={() => setSync({ phase: 'idle' })} className="text-[#B3B3B3] hover:text-[#555555]">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -111,14 +111,14 @@ export function GmailConnectBanner() {
   // ── Complete banner ──
   if (sync.phase === 'complete') {
     return (
-      <div className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 bg-[#E5F8F6] border border-[#00BDA5] rounded-lg">
-        <div className="w-6 h-6 rounded-full bg-[#00BDA5] flex items-center justify-center flex-shrink-0">
+      <div className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 bg-[#E5F8F6] border border-[#4CAF8E] rounded-lg">
+        <div className="w-6 h-6 rounded-full bg-[#4CAF8E] flex items-center justify-center flex-shrink-0">
           <Check className="w-3.5 h-3.5 text-white" />
         </div>
-        <p className="text-sm font-semibold text-[#00BDA5] flex-1">
+        <p className="text-sm font-semibold text-[#4CAF8E] flex-1">
           Gmail synced! {sync.synced} emails imported from {sync.gmailEmail}
         </p>
-        <button onClick={() => setSync({ phase: 'idle' })} className="text-[#00BDA5] opacity-60 hover:opacity-100">
+        <button onClick={() => setSync({ phase: 'idle' })} className="text-[#4CAF8E] opacity-60 hover:opacity-100">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -128,9 +128,9 @@ export function GmailConnectBanner() {
   // ── Error banner ──
   if (sync.phase === 'error') {
     return (
-      <div className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 bg-[#FFF3F0] border border-[#FF7A59] rounded-lg">
-        <p className="text-sm text-[#FF7A59] flex-1">{sync.message}</p>
-        <button onClick={() => setSync({ phase: 'idle' })} className="text-[#FF7A59] opacity-60 hover:opacity-100">
+      <div className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 bg-[#EEF0FB] border border-[#4762D5] rounded-lg">
+        <p className="text-sm text-[#4762D5] flex-1">{sync.message}</p>
+        <button onClick={() => setSync({ phase: 'idle' })} className="text-[#4762D5] opacity-60 hover:opacity-100">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -140,24 +140,24 @@ export function GmailConnectBanner() {
   // ── Default connect banner ──
   return (
     <>
-      <div className="mx-6 mt-4 flex items-center justify-between gap-4 px-4 py-3 bg-white border border-[#DFE3EB] rounded-lg shadow-sm">
+      <div className="mx-6 mt-4 flex items-center justify-between gap-4 px-4 py-3 bg-white border border-[#EBEBEB] rounded-lg shadow-sm">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[#2D3E50]">
+          <p className="text-sm font-semibold text-[#333333]">
             Connect your email to sync all your contacts and conversations in one place
           </p>
-          <p className="text-xs mt-0.5 text-[#7C98B6]">
+          <p className="text-xs mt-0.5 text-[#999999]">
             CRM uses this connection to organize communication history and enrich profiles with accurate job titles, locations, and more.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold border border-[#DFE3EB] rounded-[3px] bg-white hover:bg-[#F6F9FC] text-[#2D3E50] transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold border border-[#EBEBEB] rounded-[3px] bg-white hover:bg-[#FAFAFA] text-[#333333] transition-colors"
           >
             <GmailColorIcon size={14} />
             Connect Gmail
           </button>
-          <button onClick={() => setDismissed(true)} className="text-[#99ACC2] hover:text-[#425B76]">
+          <button onClick={() => setDismissed(true)} className="text-[#B3B3B3] hover:text-[#555555]">
             <X className="w-4 h-4" />
           </button>
         </div>

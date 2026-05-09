@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
@@ -54,8 +54,8 @@ const PAGE_SIZE = 20;
 const POLL_INTERVAL_MS = 60_000; // 1 min
 
 const AVATAR_COLORS = [
-  '#FF7A59', '#0091AE', '#00BDA5', '#F5C26B',
-  '#425B76', '#516F90', '#6366f1', '#10b981', '#f59e0b',
+  '#4762D5', '#4762D5', '#4CAF8E', '#E8882A',
+  '#555555', '#666666', '#6366f1', '#10b981', '#f59e0b',
 ];
 
 const LS_STARRED_KEY  = 'crm_inbox_starred_v1';
@@ -155,26 +155,26 @@ function OutlookIcon({ size = 16 }: { size?: number }) {
 ═══════════════════════════════════════════════════════════ */
 function ConnectGmailPrompt({ onConnect }: { onConnect: () => void }) {
   return (
-    <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: '#F6F9FC' }}>
+    <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: '#FAFAFA' }}>
       <div className="text-center max-w-sm px-6">
-        <div className="w-16 h-16 rounded-2xl border border-[#DFE3EB] flex items-center justify-center bg-white shadow-sm mx-auto mb-5">
+        <div className="w-16 h-16 rounded-2xl border border-[#EBEBEB] flex items-center justify-center bg-white shadow-sm mx-auto mb-5">
           <GmailColorIcon size={36} />
         </div>
-        <h2 className="text-base font-bold mb-2" style={{ color: '#2D3E50' }}>Connect your Gmail inbox</h2>
-        <p className="text-sm mb-6 leading-relaxed" style={{ color: '#7C98B6' }}>
+        <h2 className="text-base font-bold mb-2" style={{ color: '#333333' }}>Connect your Gmail inbox</h2>
+        <p className="text-sm mb-6 leading-relaxed" style={{ color: '#999999' }}>
           Sync your emails to view conversations, automatically match senders to contacts, and track deals.
         </p>
         <button
           onClick={onConnect}
           className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white rounded-[3px] transition-colors"
-          style={{ backgroundColor: '#2D3E50' }}
+          style={{ backgroundColor: '#333333' }}
           onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#1a2b3c')}
-          onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#2D3E50')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#333333')}
         >
           <GmailColorIcon size={16} />
           Connect Gmail
         </button>
-        <p className="text-xs mt-4" style={{ color: '#99ACC2' }}>
+        <p className="text-xs mt-4" style={{ color: '#B3B3B3' }}>
           Emails are stored securely. Spam and promotions are excluded.
         </p>
       </div>
@@ -184,13 +184,13 @@ function ConnectGmailPrompt({ onConnect }: { onConnect: () => void }) {
 
 function ConnectOutlookPrompt({ onConnect }: { onConnect: () => void }) {
   return (
-    <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: '#F6F9FC' }}>
+    <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: '#FAFAFA' }}>
       <div className="text-center max-w-sm px-6">
-        <div className="w-16 h-16 rounded-2xl border border-[#DFE3EB] flex items-center justify-center bg-white shadow-sm mx-auto mb-5">
+        <div className="w-16 h-16 rounded-2xl border border-[#EBEBEB] flex items-center justify-center bg-white shadow-sm mx-auto mb-5">
           <OutlookIcon size={36} />
         </div>
-        <h2 className="text-base font-bold mb-2" style={{ color: '#2D3E50' }}>Connect your Outlook inbox</h2>
-        <p className="text-sm mb-6 leading-relaxed" style={{ color: '#7C98B6' }}>
+        <h2 className="text-base font-bold mb-2" style={{ color: '#333333' }}>Connect your Outlook inbox</h2>
+        <p className="text-sm mb-6 leading-relaxed" style={{ color: '#999999' }}>
           Sync your Outlook / Office 365 emails to view conversations, match senders to contacts, and track deals.
         </p>
         <button
@@ -203,7 +203,7 @@ function ConnectOutlookPrompt({ onConnect }: { onConnect: () => void }) {
           <OutlookIcon size={16} />
           Connect Outlook
         </button>
-        <p className="text-xs mt-4" style={{ color: '#99ACC2' }}>
+        <p className="text-xs mt-4" style={{ color: '#B3B3B3' }}>
           Go to Settings → Email to connect your Outlook / Office 365 account.
         </p>
       </div>
@@ -238,14 +238,14 @@ function ThreadRow({
       onClick={() => onSelect(thread)}
       className="flex items-center gap-3 px-4 py-3 cursor-pointer border-b group transition-colors"
       style={{
-        borderColor: '#F0F3F7',
+        borderColor: '#F1F1F1',
         backgroundColor: isSelected
-          ? '#FFF3F0'
+          ? '#EEF0FB'
           : hasUnread
             ? '#FAFBFF'
             : 'transparent',
       }}
-      onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = '#F6F9FC'; }}
+      onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = '#FAFAFA'; }}
       onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = hasUnread ? '#FAFBFF' : ''; }}
     >
       {/* Avatar */}
@@ -261,39 +261,39 @@ function ThreadRow({
         <div className="flex items-center justify-between mb-0.5">
           <span
             className="text-xs truncate"
-            style={{ color: hasUnread ? '#2D3E50' : '#516F90', fontWeight: hasUnread ? 700 : 400 }}
+            style={{ color: hasUnread ? '#333333' : '#666666', fontWeight: hasUnread ? 700 : 400 }}
           >
             {thread.participants.slice(0, 2).join(', ')}
             {count > 1 && (
-              <span className="ml-1 text-[10px] px-1 py-0.5 rounded bg-[#F0F3F7]" style={{ color: '#7C98B6' }}>
+              <span className="ml-1 text-[10px] px-1 py-0.5 rounded bg-[#F1F1F1]" style={{ color: '#999999' }}>
                 {count}
               </span>
             )}
           </span>
-          <span className="text-xs flex-shrink-0 ml-2" style={{ color: '#99ACC2', fontWeight: hasUnread ? 600 : 400 }}>
+          <span className="text-xs flex-shrink-0 ml-2" style={{ color: '#B3B3B3', fontWeight: hasUnread ? 600 : 400 }}>
             {thread.latest.received_at}
           </span>
         </div>
 
         {/* Row 2: subject */}
         <div className="flex items-center gap-1 mb-0.5">
-          {hasUnread && <Circle className="w-1.5 h-1.5 fill-current flex-shrink-0" style={{ color: '#FF7A59' }} />}
+          {hasUnread && <Circle className="w-1.5 h-1.5 fill-current flex-shrink-0" style={{ color: '#4762D5' }} />}
           <p
             className="text-xs truncate"
-            style={{ color: hasUnread ? '#2D3E50' : '#7C98B6', fontWeight: hasUnread ? 600 : 400 }}
+            style={{ color: hasUnread ? '#333333' : '#999999', fontWeight: hasUnread ? 600 : 400 }}
           >
             {thread.subject}
           </p>
         </div>
 
         {/* Row 3: preview */}
-        <p className="text-xs truncate" style={{ color: '#99ACC2' }}>
+        <p className="text-xs truncate" style={{ color: '#B3B3B3' }}>
           {thread.latest.preview}
         </p>
 
         {/* Contact badge */}
         {thread.latest.contact_id && (
-          <span className="inline-block mt-1 text-xs px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#E5F8F6', color: '#00BDA5' }}>
+          <span className="inline-block mt-1 text-xs px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#E5F8F6', color: '#4CAF8E' }}>
             CRM contact
           </span>
         )}
@@ -303,27 +303,27 @@ function ThreadRow({
       <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 ml-1">
         <button
           onClick={e => onStar(thread.id, e)}
-          className="p-1 rounded hover:bg-[#F0F3F7]"
+          className="p-1 rounded hover:bg-[#F1F1F1]"
           title={thread.is_starred ? 'Unstar' : 'Star'}
         >
           {thread.is_starred
-            ? <Star className="w-3 h-3 fill-current" style={{ color: '#F5C26B' }} />
-            : <StarOff className="w-3 h-3" style={{ color: '#B0C1D4' }} />
+            ? <Star className="w-3 h-3 fill-current" style={{ color: '#E8882A' }} />
+            : <StarOff className="w-3 h-3" style={{ color: '#D6D6D6' }} />
           }
         </button>
         <button
           onClick={e => onArchive(thread.id, e)}
-          className="p-1 rounded hover:bg-[#F0F3F7]"
+          className="p-1 rounded hover:bg-[#F1F1F1]"
           title="Archive"
         >
-          <Archive className="w-3 h-3" style={{ color: '#B0C1D4' }} />
+          <Archive className="w-3 h-3" style={{ color: '#D6D6D6' }} />
         </button>
         <button
           onClick={e => onTrash(thread.id, e)}
-          className="p-1 rounded hover:bg-[#F0F3F7]"
+          className="p-1 rounded hover:bg-[#F1F1F1]"
           title="Delete"
         >
-          <Trash2 className="w-3 h-3" style={{ color: '#B0C1D4' }} />
+          <Trash2 className="w-3 h-3" style={{ color: '#D6D6D6' }} />
         </button>
       </div>
     </div>
@@ -366,39 +366,39 @@ function ThreadDetail({
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-white">
       {/* Header */}
-      <div className="px-6 py-3 border-b flex items-center justify-between flex-shrink-0" style={{ borderColor: '#DFE3EB' }}>
+      <div className="px-6 py-3 border-b flex items-center justify-between flex-shrink-0" style={{ borderColor: '#EBEBEB' }}>
         <div className="flex items-center gap-3 min-w-0">
-          <button onClick={onClose} className="p-1.5 rounded hover:bg-[#F0F3F7] flex-shrink-0" title="Back">
-            <X className="w-4 h-4" style={{ color: '#516F90' }} />
+          <button onClick={onClose} className="p-1.5 rounded hover:bg-[#F1F1F1] flex-shrink-0" title="Back">
+            <X className="w-4 h-4" style={{ color: '#666666' }} />
           </button>
-          <h2 className="text-sm font-semibold truncate" style={{ color: '#2D3E50' }}>{thread.subject}</h2>
+          <h2 className="text-sm font-semibold truncate" style={{ color: '#333333' }}>{thread.subject}</h2>
           {thread.messages.length > 1 && (
-            <span className="text-xs px-1.5 py-0.5 rounded-full bg-[#F0F3F7] flex-shrink-0" style={{ color: '#7C98B6' }}>
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-[#F1F1F1] flex-shrink-0" style={{ color: '#999999' }}>
               {thread.messages.length}
             </span>
           )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={e => onStar(thread.id, e)} className="p-1.5 rounded hover:bg-[#F0F3F7]" title="Star">
+          <button onClick={e => onStar(thread.id, e)} className="p-1.5 rounded hover:bg-[#F1F1F1]" title="Star">
             {thread.is_starred
-              ? <Star className="w-4 h-4 fill-current" style={{ color: '#F5C26B' }} />
-              : <StarOff className="w-4 h-4" style={{ color: '#99ACC2' }} />
+              ? <Star className="w-4 h-4 fill-current" style={{ color: '#E8882A' }} />
+              : <StarOff className="w-4 h-4" style={{ color: '#B3B3B3' }} />
             }
           </button>
-          <button onClick={e => onArchive(thread.id, e)} className="p-1.5 rounded hover:bg-[#F0F3F7]" title="Archive">
-            <Archive className="w-4 h-4" style={{ color: '#99ACC2' }} />
+          <button onClick={e => onArchive(thread.id, e)} className="p-1.5 rounded hover:bg-[#F1F1F1]" title="Archive">
+            <Archive className="w-4 h-4" style={{ color: '#B3B3B3' }} />
           </button>
-          <button onClick={e => onTrash(thread.id, e)} className="p-1.5 rounded hover:bg-[#F0F3F7]" title="Delete">
-            <Trash2 className="w-4 h-4" style={{ color: '#99ACC2' }} />
+          <button onClick={e => onTrash(thread.id, e)} className="p-1.5 rounded hover:bg-[#F1F1F1]" title="Delete">
+            <Trash2 className="w-4 h-4" style={{ color: '#B3B3B3' }} />
           </button>
-          <button className="p-1.5 rounded hover:bg-[#F0F3F7]">
-            <MoreHorizontal className="w-4 h-4" style={{ color: '#99ACC2' }} />
+          <button className="p-1.5 rounded hover:bg-[#F1F1F1]">
+            <MoreHorizontal className="w-4 h-4" style={{ color: '#B3B3B3' }} />
           </button>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2" style={{ backgroundColor: '#F6F9FC' }}>
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2" style={{ backgroundColor: '#FAFAFA' }}>
         {thread.messages.map((msg, idx) => {
           const expanded = expandedIds.has(msg.id);
           const isSent = msg.from_email.toLowerCase() === gmailEmail.toLowerCase();
@@ -408,7 +408,7 @@ function ThreadDetail({
             <div
               key={msg.id}
               className="bg-white rounded-xl border overflow-hidden"
-              style={{ borderColor: '#DFE3EB' }}
+              style={{ borderColor: '#EBEBEB' }}
             >
               {/* Message header — always visible */}
               <div
@@ -423,21 +423,21 @@ function ThreadDetail({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold" style={{ color: '#2D3E50' }}>
+                    <span className="text-sm font-semibold" style={{ color: '#333333' }}>
                       {isSent ? `Me → ${msg.to_email}` : msg.from}
                     </span>
-                    <span className="text-xs ml-3 flex-shrink-0" style={{ color: '#99ACC2' }}>
+                    <span className="text-xs ml-3 flex-shrink-0" style={{ color: '#B3B3B3' }}>
                       {fmtFull(msg.received_at_raw)}
                     </span>
                   </div>
                   {!expanded && (
-                    <p className="text-xs truncate mt-0.5" style={{ color: '#99ACC2' }}>{msg.preview}</p>
+                    <p className="text-xs truncate mt-0.5" style={{ color: '#B3B3B3' }}>{msg.preview}</p>
                   )}
                 </div>
                 <div className="flex-shrink-0 ml-2">
                   {expanded
-                    ? <ChevronUp className="w-4 h-4" style={{ color: '#99ACC2' }} />
-                    : <ChevronDown className="w-4 h-4" style={{ color: '#99ACC2' }} />
+                    ? <ChevronUp className="w-4 h-4" style={{ color: '#B3B3B3' }} />
+                    : <ChevronDown className="w-4 h-4" style={{ color: '#B3B3B3' }} />
                   }
                 </div>
               </div>
@@ -445,20 +445,20 @@ function ThreadDetail({
               {/* Message body */}
               {expanded && (
                 <div className="px-5 pb-5">
-                  <div className="text-xs mb-3" style={{ color: '#7C98B6' }}>
+                  <div className="text-xs mb-3" style={{ color: '#999999' }}>
                     <span>To: </span>
-                    <span style={{ color: '#425B76' }}>{msg.to_email || '(hidden)'}</span>
+                    <span style={{ color: '#555555' }}>{msg.to_email || '(hidden)'}</span>
                     {msg.contact_id && (
-                      <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: '#E5F8F6', color: '#00BDA5' }}>
+                      <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: '#E5F8F6', color: '#4CAF8E' }}>
                         CRM contact
                       </span>
                     )}
                   </div>
-                  <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#2D3E50' }}>
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#333333' }}>
                     {msg.body}
                   </div>
                   {msg.has_attachment && (
-                    <div className="mt-3 flex items-center gap-1 text-xs" style={{ color: '#7C98B6' }}>
+                    <div className="mt-3 flex items-center gap-1 text-xs" style={{ color: '#999999' }}>
                       <Paperclip className="w-3.5 h-3.5" />Attachments
                     </div>
                   )}
@@ -466,14 +466,14 @@ function ThreadDetail({
                   <div className="mt-4 flex items-center gap-2">
                     <button
                       onClick={() => setReplyOpen(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-full font-medium transition-colors hover:bg-[#F0F3F7]"
-                      style={{ borderColor: '#DFE3EB', color: '#516F90' }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-full font-medium transition-colors hover:bg-[#F1F1F1]"
+                      style={{ borderColor: '#EBEBEB', color: '#666666' }}
                     >
                       <Reply className="w-3 h-3" />Reply
                     </button>
                     <button
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-full font-medium transition-colors hover:bg-[#F0F3F7]"
-                      style={{ borderColor: '#DFE3EB', color: '#516F90' }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-full font-medium transition-colors hover:bg-[#F1F1F1]"
+                      style={{ borderColor: '#EBEBEB', color: '#666666' }}
                     >
                       <Forward className="w-3 h-3" />Forward
                     </button>
@@ -486,10 +486,10 @@ function ThreadDetail({
 
         {/* Reply composer */}
         {replyOpen && (
-          <div className="bg-white rounded-xl border overflow-hidden" style={{ borderColor: '#DFE3EB' }}>
-            <div className="px-5 pt-4 pb-2 border-b" style={{ borderColor: '#DFE3EB' }}>
-              <p className="text-xs" style={{ color: '#7C98B6' }}>
-                Reply to: <span style={{ color: '#425B76' }}>{thread.latest.from_email}</span>
+          <div className="bg-white rounded-xl border overflow-hidden" style={{ borderColor: '#EBEBEB' }}>
+            <div className="px-5 pt-4 pb-2 border-b" style={{ borderColor: '#EBEBEB' }}>
+              <p className="text-xs" style={{ color: '#999999' }}>
+                Reply to: <span style={{ color: '#555555' }}>{thread.latest.from_email}</span>
               </p>
             </div>
             <div className="p-4">
@@ -499,9 +499,9 @@ function ThreadDetail({
                 placeholder={`Reply to ${thread.latest.from}…`}
                 rows={4}
                 className="w-full text-sm rounded border resize-none outline-none px-3 py-2"
-                style={{ borderColor: '#DFE3EB', color: '#2D3E50' }}
-                onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255,122,89,0.12)'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; e.currentTarget.style.boxShadow = ''; }}
+                style={{ borderColor: '#EBEBEB', color: '#333333' }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255,122,89,0.12)'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; e.currentTarget.style.boxShadow = ''; }}
                 autoFocus
               />
               <div className="flex items-center justify-between mt-3">
@@ -513,7 +513,7 @@ function ThreadDetail({
                     Discard
                   </Button>
                 </div>
-                <CheckCheck className="w-4 h-4" style={{ color: '#DFE3EB' }} />
+                <CheckCheck className="w-4 h-4" style={{ color: '#EBEBEB' }} />
               </div>
             </div>
           </div>
@@ -867,16 +867,16 @@ export default function InboxPage() {
   ];
 
   return (
-    <div className="flex h-full" style={{ backgroundColor: '#F6F9FC' }}>
+    <div className="flex h-full" style={{ backgroundColor: '#FAFAFA' }}>
 
       {/* ── LEFT NAV ──────────────────────────────────────── */}
       <div
         className="flex-shrink-0 flex flex-col border-r pt-4 pb-4"
-        style={{ width: 200, borderColor: '#DFE3EB', backgroundColor: '#FFFFFF' }}
+        style={{ width: 200, borderColor: '#EBEBEB', backgroundColor: '#FFFFFF' }}
       >
         {/* Brand */}
         <div className="px-4 mb-3">
-          <span className="text-sm font-bold" style={{ color: '#2D3E50' }}>Inbox</span>
+          <span className="text-sm font-bold" style={{ color: '#333333' }}>Inbox</span>
         </div>
 
         {/* Provider switcher */}
@@ -885,9 +885,9 @@ export default function InboxPage() {
             onClick={() => { setProvider('gmail'); setFolder('inbox'); setPage(1); setSelected(null); }}
             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
             style={{
-              backgroundColor: provider === 'gmail' ? '#F6F9FC' : 'transparent',
-              color: provider === 'gmail' ? '#2D3E50' : '#99ACC2',
-              border: provider === 'gmail' ? '1px solid #DFE3EB' : '1px solid transparent',
+              backgroundColor: provider === 'gmail' ? '#FAFAFA' : 'transparent',
+              color: provider === 'gmail' ? '#333333' : '#B3B3B3',
+              border: provider === 'gmail' ? '1px solid #EBEBEB' : '1px solid transparent',
             }}
           >
             <GmailColorIcon size={13} />
@@ -897,9 +897,9 @@ export default function InboxPage() {
             onClick={() => { setProvider('outlook'); setFolder('inbox'); setPage(1); setSelected(null); }}
             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
             style={{
-              backgroundColor: provider === 'outlook' ? '#F6F9FC' : 'transparent',
-              color: provider === 'outlook' ? '#2D3E50' : '#99ACC2',
-              border: provider === 'outlook' ? '1px solid #DFE3EB' : '1px solid transparent',
+              backgroundColor: provider === 'outlook' ? '#FAFAFA' : 'transparent',
+              color: provider === 'outlook' ? '#333333' : '#B3B3B3',
+              border: provider === 'outlook' ? '1px solid #EBEBEB' : '1px solid transparent',
             }}
           >
             <OutlookIcon size={13} />
@@ -910,10 +910,10 @@ export default function InboxPage() {
         {/* Account badge */}
         <div className="px-4 mb-2">
           {provider === 'gmail' && isConnected && gmailEmail && (
-            <p className="text-[10px] truncate" style={{ color: '#99ACC2' }}>{gmailEmail}</p>
+            <p className="text-[10px] truncate" style={{ color: '#B3B3B3' }}>{gmailEmail}</p>
           )}
           {provider === 'outlook' && outlookConnected && outlookEmail && (
-            <p className="text-[10px] truncate" style={{ color: '#99ACC2' }}>{outlookEmail}</p>
+            <p className="text-[10px] truncate" style={{ color: '#B3B3B3' }}>{outlookEmail}</p>
           )}
         </div>
 
@@ -932,10 +932,10 @@ export default function InboxPage() {
                 onClick={() => switchFolder(id)}
                 className="w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
                 style={{
-                  backgroundColor: active ? '#FFF3F0' : 'transparent',
-                  color: active ? '#FF7A59' : '#516F90',
+                  backgroundColor: active ? '#EEF0FB' : 'transparent',
+                  color: active ? '#4762D5' : '#666666',
                 }}
-                onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = '#F6F9FC'; }}
+                onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = '#FAFAFA'; }}
                 onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
               >
                 <div className="flex items-center gap-2.5">
@@ -945,7 +945,7 @@ export default function InboxPage() {
                 {badge > 0 && (
                   <span
                     className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: active ? '#FF7A59' : '#F0F3F7', color: active ? '#fff' : '#516F90' }}
+                    style={{ backgroundColor: active ? '#4762D5' : '#F1F1F1', color: active ? '#fff' : '#666666' }}
                   >
                     {badge}
                   </span>
@@ -961,9 +961,9 @@ export default function InboxPage() {
             onClick={() => loadEmails(true)}
             disabled={refreshing}
             className="flex items-center gap-1.5 text-xs transition-colors w-full px-3 py-2 rounded-lg"
-            style={{ color: '#99ACC2' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#516F90'; (e.currentTarget as HTMLElement).style.backgroundColor = '#F6F9FC'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#99ACC2'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+            style={{ color: '#B3B3B3' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#666666'; (e.currentTarget as HTMLElement).style.backgroundColor = '#FAFAFA'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#B3B3B3'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Refreshing…' : 'Refresh'}
@@ -976,7 +976,7 @@ export default function InboxPage() {
             <button
               onClick={() => setShowSyncModal(true)}
               className="w-full flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors"
-              style={{ backgroundColor: '#FFF3F0', color: '#FF7A59' }}
+              style={{ backgroundColor: '#EEF0FB', color: '#4762D5' }}
             >
               <GmailColorIcon size={12} />
               Connect Gmail
@@ -1013,23 +1013,23 @@ export default function InboxPage() {
       {/* ── THREAD LIST ───────────────────────────────────── */}
       <div
         className="flex-shrink-0 flex flex-col border-r"
-        style={{ width: 320, borderColor: '#DFE3EB', backgroundColor: '#ffffff' }}
+        style={{ width: 320, borderColor: '#EBEBEB', backgroundColor: '#ffffff' }}
       >
         {/* List header */}
-        <div className="px-4 pt-4 pb-3 border-b flex-shrink-0" style={{ borderColor: '#DFE3EB' }}>
+        <div className="px-4 pt-4 pb-3 border-b flex-shrink-0" style={{ borderColor: '#EBEBEB' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold capitalize" style={{ color: '#2D3E50' }}>
+              <h2 className="text-sm font-semibold capitalize" style={{ color: '#333333' }}>
                 {folder === 'all' ? 'All Mail' : folder.charAt(0).toUpperCase() + folder.slice(1)}
               </h2>
-              <span className="text-xs" style={{ color: '#99ACC2' }}>
+              <span className="text-xs" style={{ color: '#B3B3B3' }}>
                 {threads.length} thread{threads.length !== 1 ? 's' : ''}
               </span>
             </div>
             {syncing && (
               <div className="flex items-center gap-1.5">
-                <Loader2 className="w-3 h-3 animate-spin" style={{ color: '#00BDA5' }} />
-                <span className="text-[10px]" style={{ color: '#7C98B6' }}>
+                <Loader2 className="w-3 h-3 animate-spin" style={{ color: '#4CAF8E' }} />
+                <span className="text-[10px]" style={{ color: '#999999' }}>
                   {syncProgress.synced}/{syncProgress.total || '…'}
                 </span>
               </div>
@@ -1038,12 +1038,12 @@ export default function InboxPage() {
 
           {/* Sync progress bar */}
           {syncing && (
-            <div className="h-0.5 bg-[#F0F3F7] rounded-full overflow-hidden mb-2">
+            <div className="h-0.5 bg-[#F1F1F1] rounded-full overflow-hidden mb-2">
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: syncProgress.total > 0 ? `${Math.min(100, Math.round(syncProgress.synced / syncProgress.total * 100))}%` : '5%',
-                  backgroundColor: '#00BDA5',
+                  backgroundColor: '#4CAF8E',
                 }}
               />
             </div>
@@ -1051,7 +1051,7 @@ export default function InboxPage() {
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: '#99ACC2' }} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: '#B3B3B3' }} />
             <Input
               placeholder="Search emails…"
               value={search}
@@ -1059,8 +1059,8 @@ export default function InboxPage() {
               className="pl-8 text-xs"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[#F0F3F7]">
-                <X className="w-3.5 h-3.5" style={{ color: '#99ACC2' }} />
+              <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[#F1F1F1]">
+                <X className="w-3.5 h-3.5" style={{ color: '#B3B3B3' }} />
               </button>
             )}
           </div>
@@ -1070,12 +1070,12 @@ export default function InboxPage() {
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#DFE3EB' }} />
+              <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#EBEBEB' }} />
             </div>
           ) : visibleThreads.length === 0 ? (
             <div className="text-center py-16 px-4">
-              <Inbox className="w-8 h-8 mx-auto mb-2" style={{ color: '#DFE3EB' }} />
-              <p className="text-sm" style={{ color: '#7C98B6' }}>
+              <Inbox className="w-8 h-8 mx-auto mb-2" style={{ color: '#EBEBEB' }} />
+              <p className="text-sm" style={{ color: '#999999' }}>
                 {search ? 'No results found' : `No ${folder === 'all' ? '' : folder + ' '}emails`}
               </p>
             </div>
@@ -1097,8 +1097,8 @@ export default function InboxPage() {
               {hasMore && (
                 <button
                   onClick={() => setPage(p => p + 1)}
-                  className="w-full py-3 text-xs font-medium transition-colors hover:bg-[#F6F9FC]"
-                  style={{ color: '#516F90' }}
+                  className="w-full py-3 text-xs font-medium transition-colors hover:bg-[#FAFAFA]"
+                  style={{ color: '#666666' }}
                 >
                   Load {Math.min(PAGE_SIZE, threads.length - visibleThreads.length)} more…
                 </button>
@@ -1110,19 +1110,19 @@ export default function InboxPage() {
 
       {/* ── RIGHT: DETAIL PANEL ───────────────────────────── */}
       {inboxDisabled ? (
-        <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: '#F6F9FC' }}>
+        <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: '#FAFAFA' }}>
           <div className="text-center max-w-sm px-6">
-            <div className="w-16 h-16 rounded-2xl border border-[#DFE3EB] flex items-center justify-center bg-white shadow-sm mx-auto mb-5">
-              <Mail className="w-8 h-8" style={{ color: '#7C98B6' }} />
+            <div className="w-16 h-16 rounded-2xl border border-[#EBEBEB] flex items-center justify-center bg-white shadow-sm mx-auto mb-5">
+              <Mail className="w-8 h-8" style={{ color: '#999999' }} />
             </div>
-            <h2 className="text-base font-bold mb-2" style={{ color: '#2D3E50' }}>Inbox not enabled</h2>
-            <p className="text-sm mb-6 leading-relaxed" style={{ color: '#7C98B6' }}>
+            <h2 className="text-base font-bold mb-2" style={{ color: '#333333' }}>Inbox not enabled</h2>
+            <p className="text-sm mb-6 leading-relaxed" style={{ color: '#999999' }}>
               Your Gmail account is connected but the Inbox feature was not enabled. Go to Settings → Email to re-connect and enable it.
             </p>
             <a
               href="/settings?tab=email"
               className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white rounded-[3px]"
-              style={{ backgroundColor: '#FF7A59' }}
+              style={{ backgroundColor: '#4762D5' }}
             >
               Go to Email Settings
             </a>
@@ -1142,11 +1142,11 @@ export default function InboxPage() {
           gmailEmail={userEmail}
         />
       ) : (
-        <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: '#F6F9FC' }}>
+        <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: '#FAFAFA' }}>
           <div className="text-center">
-            <Mail className="w-12 h-12 mx-auto mb-3" style={{ color: '#DFE3EB' }} />
-            <p className="text-sm font-medium" style={{ color: '#7C98B6' }}>Select a conversation to read</p>
-            <p className="text-xs mt-1" style={{ color: '#99ACC2' }}>
+            <Mail className="w-12 h-12 mx-auto mb-3" style={{ color: '#EBEBEB' }} />
+            <p className="text-sm font-medium" style={{ color: '#999999' }}>Select a conversation to read</p>
+            <p className="text-xs mt-1" style={{ color: '#B3B3B3' }}>
               {counts.inbox > 0
                 ? `${counts.inbox} unread thread${counts.inbox !== 1 ? 's' : ''} in Inbox`
                 : 'All caught up!'}

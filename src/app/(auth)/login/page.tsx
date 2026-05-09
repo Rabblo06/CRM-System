@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, {
   useState, useRef, useEffect, useCallback,
@@ -29,15 +29,15 @@ function HsInput({
   return (
     <input
       className={`w-full h-10 px-3 text-sm border rounded-[3px] outline-none transition-all
-        placeholder:text-[#b0c1d4] text-[#2d3e50] bg-white ${className}`}
-      style={{ borderColor: error ? '#e8674a' : '#cbd6e2' }}
+        placeholder:text-[#D6D6D6] text-[#333333] bg-white ${className}`}
+      style={{ borderColor: error ? '#D45353' : '#EBEBEB' }}
       onFocus={e => {
-        e.currentTarget.style.borderColor = error ? '#e8674a' : '#00a38d';
-        e.currentTarget.style.boxShadow = `0 0 0 1px ${error ? '#e8674a' : '#00a38d'}`;
+        e.currentTarget.style.borderColor = error ? '#D45353' : '#4762D5';
+        e.currentTarget.style.boxShadow = `0 0 0 1px ${error ? '#D45353' : '#4762D5'}`;
         onFocus?.(e);
       }}
       onBlur={e => {
-        e.currentTarget.style.borderColor = error ? '#e8674a' : '#cbd6e2';
+        e.currentTarget.style.borderColor = error ? '#D45353' : '#EBEBEB';
         e.currentTarget.style.boxShadow = 'none';
         onBlur?.(e);
       }}
@@ -47,15 +47,15 @@ function HsInput({
 }
 
 function FieldError({ msg }: { msg: string }) {
-  return <p className="mt-1 text-xs text-[#e8674a]">{msg}</p>;
+  return <p className="mt-1 text-xs text-[#D45353]">{msg}</p>;
 }
 
 function Divider() {
   return (
     <div className="relative flex items-center gap-3 my-5">
-      <div className="flex-1 h-px bg-[#dfe3eb]" />
-      <span className="text-xs font-semibold uppercase tracking-wide text-[#7c98b6]">OR</span>
-      <div className="flex-1 h-px bg-[#dfe3eb]" />
+      <div className="flex-1 h-px bg-[#EBEBEB]" />
+      <span className="text-xs font-semibold uppercase tracking-wide text-[#999999]">OR</span>
+      <div className="flex-1 h-px bg-[#EBEBEB]" />
     </div>
   );
 }
@@ -130,15 +130,15 @@ function SocialButton({
       type="button"
       onClick={handle}
       disabled={loading}
-      className="w-full flex items-center gap-3 px-4 py-2.5 bg-white border border-[#cbd6e2]
-        rounded-[3px] text-sm font-semibold text-[#2d3e50] hover:bg-[#f6f9fc] transition-colors
+      className="w-full flex items-center gap-3 px-4 py-2.5 bg-white border border-[#EBEBEB]
+        rounded-[3px] text-sm font-semibold text-[#333333] hover:bg-[#FAFAFA] transition-colors
         disabled:opacity-60"
     >
       <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">{icon}</span>
       <span className="flex-1 text-center">
         {loading ? (
           <span className="flex items-center justify-center gap-2">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#7c98b6]" /> Redirecting…
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#999999]" /> Redirecting…
           </span>
         ) : children}
       </span>
@@ -160,10 +160,10 @@ const FEATURES = [
 function BrandPanel() {
   return (
     <div className="hidden lg:flex flex-col justify-between h-full px-12 py-10"
-      style={{ backgroundColor: '#2D3E50' }}>
+      style={{ backgroundColor: '#333333' }}>
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-[3px] flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: '#FF7A59' }}>
+          style={{ backgroundColor: '#4762D5' }}>
           <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
@@ -174,9 +174,9 @@ function BrandPanel() {
       <div>
         <h2 className="text-3xl font-extrabold text-white leading-tight mb-4">
           Grow your revenue<br />
-          <span style={{ color: '#FF7A59' }}>faster than ever.</span>
+          <span style={{ color: '#4762D5' }}>faster than ever.</span>
         </h2>
-        <p className="text-sm leading-relaxed mb-8" style={{ color: '#7C98B6' }}>
+        <p className="text-sm leading-relaxed mb-8" style={{ color: '#999999' }}>
           Everything your sales team needs — contacts, pipeline, meetings, and analytics — in one
           clean workspace.
         </p>
@@ -185,9 +185,9 @@ function BrandPanel() {
             <li key={f} className="flex items-center gap-3">
               <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: 'rgba(255,122,89,0.2)' }}>
-                <Check className="w-2.5 h-2.5" style={{ color: '#FF7A59' }} />
+                <Check className="w-2.5 h-2.5" style={{ color: '#4762D5' }} />
               </div>
-              <span className="text-sm" style={{ color: '#CBD6E2' }}>{f}</span>
+              <span className="text-sm" style={{ color: '#EBEBEB' }}>{f}</span>
             </li>
           ))}
         </ul>
@@ -195,15 +195,15 @@ function BrandPanel() {
 
       <div className="rounded-[3px] p-4"
         style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-        <p className="text-sm italic leading-relaxed mb-3" style={{ color: '#CBD6E2' }}>
+        <p className="text-sm italic leading-relaxed mb-3" style={{ color: '#EBEBEB' }}>
           &ldquo;CRM Pro cut our deal-tracking time in half. The pipeline view alone is worth it.&rdquo;
         </p>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-            style={{ backgroundColor: '#FF7A59' }}>JS</div>
+            style={{ backgroundColor: '#4762D5' }}>JS</div>
           <div>
             <p className="text-xs font-semibold text-white">James S.</p>
-            <p className="text-xs" style={{ color: '#7C98B6' }}>VP of Sales, Acme Corp</p>
+            <p className="text-xs" style={{ color: '#999999' }}>VP of Sales, Acme Corp</p>
           </div>
         </div>
       </div>
@@ -336,18 +336,18 @@ function SignInView({ onSwitch, onForgot, callbackError }: {
   return (
     <>
       <div className="mb-7">
-        <h1 className="text-2xl font-bold text-[#2d3e50]">Sign in to your account</h1>
-        <p className="text-sm text-[#7c98b6] mt-1">
+        <h1 className="text-2xl font-bold text-[#333333]">Sign in to your account</h1>
+        <p className="text-sm text-[#999999] mt-1">
           No account?{' '}
           <button type="button" onClick={onSwitch}
-            className="text-[#00a38d] font-medium hover:underline">
+            className="text-[#4762D5] font-medium hover:underline">
             Create one free →
           </button>
         </p>
       </div>
 
       {IS_DEMO && (
-        <div className="mb-5 rounded-[3px] px-3 py-2.5 text-xs bg-[#fffbf0] border border-[#f5c26b]"
+        <div className="mb-5 rounded-[3px] px-3 py-2.5 text-xs bg-[#fffbf0] border border-[#E8882A]"
           style={{ color: '#8b6914' }}>
           <strong>Demo mode</strong> — Supabase not configured.{' '}
           <button type="button" onClick={() => router.push('/dashboard')}
@@ -368,7 +368,7 @@ function SignInView({ onSwitch, onForgot, callbackError }: {
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wide text-[#425b76] mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wide text-[#555555] mb-1.5">
             Email address
           </label>
           <HsInput
@@ -383,13 +383,13 @@ function SignInView({ onSwitch, onForgot, callbackError }: {
 
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-[#425b76]">
+            <label className="text-xs font-semibold uppercase tracking-wide text-[#555555]">
               Password
             </label>
             <button
               type="button"
               onClick={onForgot}
-              className="text-xs text-[#00a38d] hover:underline"
+              className="text-xs text-[#4762D5] hover:underline"
             >
               Forgot password?
             </button>
@@ -407,7 +407,7 @@ function SignInView({ onSwitch, onForgot, callbackError }: {
             <button
               type="button"
               onClick={() => setShowPw(!showPw)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7c98b6] hover:text-[#425b76]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] hover:text-[#555555]"
               tabIndex={-1}
             >
               {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -420,8 +420,8 @@ function SignInView({ onSwitch, onForgot, callbackError }: {
           <div
             className="relative w-4 h-4 rounded-[3px] border-2 flex items-center justify-center flex-shrink-0 transition-colors"
             style={{
-              borderColor: rememberMe ? '#00a38d' : '#cbd6e2',
-              backgroundColor: rememberMe ? '#00a38d' : 'white',
+              borderColor: rememberMe ? '#4762D5' : '#EBEBEB',
+              backgroundColor: rememberMe ? '#4762D5' : 'white',
             }}
             onClick={() => setRememberMe(!rememberMe)}
           >
@@ -433,7 +433,7 @@ function SignInView({ onSwitch, onForgot, callbackError }: {
               onChange={e => setRememberMe(e.target.checked)}
             />
           </div>
-          <span className="text-xs text-[#425b76]">Remember me for 30 days</span>
+          <span className="text-xs text-[#555555]">Remember me for 30 days</span>
         </label>
 
         <button
@@ -441,9 +441,9 @@ function SignInView({ onSwitch, onForgot, callbackError }: {
           disabled={loading}
           className="w-full py-3 text-white text-sm font-bold rounded-[3px] transition-colors
             disabled:opacity-60 flex items-center justify-center gap-2"
-          style={{ backgroundColor: '#ff7a59' }}
-          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = '#ff8f73'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#ff7a59'; }}
+          style={{ backgroundColor: '#4762D5' }}
+          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = '#3A52C0'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#4762D5'; }}
         >
           {loading ? <><Spinner /> Signing in…</> : 'Sign in'}
         </button>
@@ -452,8 +452,8 @@ function SignInView({ onSwitch, onForgot, callbackError }: {
       <button
         type="button"
         onClick={() => { setDemoUserEmail('demo@crmpro.app'); router.push('/dashboard'); }}
-        className="w-full mt-3 py-2.5 bg-white border border-[#cbd6e2] text-[#2d3e50] text-sm
-          font-semibold rounded-[3px] hover:bg-[#f6f9fc] transition-colors"
+        className="w-full mt-3 py-2.5 bg-white border border-[#EBEBEB] text-[#333333] text-sm
+          font-semibold rounded-[3px] hover:bg-[#FAFAFA] transition-colors"
       >
         Continue with Demo (no login required)
       </button>
@@ -547,12 +547,12 @@ function CreateAccountView({ onSwitch, onEmailSent }: {
   return (
     <>
       <div className="mb-7">
-        <h1 className="text-2xl font-bold text-[#2d3e50]">Create your free account</h1>
-        <p className="text-sm text-[#7c98b6] mt-1">100% free. No credit card needed.</p>
+        <h1 className="text-2xl font-bold text-[#333333]">Create your free account</h1>
+        <p className="text-sm text-[#999999] mt-1">100% free. No credit card needed.</p>
       </div>
 
       {IS_DEMO && (
-        <div className="mb-5 rounded-[3px] px-3 py-2.5 text-xs bg-[#fffbf0] border border-[#f5c26b]"
+        <div className="mb-5 rounded-[3px] px-3 py-2.5 text-xs bg-[#fffbf0] border border-[#E8882A]"
           style={{ color: '#8b6914' }}>
           <strong>Demo mode</strong> — fill in any details to continue.
         </div>
@@ -572,8 +572,8 @@ function CreateAccountView({ onSwitch, onEmailSent }: {
       <form onSubmit={handleSignup} className="space-y-4">
         {/* Name */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wide text-[#425b76] mb-1.5">
-            Full name <span className="text-[#ff7a59]">*</span>
+          <label className="block text-xs font-semibold uppercase tracking-wide text-[#555555] mb-1.5">
+            Full name <span className="text-[#4762D5]">*</span>
           </label>
           <HsInput
             type="text"
@@ -588,8 +588,8 @@ function CreateAccountView({ onSwitch, onEmailSent }: {
 
         {/* Email */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wide text-[#425b76] mb-1.5">
-            Email address <span className="text-[#ff7a59]">*</span>
+          <label className="block text-xs font-semibold uppercase tracking-wide text-[#555555] mb-1.5">
+            Email address <span className="text-[#4762D5]">*</span>
           </label>
           <HsInput
             type="email"
@@ -604,8 +604,8 @@ function CreateAccountView({ onSwitch, onEmailSent }: {
 
         {/* Password */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wide text-[#425b76] mb-1.5">
-            Password <span className="text-[#ff7a59]">*</span>
+          <label className="block text-xs font-semibold uppercase tracking-wide text-[#555555] mb-1.5">
+            Password <span className="text-[#4762D5]">*</span>
           </label>
           <div className="relative">
             <HsInput
@@ -620,7 +620,7 @@ function CreateAccountView({ onSwitch, onEmailSent }: {
             <button
               type="button"
               onClick={() => setShowPw(!showPw)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7c98b6] hover:text-[#425b76]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] hover:text-[#555555]"
               tabIndex={-1}
             >
               {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -636,9 +636,9 @@ function CreateAccountView({ onSwitch, onEmailSent }: {
                   className="flex-1 h-1 rounded-full transition-colors"
                   style={{
                     backgroundColor:
-                      password.length >= threshold ? '#00a38d'
-                        : password.length >= 8 ? '#f5c26b'
-                          : '#dfe3eb',
+                      password.length >= threshold ? '#4762D5'
+                        : password.length >= 8 ? '#E8882A'
+                          : '#EBEBEB',
                   }}
                 />
               ))}
@@ -646,11 +646,11 @@ function CreateAccountView({ onSwitch, onEmailSent }: {
           )}
         </div>
 
-        <p className="text-xs text-[#7c98b6] leading-relaxed">
+        <p className="text-xs text-[#999999] leading-relaxed">
           By creating an account you agree to our{' '}
-          <a href="#" className="text-[#00a38d] hover:underline">Terms of Service</a>{' '}
+          <a href="#" className="text-[#4762D5] hover:underline">Terms of Service</a>{' '}
           and{' '}
-          <a href="#" className="text-[#00a38d] hover:underline">Privacy Policy</a>.
+          <a href="#" className="text-[#4762D5] hover:underline">Privacy Policy</a>.
         </p>
 
         <button
@@ -658,24 +658,24 @@ function CreateAccountView({ onSwitch, onEmailSent }: {
           disabled={loading}
           className="w-full py-3 text-white text-sm font-bold rounded-[3px] transition-colors
             disabled:opacity-60 flex items-center justify-center gap-2"
-          style={{ backgroundColor: '#ff7a59' }}
-          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = '#ff8f73'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#ff7a59'; }}
+          style={{ backgroundColor: '#4762D5' }}
+          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = '#3A52C0'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#4762D5'; }}
         >
           {loading ? <><Spinner /> Creating account…</> : 'Create free account'}
         </button>
       </form>
 
-      <p className="text-sm text-[#2d3e50] text-center mt-6">
+      <p className="text-sm text-[#333333] text-center mt-6">
         Already have an account?{' '}
         <button type="button" onClick={onSwitch}
-          className="text-[#00a38d] font-medium hover:underline">Sign in</button>
+          className="text-[#4762D5] font-medium hover:underline">Sign in</button>
       </p>
       <button
         type="button"
         onClick={() => { setDemoUserEmail('demo@crmpro.app'); router.push('/dashboard'); }}
-        className="w-full mt-3 py-2.5 bg-white border border-[#cbd6e2] text-[#2d3e50] text-sm
-          font-semibold rounded-[3px] hover:bg-[#f6f9fc] transition-colors"
+        className="w-full mt-3 py-2.5 bg-white border border-[#EBEBEB] text-[#333333] text-sm
+          font-semibold rounded-[3px] hover:bg-[#FAFAFA] transition-colors"
       >
         Continue with Demo (no login required)
       </button>
@@ -729,22 +729,22 @@ function ForgotPasswordView({ onBack, onEmailSent }: {
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-1.5 text-xs text-[#7c98b6] hover:text-[#425b76]
+        className="flex items-center gap-1.5 text-xs text-[#999999] hover:text-[#555555]
           transition-colors mb-6"
       >
         <ArrowLeft className="w-3.5 h-3.5" /> Back to sign in
       </button>
 
       <div className="mb-7">
-        <h1 className="text-2xl font-bold text-[#2d3e50]">Reset your password</h1>
-        <p className="text-sm text-[#7c98b6] mt-1">
+        <h1 className="text-2xl font-bold text-[#333333]">Reset your password</h1>
+        <p className="text-sm text-[#999999] mt-1">
           Enter your email and we&apos;ll send you a link to reset your password.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wide text-[#425b76] mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wide text-[#555555] mb-1.5">
             Email address
           </label>
           <HsInput
@@ -763,9 +763,9 @@ function ForgotPasswordView({ onBack, onEmailSent }: {
           disabled={loading}
           className="w-full py-3 text-white text-sm font-bold rounded-[3px] transition-colors
             disabled:opacity-60 flex items-center justify-center gap-2"
-          style={{ backgroundColor: '#ff7a59' }}
-          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = '#ff8f73'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#ff7a59'; }}
+          style={{ backgroundColor: '#4762D5' }}
+          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = '#3A52C0'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#4762D5'; }}
         >
           {loading ? <><Spinner /> Sending reset link…</> : 'Send reset link'}
         </button>
@@ -823,21 +823,21 @@ function EmailSentView({ email, type, onBack }: {
   return (
     <>
       <div className="flex items-center justify-center w-14 h-14 rounded-full mb-5"
-        style={{ backgroundColor: '#fff3f0' }}>
-        <Mail className="w-7 h-7" style={{ color: '#ff7a59' }} />
+        style={{ backgroundColor: '#EEF0FB' }}>
+        <Mail className="w-7 h-7" style={{ color: '#4762D5' }} />
       </div>
 
-      <h1 className="text-2xl font-bold text-[#2d3e50] mb-1">
+      <h1 className="text-2xl font-bold text-[#333333] mb-1">
         {type === 'reset' ? 'Check your email' : 'Verify your email'}
       </h1>
-      <p className="text-sm text-[#7c98b6] mb-1">
+      <p className="text-sm text-[#999999] mb-1">
         {type === 'reset'
           ? "We sent a password reset link to"
           : "We sent a verification link to"}
       </p>
-      <p className="text-sm font-semibold text-[#2d3e50] mb-6">{email}</p>
+      <p className="text-sm font-semibold text-[#333333] mb-6">{email}</p>
 
-      <div className="rounded-[3px] bg-[#f6f9fc] border border-[#dfe3eb] p-4 text-xs text-[#516f90] leading-relaxed mb-6">
+      <div className="rounded-[3px] bg-[#FAFAFA] border border-[#EBEBEB] p-4 text-xs text-[#666666] leading-relaxed mb-6">
         {type === 'reset' ? (
           <>Click the link in the email to set a new password. The link expires in <strong>1 hour</strong>.</>
         ) : (
@@ -846,16 +846,16 @@ function EmailSentView({ email, type, onBack }: {
       </div>
 
       <div className="space-y-3 text-center">
-        <p className="text-sm text-[#7c98b6]">
+        <p className="text-sm text-[#999999]">
           Didn&apos;t receive it?{' '}
           {cooldown > 0 ? (
-            <span className="text-[#7c98b6]">Resend in {cooldown}s</span>
+            <span className="text-[#999999]">Resend in {cooldown}s</span>
           ) : (
             <button
               type="button"
               onClick={handleResend}
               disabled={resending}
-              className="text-[#00a38d] font-medium hover:underline disabled:opacity-60"
+              className="text-[#4762D5] font-medium hover:underline disabled:opacity-60"
             >
               {resending ? 'Sending…' : 'Resend email'}
             </button>
@@ -864,7 +864,7 @@ function EmailSentView({ email, type, onBack }: {
         <button
           type="button"
           onClick={onBack}
-          className="text-sm text-[#7c98b6] hover:text-[#425b76] transition-colors flex items-center gap-1.5 mx-auto"
+          className="text-sm text-[#999999] hover:text-[#555555] transition-colors flex items-center gap-1.5 mx-auto"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back to sign in
         </button>
@@ -927,28 +927,28 @@ function LoginInner() {
   }, []);
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#F6F9FC' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#FAFAFA' }}>
       {/* Left: branding */}
       <div className="hidden lg:flex lg:w-[46%] flex-shrink-0">
         <BrandPanel />
       </div>
 
       {/* Right: form card */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 bg-[#f6f9fc]">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 bg-[#FAFAFA]">
         {/* Mobile logo */}
         <button onClick={() => router.push('/')}
           className="flex items-center gap-2 mb-8 lg:hidden">
           <div className="w-8 h-8 rounded-[3px] flex items-center justify-center"
-            style={{ backgroundColor: '#ff7a59' }}>
+            style={{ backgroundColor: '#4762D5' }}>
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"
               stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <span className="font-bold text-[#2d3e50] text-base">CRM Pro</span>
+          <span className="font-bold text-[#333333] text-base">CRM Pro</span>
         </button>
 
-        <div className="w-full max-w-[480px] bg-white border border-[#dfe3eb] shadow-sm rounded-[3px] p-10">
+        <div className="w-full max-w-[480px] bg-white border border-[#EBEBEB] shadow-sm rounded-[3px] p-10">
           {view === 'signin' && (
             <SignInView
               onSwitch={() => setView('create')}
@@ -977,7 +977,7 @@ function LoginInner() {
           )}
         </div>
 
-        <p className="mt-5 text-xs text-[#7c98b6] text-center">
+        <p className="mt-5 text-xs text-[#999999] text-center">
           {IS_DEMO
             ? 'Demo mode — add Supabase credentials in .env.local for real auth.'
             : 'Your data is encrypted and stored securely.'}
@@ -993,9 +993,9 @@ function LoginInner() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#f6f9fc] flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-          style={{ borderColor: '#ff7a59', borderTopColor: 'transparent' }} />
+          style={{ borderColor: '#4762D5', borderTopColor: 'transparent' }} />
       </div>
     }>
       <LoginInner />

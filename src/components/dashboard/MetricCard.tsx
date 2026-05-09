@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -19,19 +19,19 @@ export function MetricCard({
   change,
   changeLabel,
   icon: Icon,
-  iconColor = 'text-[#FF7A59]',
-  iconBg = 'bg-[#FFF3F0]',
+  iconColor = 'text-[#4762D5]',
+  iconBg = 'bg-[#EEF0FB]',
 }: MetricCardProps) {
   const isPositive = change && change > 0;
   const isNegative = change && change < 0;
 
   return (
-    <Card className="hover:border-[#CBD6E2] transition-colors bg-white border-[#DFE3EB]">
+    <Card className="hover:border-[#EBEBEB] transition-colors bg-white border-[#EBEBEB]">
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-sm text-[#516F90] font-medium">{title}</p>
-            <p className="text-2xl font-bold text-[#2D3E50] mt-1">{value}</p>
+            <p className="text-sm text-[#666666] font-medium">{title}</p>
+            <p className="text-2xl font-bold text-[#333333] mt-1">{value}</p>
             {change !== undefined && (
               <div className="flex items-center gap-1 mt-2">
                 {isPositive ? (
@@ -42,7 +42,7 @@ export function MetricCard({
                 <span
                   className={cn(
                     'text-xs font-medium',
-                    isPositive ? 'text-green-400' : isNegative ? 'text-red-400' : 'text-[#516F90]'
+                    isPositive ? 'text-green-400' : isNegative ? 'text-red-400' : 'text-[#666666]'
                   )}
                 >
                   {change > 0 ? '+' : ''}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -108,18 +108,18 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
 
       {/* Slide-in Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-[480px] bg-white border-l border-[#DFE3EB] z-50 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-[480px] bg-white border-l border-[#EBEBEB] z-50 flex flex-col transition-transform duration-300 ease-in-out ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#DFE3EB]">
-          <h2 className="text-base font-semibold text-[#2D3E50]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#EBEBEB]">
+          <h2 className="text-base font-semibold text-[#333333]">
             {isEditing ? 'Edit contact' : 'Create contact'}
           </h2>
           <button
             onClick={onClose}
-            className="text-[#516F90] hover:text-[#2D3E50] transition-colors"
+            className="text-[#666666] hover:text-[#333333] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -130,13 +130,13 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
           <div className="px-6 py-5 space-y-5">
             {/* Required info section */}
             <div>
-              <p className="text-xs font-medium text-[#7C98B6] uppercase tracking-wider mb-3">
+              <p className="text-xs font-medium text-[#999999] uppercase tracking-wider mb-3">
                 Contact information
               </p>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label htmlFor="first_name" className="text-xs text-[#516F90]">
+                    <Label htmlFor="first_name" className="text-xs text-[#666666]">
                       First name <span className="text-red-400">*</span>
                     </Label>
                     <Input
@@ -150,7 +150,7 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
                     )}
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="last_name" className="text-xs text-[#516F90]">
+                    <Label htmlFor="last_name" className="text-xs text-[#666666]">
                       Last name <span className="text-red-400">*</span>
                     </Label>
                     <Input
@@ -166,7 +166,7 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="email" className="text-xs text-[#516F90]">Email address</Label>
+                  <Label htmlFor="email" className="text-xs text-[#666666]">Email address</Label>
                   <Input
                     id="email"
                     type="email"
@@ -180,7 +180,7 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="phone" className="text-xs text-[#516F90]">Phone number</Label>
+                  <Label htmlFor="phone" className="text-xs text-[#666666]">Phone number</Label>
                   <Input
                     id="phone"
                     {...register('phone')}
@@ -190,7 +190,7 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="job_title" className="text-xs text-[#516F90]">Job title</Label>
+                  <Label htmlFor="job_title" className="text-xs text-[#666666]">Job title</Label>
                   <Input
                     id="job_title"
                     {...register('job_title')}
@@ -200,7 +200,7 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="department" className="text-xs text-[#516F90]">Department</Label>
+                  <Label htmlFor="department" className="text-xs text-[#666666]">Department</Label>
                   <Input
                     id="department"
                     {...register('department')}
@@ -213,12 +213,12 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
 
             {/* Status section */}
             <div>
-              <p className="text-xs font-medium text-[#7C98B6] uppercase tracking-wider mb-3">
+              <p className="text-xs font-medium text-[#999999] uppercase tracking-wider mb-3">
                 CRM status
               </p>
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-[#516F90]">Lifecycle stage</Label>
+                  <Label className="text-xs text-[#666666]">Lifecycle stage</Label>
                   <Select
                     value={watch('lifecycle_stage')}
                     onValueChange={(v) => setValue('lifecycle_stage', v)}
@@ -237,7 +237,7 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs text-[#516F90]">Lead status</Label>
+                  <Label className="text-xs text-[#666666]">Lead status</Label>
                   <Select
                     value={watch('lead_status')}
                     onValueChange={(v) => setValue('lead_status', v)}
@@ -259,12 +259,12 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
 
             {/* Additional info */}
             <div>
-              <p className="text-xs font-medium text-[#7C98B6] uppercase tracking-wider mb-3">
+              <p className="text-xs font-medium text-[#999999] uppercase tracking-wider mb-3">
                 Additional details
               </p>
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label htmlFor="source" className="text-xs text-[#516F90]">Lead source</Label>
+                  <Label htmlFor="source" className="text-xs text-[#666666]">Lead source</Label>
                   <Input
                     id="source"
                     {...register('source')}
@@ -275,7 +275,7 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label htmlFor="city" className="text-xs text-[#516F90]">City</Label>
+                    <Label htmlFor="city" className="text-xs text-[#666666]">City</Label>
                     <Input
                       id="city"
                       {...register('city')}
@@ -284,7 +284,7 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="country" className="text-xs text-[#516F90]">Country</Label>
+                    <Label htmlFor="country" className="text-xs text-[#666666]">Country</Label>
                     <Input
                       id="country"
                       {...register('country')}
@@ -295,7 +295,7 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="notes" className="text-xs text-[#516F90]">Notes</Label>
+                  <Label htmlFor="notes" className="text-xs text-[#666666]">Notes</Label>
                   <Textarea
                     id="notes"
                     {...register('notes')}
@@ -310,7 +310,7 @@ export function ContactForm({ open, onClose, onSubmit, initialData }: ContactFor
         </form>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-[#DFE3EB] flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-[#EBEBEB] flex items-center justify-between">
           <Button type="button" variant="ghost" size="sm" onClick={onClose}>
             Cancel
           </Button>

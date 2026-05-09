@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
@@ -21,11 +21,11 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      'flex cursor-default select-none items-center rounded px-2 py-1.5 text-xs outline-none focus:bg-[#F6F9FC] data-[state=open]:bg-[#F6F9FC]',
+      'flex cursor-default select-none items-center rounded px-2 py-1.5 text-xs outline-none focus:bg-[#FAFAFA] data-[state=open]:bg-[#FAFAFA]',
       inset && 'pl-8',
       className
     )}
-    style={{ color: '#2D3E50' }}
+    style={{ color: '#333333' }}
     {...props}
   >
     {children}
@@ -44,7 +44,7 @@ const DropdownMenuSubContent = React.forwardRef<
       'z-50 min-w-[8rem] overflow-hidden rounded-lg p-1 shadow-lg',
       className
     )}
-    style={{ border: '1px solid #DFE3EB', backgroundColor: '#ffffff', color: '#2D3E50' }}
+    style={{ border: '1px solid #EBEBEB', backgroundColor: '#ffffff', color: '#333333' }}
     {...props}
   />
 ));
@@ -62,7 +62,7 @@ const DropdownMenuContent = React.forwardRef<
         'z-50 min-w-[8rem] overflow-hidden rounded-lg p-1 shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
         className
       )}
-      style={{ border: '1px solid #DFE3EB', backgroundColor: '#ffffff', color: '#2D3E50' }}
+      style={{ border: '1px solid #EBEBEB', backgroundColor: '#ffffff', color: '#333333' }}
       {...props}
     />
   </DropdownMenuPrimitive.Portal>
@@ -78,11 +78,11 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex cursor-default select-none items-center rounded px-2 py-1.5 text-xs outline-none transition-colors focus:bg-[#F6F9FC] focus:text-[#2D3E50] data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'relative flex cursor-default select-none items-center rounded px-2 py-1.5 text-xs outline-none transition-colors focus:bg-[#FAFAFA] focus:text-[#333333] data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       inset && 'pl-8',
       className
     )}
-    style={{ color: '#2D3E50' }}
+    style={{ color: '#333333' }}
     {...props}
   />
 ));
@@ -95,16 +95,16 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      'relative flex cursor-default select-none items-center rounded py-1.5 pl-8 pr-2 text-xs outline-none transition-colors focus:bg-[#F6F9FC] data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'relative flex cursor-default select-none items-center rounded py-1.5 pl-8 pr-2 text-xs outline-none transition-colors focus:bg-[#FAFAFA] data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}
-    style={{ color: '#2D3E50' }}
+    style={{ color: '#333333' }}
     checked={checked}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
-        <Check className="h-3.5 w-3.5" style={{ color: '#FF7A59' }} />
+        <Check className="h-3.5 w-3.5" style={{ color: '#4762D5' }} />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>
     {children}
@@ -119,10 +119,10 @@ const DropdownMenuRadioItem = React.forwardRef<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      'relative flex cursor-default select-none items-center rounded py-1.5 pl-8 pr-2 text-xs outline-none transition-colors focus:bg-[#F6F9FC] data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'relative flex cursor-default select-none items-center rounded py-1.5 pl-8 pr-2 text-xs outline-none transition-colors focus:bg-[#FAFAFA] data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}
-    style={{ color: '#2D3E50' }}
+    style={{ color: '#333333' }}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
@@ -144,7 +144,7 @@ const DropdownMenuLabel = React.forwardRef<
   <DropdownMenuPrimitive.Label
     ref={ref}
     className={cn('px-2 py-1.5 text-xs font-semibold', inset && 'pl-8', className)}
-    style={{ color: '#7C98B6' }}
+    style={{ color: '#999999' }}
     {...props}
   />
 ));
@@ -157,7 +157,7 @@ const DropdownMenuSeparator = React.forwardRef<
   <DropdownMenuPrimitive.Separator
     ref={ref}
     className={cn('-mx-1 my-1 h-px', className)}
-    style={{ backgroundColor: '#DFE3EB' }}
+    style={{ backgroundColor: '#EBEBEB' }}
     {...props}
   />
 ));

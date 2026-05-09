@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Link from 'next/link';
@@ -148,18 +148,18 @@ function AssociatePicker({
   const list = tab === 'contacts' ? contactRecords : companyRecords;
 
   return (
-    <div className="absolute top-full left-0 right-0 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl mt-1" style={{ maxHeight: 320 }}>
-      <div className="p-2 border-b border-[#DFE3EB]">
+    <div className="absolute top-full left-0 right-0 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-xl mt-1" style={{ maxHeight: 320 }}>
+      <div className="p-2 border-b border-[#EBEBEB]">
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#99ACC2]" />
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#B3B3B3]" />
           <input
             autoFocus
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder={`Search ${tab}...`}
-            className="w-full pl-7 pr-3 py-1.5 text-xs border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50]"
-            onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }}
+            className="w-full pl-7 pr-3 py-1.5 text-xs border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333]"
+            onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+            onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }}
           />
         </div>
         <div className="flex gap-0 mt-2">
@@ -169,7 +169,7 @@ function AssociatePicker({
               type="button"
               onClick={() => setTab(t)}
               className="px-3 py-1 text-xs font-medium border-b-2 transition-colors capitalize"
-              style={{ borderColor: tab === t ? '#FF7A59' : 'transparent', color: tab === t ? '#FF7A59' : '#7C98B6' }}
+              style={{ borderColor: tab === t ? '#4762D5' : 'transparent', color: tab === t ? '#4762D5' : '#999999' }}
             >
               {t}
             </button>
@@ -178,7 +178,7 @@ function AssociatePicker({
       </div>
       <div className="overflow-y-auto" style={{ maxHeight: 220 }}>
         {list.length === 0 ? (
-          <p className="px-4 py-3 text-xs text-[#99ACC2]">No {tab} found</p>
+          <p className="px-4 py-3 text-xs text-[#B3B3B3]">No {tab} found</p>
         ) : list.map(r => {
           const isSel = tab === 'contacts' ? selectedContactId === r.id : selectedCompanyId === r.id;
           return (
@@ -195,19 +195,19 @@ function AssociatePicker({
                 }
                 onClose();
               }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#F6F9FC] text-left transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#FAFAFA] text-left transition-colors"
             >
               <div
                 className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                style={{ backgroundColor: isSel ? '#FF7A59' : '#516F90' }}
+                style={{ backgroundColor: isSel ? '#4762D5' : '#666666' }}
               >
                 {r.name[0]?.toUpperCase()}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#2D3E50] truncate">{r.name}</p>
-                {r.sub && <p className="text-xs text-[#99ACC2] truncate">{r.sub}</p>}
+                <p className="text-xs font-semibold text-[#333333] truncate">{r.name}</p>
+                {r.sub && <p className="text-xs text-[#B3B3B3] truncate">{r.sub}</p>}
               </div>
-              {isSel && <div className="ml-auto w-4 h-4 rounded-full bg-[#FF7A59] flex items-center justify-center flex-shrink-0">
+              {isSel && <div className="ml-auto w-4 h-4 rounded-full bg-[#4762D5] flex items-center justify-center flex-shrink-0">
                 <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
@@ -325,12 +325,12 @@ function CreateTaskDrawer({
       {/* Drawer */}
       <div
         className="fixed right-0 top-0 h-full z-50 bg-white shadow-2xl flex flex-col"
-        style={{ width: 440, borderLeft: '1px solid #DFE3EB' }}
+        style={{ width: 440, borderLeft: '1px solid #EBEBEB' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#DFE3EB] flex-shrink-0">
-          <h2 className="text-base font-bold text-[#2D3E50]">Create task</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2] hover:text-[#425B76]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#EBEBEB] flex-shrink-0">
+          <h2 className="text-base font-bold text-[#333333]">Create task</h2>
+          <button type="button" onClick={onClose} className="p-1.5 rounded hover:bg-[#F1F1F1] text-[#B3B3B3] hover:text-[#555555]">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -341,44 +341,44 @@ function CreateTaskDrawer({
 
             {/* Title */}
             <div>
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">
-                Task Title <span style={{ color: '#FF7A59' }}>*</span>
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">
+                Task Title <span style={{ color: '#4762D5' }}>*</span>
               </label>
               <input
                 ref={titleRef}
                 value={form.title}
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="Enter task title"
-                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4]"
-                onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; e.currentTarget.style.boxShadow = '0 0 0 1px #FF7A59'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; e.currentTarget.style.boxShadow = 'none'; }}
+                className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] placeholder:text-[#D6D6D6]"
+                onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; e.currentTarget.style.boxShadow = '0 0 0 1px #4762D5'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; e.currentTarget.style.boxShadow = 'none'; }}
               />
             </div>
 
             {/* Task Type + Priority */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">
-                  Task Type <span style={{ color: '#FF7A59' }}>*</span>
+                <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">
+                  Task Type <span style={{ color: '#4762D5' }}>*</span>
                 </label>
                 <select
                   value={form.task_type}
                   onChange={e => setForm(f => ({ ...f, task_type: e.target.value }))}
-                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white"
-                  onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }}
+                  className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] bg-white"
+                  onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }}
                 >
                   {TASK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Priority</label>
+                <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">Priority</label>
                 <select
                   value={form.priority}
                   onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
-                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white"
-                  onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }}
+                  className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] bg-white"
+                  onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }}
                 >
                   {PRIORITY_OPTIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                 </select>
@@ -387,27 +387,27 @@ function CreateTaskDrawer({
 
             {/* Associate with records */}
             <div ref={assocRef} className="relative">
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">
                 Associate with records
               </label>
               <button
                 type="button"
                 onClick={() => setShowAssocPicker(v => !v)}
-                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] text-left flex items-center justify-between bg-white transition-colors hover:border-[#99ACC2]"
+                className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] text-left flex items-center justify-between bg-white transition-colors hover:border-[#B3B3B3]"
               >
-                <span style={{ color: assocCount > 0 ? '#2D3E50' : '#B0C1D4' }}>
+                <span style={{ color: assocCount > 0 ? '#333333' : '#D6D6D6' }}>
                   {assocCount === 0
                     ? 'Associated with 0 records'
                     : `Associated with ${assocCount} record${assocCount > 1 ? 's' : ''}`}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#99ACC2]" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#B3B3B3]" />
               </button>
 
               {/* Selected chips */}
               {assocCount > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {selectedContact && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-[#EBF5FB] text-[#0091AE] font-medium">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-[#EBF5FB] text-[#4762D5] font-medium">
                       {selectedContact.first_name} {selectedContact.last_name}
                       <button type="button" onClick={() => setForm(f => ({ ...f, contact_id: '' }))} className="hover:text-red-400">
                         <X className="w-3 h-3" />
@@ -415,7 +415,7 @@ function CreateTaskDrawer({
                     </span>
                   )}
                   {selectedCompany && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-[#F0FBF9] text-[#00A38D] font-medium">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-[#F0FBF9] text-[#4762D5] font-medium">
                       {selectedCompany.name}
                       <button type="button" onClick={() => setForm(f => ({ ...f, company_id: '' }))} className="hover:text-red-400">
                         <X className="w-3 h-3" />
@@ -439,54 +439,54 @@ function CreateTaskDrawer({
 
             {/* Assigned to */}
             <div>
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Assigned to</label>
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">Assigned to</label>
               <input
                 value={form.assigned_to_name}
                 readOnly
-                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] text-[#2D3E50] bg-[#F6F9FC] cursor-default"
+                className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] text-[#333333] bg-[#FAFAFA] cursor-default"
               />
             </div>
 
             {/* Due date + time */}
             <div>
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Due date</label>
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">Due date</label>
               <div className="grid grid-cols-2 gap-3">
                 <input
                   type="date"
                   value={form.due_date}
                   onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))}
-                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white"
-                  onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }}
+                  className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] bg-white"
+                  onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }}
                 />
                 <input
                   type="time"
                   value={form.due_time}
                   onChange={e => setForm(f => ({ ...f, due_time: e.target.value }))}
-                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white"
-                  onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }}
+                  className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] bg-white"
+                  onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }}
                 />
               </div>
             </div>
 
             {/* Reminder */}
             <div>
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">
                 <span className="flex items-center gap-1.5"><Bell className="w-3.5 h-3.5" /> Reminder</span>
               </label>
               <select
                 value={form.reminder_minutes}
                 onChange={e => setForm(f => ({ ...f, reminder_minutes: e.target.value }))}
-                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white"
-                onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }}
+                className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] bg-white"
+                onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }}
               >
                 {REMINDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
               {form.reminder_minutes !== '-1' && form.due_date && (
-                <p className="mt-1 text-xs text-[#7C98B6]">
-                  Reminder at: <span className="font-medium text-[#2D3E50]">
+                <p className="mt-1 text-xs text-[#999999]">
+                  Reminder at: <span className="font-medium text-[#333333]">
                     {new Date(
                       new Date(`${form.due_date}T${form.due_time || '00:00'}`).getTime() -
                       parseInt(form.reminder_minutes) * 60000
@@ -498,30 +498,30 @@ function CreateTaskDrawer({
 
             {/* Notes */}
             <div>
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Notes</label>
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">Notes</label>
               <textarea
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="Add notes..."
                 rows={3}
-                className="w-full px-3 py-2 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] resize-none"
-                onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; e.currentTarget.style.boxShadow = '0 0 0 1px #FF7A59'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; e.currentTarget.style.boxShadow = 'none'; }}
+                className="w-full px-3 py-2 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] placeholder:text-[#D6D6D6] resize-none"
+                onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; e.currentTarget.style.boxShadow = '0 0 0 1px #4762D5'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; e.currentTarget.style.boxShadow = 'none'; }}
               />
             </div>
           </div>
         </form>
 
         {/* Footer buttons */}
-        <div className="px-6 py-4 border-t border-[#DFE3EB] flex-shrink-0 flex items-center gap-2">
+        <div className="px-6 py-4 border-t border-[#EBEBEB] flex-shrink-0 flex items-center gap-2">
           <button
             type="button"
             disabled={saving}
             onClick={(e) => handleSubmit(e as unknown as React.FormEvent, false)}
             className="px-4 py-2 text-sm font-bold text-white rounded-[3px] disabled:opacity-50 transition-colors"
-            style={{ backgroundColor: '#FF7A59' }}
-            onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLElement).style.backgroundColor = '#FF8F73'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FF7A59'; }}
+            style={{ backgroundColor: '#4762D5' }}
+            onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLElement).style.backgroundColor = '#3A52C0'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#4762D5'; }}
           >
             {saving ? <span className="flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Creating…</span> : 'Create'}
           </button>
@@ -529,14 +529,14 @@ function CreateTaskDrawer({
             type="button"
             disabled={saving}
             onClick={(e) => { setAddAnother(true); handleSubmit(e as unknown as React.FormEvent, true); }}
-            className="px-4 py-2 text-sm font-bold text-[#2D3E50] border border-[#DFE3EB] rounded-[3px] disabled:opacity-50 hover:bg-[#F6F9FC] transition-colors"
+            className="px-4 py-2 text-sm font-bold text-[#333333] border border-[#EBEBEB] rounded-[3px] disabled:opacity-50 hover:bg-[#FAFAFA] transition-colors"
           >
             Create and add another
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold text-[#516F90] hover:text-[#2D3E50] transition-colors"
+            className="px-4 py-2 text-sm font-semibold text-[#666666] hover:text-[#333333] transition-colors"
           >
             Cancel
           </button>
@@ -622,15 +622,15 @@ function EditTaskDrawer({
   return (
     <>
       <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full z-50 bg-white shadow-2xl flex flex-col" style={{ width: 440, borderLeft: '1px solid #DFE3EB' }}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#DFE3EB] flex-shrink-0">
-          <h2 className="text-base font-bold text-[#2D3E50]">Edit task</h2>
+      <div className="fixed right-0 top-0 h-full z-50 bg-white shadow-2xl flex flex-col" style={{ width: 440, borderLeft: '1px solid #EBEBEB' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#EBEBEB] flex-shrink-0">
+          <h2 className="text-base font-bold text-[#333333]">Edit task</h2>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => { onDelete(task.id); onClose(); }}
-              className="p-1.5 rounded hover:bg-red-50 text-[#99ACC2] hover:text-red-400 transition-colors" title="Delete task">
+              className="p-1.5 rounded hover:bg-red-50 text-[#B3B3B3] hover:text-red-400 transition-colors" title="Delete task">
               <Trash2 className="w-4 h-4" />
             </button>
-            <button type="button" onClick={onClose} className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2] hover:text-[#425B76]">
+            <button type="button" onClick={onClose} className="p-1.5 rounded hover:bg-[#F1F1F1] text-[#B3B3B3] hover:text-[#555555]">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -638,47 +638,47 @@ function EditTaskDrawer({
         <div className="flex-1 overflow-y-auto">
           <div className="px-6 py-5 space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Task Title <span style={{ color: '#FF7A59' }}>*</span></label>
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">Task Title <span style={{ color: '#4762D5' }}>*</span></label>
               <input ref={titleRef} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50]"
-                onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; e.currentTarget.style.boxShadow = '0 0 0 1px #FF7A59'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; e.currentTarget.style.boxShadow = 'none'; }} />
+                className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333]"
+                onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; e.currentTarget.style.boxShadow = '0 0 0 1px #4762D5'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; e.currentTarget.style.boxShadow = 'none'; }} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Task Type</label>
+                <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">Task Type</label>
                 <select value={form.task_type} onChange={e => setForm(f => ({ ...f, task_type: e.target.value }))}
-                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white">
+                  className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] bg-white">
                   {TASK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Priority</label>
+                <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">Priority</label>
                 <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
-                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white">
+                  className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] bg-white">
                   {PRIORITY_OPTIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                 </select>
               </div>
             </div>
             <div ref={assocRef} className="relative">
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Associate with records</label>
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">Associate with records</label>
               <button type="button" onClick={() => setShowAssocPicker(v => !v)}
-                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] text-left flex items-center justify-between bg-white hover:border-[#99ACC2]">
-                <span style={{ color: assocCount > 0 ? '#2D3E50' : '#B0C1D4' }}>
+                className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] text-left flex items-center justify-between bg-white hover:border-[#B3B3B3]">
+                <span style={{ color: assocCount > 0 ? '#333333' : '#D6D6D6' }}>
                   {assocCount === 0 ? 'Associated with 0 records' : `Associated with ${assocCount} record${assocCount > 1 ? 's' : ''}`}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#99ACC2]" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#B3B3B3]" />
               </button>
               {assocCount > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {selectedContact && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-[#EBF5FB] text-[#0091AE] font-medium">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-[#EBF5FB] text-[#4762D5] font-medium">
                       {selectedContact.first_name} {selectedContact.last_name}
                       <button type="button" onClick={() => setForm(f => ({ ...f, contact_id: '' }))}><X className="w-3 h-3" /></button>
                     </span>
                   )}
                   {selectedCompany && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-[#F0FBF9] text-[#00A38D] font-medium">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-[#F0FBF9] text-[#4762D5] font-medium">
                       {selectedCompany.name}
                       <button type="button" onClick={() => setForm(f => ({ ...f, company_id: '' }))}><X className="w-3 h-3" /></button>
                     </span>
@@ -693,50 +693,50 @@ function EditTaskDrawer({
               )}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Assigned to</label>
-              <input value={currentUserName} readOnly className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] text-[#2D3E50] bg-[#F6F9FC] cursor-default" />
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">Assigned to</label>
+              <input value={currentUserName} readOnly className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] text-[#333333] bg-[#FAFAFA] cursor-default" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Due date</label>
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">Due date</label>
               <div className="grid grid-cols-2 gap-3">
                 <input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))}
-                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white"
-                  onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
+                  className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] bg-white"
+                  onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }} />
                 <input type="time" value={form.due_time} onChange={e => setForm(f => ({ ...f, due_time: e.target.value }))}
-                  className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white"
-                  onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; }} />
+                  className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] bg-white"
+                  onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }} />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">
                 <span className="flex items-center gap-1.5"><Bell className="w-3.5 h-3.5" /> Reminder</span>
               </label>
               <select value={form.reminder_minutes} onChange={e => setForm(f => ({ ...f, reminder_minutes: e.target.value }))}
-                className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] bg-white">
+                className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] bg-white">
                 {REMINDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#425B76] mb-1.5 uppercase tracking-wide">Notes</label>
+              <label className="block text-xs font-semibold text-[#555555] mb-1.5 uppercase tracking-wide">Notes</label>
               <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="Add notes..." rows={3}
-                className="w-full px-3 py-2 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] resize-none"
-                onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; e.currentTarget.style.boxShadow = '0 0 0 1px #FF7A59'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#CBD6E2'; e.currentTarget.style.boxShadow = 'none'; }} />
+                className="w-full px-3 py-2 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] placeholder:text-[#D6D6D6] resize-none"
+                onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; e.currentTarget.style.boxShadow = '0 0 0 1px #4762D5'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; e.currentTarget.style.boxShadow = 'none'; }} />
             </div>
           </div>
         </div>
-        <div className="px-6 py-4 border-t border-[#DFE3EB] flex-shrink-0 flex items-center gap-2">
+        <div className="px-6 py-4 border-t border-[#EBEBEB] flex-shrink-0 flex items-center gap-2">
           <button type="button" disabled={saving} onClick={handleSave}
             className="px-4 py-2 text-sm font-bold text-white rounded-[3px] disabled:opacity-50 transition-colors"
-            style={{ backgroundColor: '#FF7A59' }}
-            onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLElement).style.backgroundColor = '#FF8F73'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FF7A59'; }}>
+            style={{ backgroundColor: '#4762D5' }}
+            onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLElement).style.backgroundColor = '#3A52C0'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#4762D5'; }}>
             {saving ? <span className="flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</span> : 'Save'}
           </button>
-          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-[#516F90] hover:text-[#2D3E50] transition-colors">Cancel</button>
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-[#666666] hover:text-[#333333] transition-colors">Cancel</button>
         </div>
       </div>
     </>
@@ -752,8 +752,8 @@ function StatusCircle({ status, onClick }: { status: Task['status']; onClick: ()
       onClick={onClick}
       className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
       style={{
-        borderColor: done ? '#00BDA5' : '#99ACC2',
-        backgroundColor: done ? '#00BDA5' : 'transparent',
+        borderColor: done ? '#4CAF8E' : '#B3B3B3',
+        backgroundColor: done ? '#4CAF8E' : 'transparent',
       }}
       title={done ? 'Mark as to-do' : 'Mark as complete'}
     >
@@ -789,23 +789,23 @@ function FilterDropdown({
         onClick={() => setOpen(v => !v)}
         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border rounded-[3px] transition-colors"
         style={{
-          borderColor: value ? '#FF7A59' : '#DFE3EB',
-          backgroundColor: value ? '#FFF3F0' : '#fff',
-          color: value ? '#FF7A59' : '#425B76',
+          borderColor: value ? '#4762D5' : '#EBEBEB',
+          backgroundColor: value ? '#EEF0FB' : '#fff',
+          color: value ? '#4762D5' : '#555555',
         }}
       >
         {label}{count !== undefined && count > 0 ? ` (${count})` : ''}
         <ChevronDown className="w-3 h-3" />
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1 z-40 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[160px]">
+        <div className="absolute top-full left-0 mt-1 z-40 bg-white border border-[#EBEBEB] rounded-[3px] shadow-xl py-1 min-w-[160px]">
           {options.map(o => (
             <button
               key={o.value}
               type="button"
               onClick={() => { onChange(o.value); setOpen(false); }}
-              className="w-full px-4 py-2 text-xs text-left transition-colors hover:bg-[#F6F9FC]"
-              style={{ color: value === o.value ? '#FF7A59' : '#2D3E50', fontWeight: value === o.value ? 600 : 400 }}
+              className="w-full px-4 py-2 text-xs text-left transition-colors hover:bg-[#FAFAFA]"
+              style={{ color: value === o.value ? '#4762D5' : '#333333', fontWeight: value === o.value ? 600 : 400 }}
             >
               {o.label}
             </button>
@@ -981,25 +981,25 @@ export default function TasksPage() {
   ];
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: '#F6F9FC' }}>
+    <div className="flex flex-col h-full" style={{ backgroundColor: '#FAFAFA' }}>
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-6 pt-6 pb-4 bg-white border-b border-[#DFE3EB]">
+      <div className="flex items-center justify-between px-6 pt-6 pb-4 bg-white border-b border-[#EBEBEB]">
         <div>
-          <h1 className="text-xl font-bold text-[#2D3E50]">Tasks</h1>
-          <p className="text-sm text-[#516F90] mt-0.5">{filtered.length} record{filtered.length !== 1 ? 's' : ''}</p>
+          <h1 className="text-xl font-bold text-[#333333]">Tasks</h1>
+          <p className="text-sm text-[#666666] mt-0.5">{filtered.length} record{filtered.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
-            className="px-3 py-1.5 text-xs font-semibold border border-[#DFE3EB] rounded-[3px] bg-white hover:bg-[#F6F9FC] text-[#425B76] transition-colors"
+            className="px-3 py-1.5 text-xs font-semibold border border-[#EBEBEB] rounded-[3px] bg-white hover:bg-[#FAFAFA] text-[#555555] transition-colors"
           >
             Import
           </button>
           <button
             onClick={() => setShowDrawer(true)}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white rounded-[3px] transition-colors"
-            style={{ backgroundColor: '#FF7A59' }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}
+            style={{ backgroundColor: '#4762D5' }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3A52C0')}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#4762D5')}
           >
             <Plus className="w-4 h-4" /> Create task
           </button>
@@ -1009,25 +1009,25 @@ export default function TasksPage() {
       {/* ── Summary Cards ── */}
       <div className="grid grid-cols-4 gap-3 px-6 pt-4">
         {[
-          { key: 'todo',        label: 'To Do',       color: '#516F90', bg: '#F6F9FC' },
-          { key: 'in_progress', label: 'In Progress',  color: '#F5C26B', bg: '#FFFBF0' },
-          { key: 'completed',   label: 'Completed',   color: '#00BDA5', bg: '#F0FBF9' },
-          { key: 'total',       label: 'Total',        color: '#FF7A59', bg: '#FFF3F0' },
+          { key: 'todo',        label: 'To Do',       color: '#666666', bg: '#FAFAFA' },
+          { key: 'in_progress', label: 'In Progress',  color: '#E8882A', bg: '#FFFBF0' },
+          { key: 'completed',   label: 'Completed',   color: '#4CAF8E', bg: '#F0FBF9' },
+          { key: 'total',       label: 'Total',        color: '#4762D5', bg: '#EEF0FB' },
         ].map(item => (
-          <div key={item.key} className="bg-white border border-[#DFE3EB] rounded-[3px] px-4 py-3">
+          <div key={item.key} className="bg-white border border-[#EBEBEB] rounded-[3px] px-4 py-3">
             <p className="text-2xl font-bold" style={{ color: item.color }}>
               {counts[item.key as keyof typeof counts]}
             </p>
-            <p className="text-xs text-[#7C98B6] mt-0.5">{item.label}</p>
+            <p className="text-xs text-[#999999] mt-0.5">{item.label}</p>
           </div>
         ))}
       </div>
 
       {/* ── Main Table Area ── */}
-      <div className="flex-1 overflow-hidden flex flex-col mx-6 mt-4 mb-6 bg-white border border-[#DFE3EB] rounded-[3px]">
+      <div className="flex-1 overflow-hidden flex flex-col mx-6 mt-4 mb-6 bg-white border border-[#EBEBEB] rounded-[3px]">
 
         {/* Tabs */}
-        <div className="flex items-center border-b border-[#DFE3EB] px-0">
+        <div className="flex items-center border-b border-[#EBEBEB] px-0">
           {TABS.map(tab => (
             <button
               key={tab.id}
@@ -1035,8 +1035,8 @@ export default function TasksPage() {
               onClick={() => { setActiveTab(tab.id); setPage(1); }}
               className="px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
               style={{
-                borderColor: activeTab === tab.id ? '#FF7A59' : 'transparent',
-                color: activeTab === tab.id ? '#2D3E50' : '#516F90',
+                borderColor: activeTab === tab.id ? '#4762D5' : 'transparent',
+                color: activeTab === tab.id ? '#333333' : '#666666',
               }}
             >
               {tab.label}
@@ -1045,16 +1045,16 @@ export default function TasksPage() {
         </div>
 
         {/* Filter row */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#DFE3EB] flex-wrap">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#EBEBEB] flex-wrap">
           {/* Assigned to chip */}
           <button
             type="button"
             onClick={() => setFilterAssignedToMe(v => !v)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border rounded-[3px] transition-colors"
             style={{
-              borderColor: filterAssignedToMe ? '#FF7A59' : '#DFE3EB',
-              backgroundColor: filterAssignedToMe ? '#FFF3F0' : '#fff',
-              color: filterAssignedToMe ? '#FF7A59' : '#425B76',
+              borderColor: filterAssignedToMe ? '#4762D5' : '#EBEBEB',
+              backgroundColor: filterAssignedToMe ? '#EEF0FB' : '#fff',
+              color: filterAssignedToMe ? '#4762D5' : '#555555',
             }}
           >
             Assigned to{filterAssignedToMe ? ' (1)' : ''}
@@ -1076,24 +1076,24 @@ export default function TasksPage() {
             <button
               type="button"
               onClick={clearFilters}
-              className="px-3 py-1.5 text-xs font-semibold text-[#7C98B6] hover:text-[#2D3E50] transition-colors"
+              className="px-3 py-1.5 text-xs font-semibold text-[#999999] hover:text-[#333333] transition-colors"
             >
               Clear all
             </button>
           )}
 
-          <div className="w-px h-5 bg-[#DFE3EB] mx-1" />
+          <div className="w-px h-5 bg-[#EBEBEB] mx-1" />
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#99ACC2]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#B3B3B3]" />
             <input
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search task title and note"
-              className="pl-8 pr-3 py-1.5 text-xs border border-[#DFE3EB] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] w-56"
-              onFocus={e => { e.currentTarget.style.borderColor = '#FF7A59'; }}
-              onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }}
+              className="pl-8 pr-3 py-1.5 text-xs border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] placeholder:text-[#D6D6D6] w-56"
+              onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }}
             />
           </div>
 
@@ -1102,25 +1102,25 @@ export default function TasksPage() {
           {/* Bulk actions */}
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-[#2D3E50] mr-1">{selectedIds.size} selected</span>
+              <span className="text-xs font-semibold text-[#333333] mr-1">{selectedIds.size} selected</span>
               <button
                 type="button"
                 onClick={handleMarkSelectedComplete}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#00BDA5] hover:bg-[#F0FBF9] rounded-[3px] border border-[#DFE3EB] transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#4CAF8E] hover:bg-[#F0FBF9] rounded-[3px] border border-[#EBEBEB] transition-colors"
               >
                 <CheckCheck className="w-3.5 h-3.5" /> Mark as completed
               </button>
               <button
                 type="button"
                 onClick={handleDeleteSelected}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 rounded-[3px] border border-[#DFE3EB] transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 rounded-[3px] border border-[#EBEBEB] transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" /> Delete
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedIds(new Set())}
-                className="p-1.5 text-[#99ACC2] hover:text-[#425B76]"
+                className="p-1.5 text-[#B3B3B3] hover:text-[#555555]"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -1131,9 +1131,9 @@ export default function TasksPage() {
             <button
               onClick={() => setShowDrawer(true)}
               className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white rounded-[3px] transition-colors"
-              style={{ backgroundColor: '#2D3E50' }}
+              style={{ backgroundColor: '#333333' }}
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#1a2b3c')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#2D3E50')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#333333')}
             >
               Start {filtered.filter(t => t.status !== 'completed').length} tasks
             </button>
@@ -1144,18 +1144,18 @@ export default function TasksPage() {
         <div className="flex-1 overflow-auto">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-6 h-6 animate-spin text-[#DFE3EB]" />
+              <Loader2 className="w-6 h-6 animate-spin text-[#EBEBEB]" />
             </div>
           ) : (
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-[#DFE3EB] bg-[#F6F9FC]">
+                <tr className="border-b border-[#EBEBEB] bg-[#FAFAFA]">
                   <th className="w-10 px-3 py-3 text-left">
                     <input
                       type="checkbox"
                       checked={allOnPageSelected}
                       onChange={toggleAll}
-                      className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#FF7A59]"
+                      className="w-3.5 h-3.5 rounded border-[#EBEBEB] accent-[#4762D5]"
                     />
                   </th>
                   <th className="w-8 px-2 py-3" />
@@ -1163,7 +1163,7 @@ export default function TasksPage() {
                     'TITLE', 'ASSOCIATED CONTACT', 'ASSOCIATED COMPANY',
                     'LAST CONTACTED', 'TASK TYPE',
                   ].map(col => (
-                    <th key={col} className="px-4 py-3 text-left font-semibold tracking-wide uppercase" style={{ color: '#516F90', fontSize: 11 }}>
+                    <th key={col} className="px-4 py-3 text-left font-semibold tracking-wide uppercase" style={{ color: '#666666', fontSize: 11 }}>
                       {col}
                     </th>
                   ))}
@@ -1175,9 +1175,9 @@ export default function TasksPage() {
                   <tr>
                     <td colSpan={8} className="text-center py-16">
                       <div>
-                        <ClipboardList className="w-10 h-10 mx-auto mb-3 text-[#DFE3EB]" />
-                        <p className="text-sm text-[#7C98B6]">No tasks found</p>
-                        <p className="text-xs text-[#99ACC2] mt-1">
+                        <ClipboardList className="w-10 h-10 mx-auto mb-3 text-[#EBEBEB]" />
+                        <p className="text-sm text-[#999999]">No tasks found</p>
+                        <p className="text-xs text-[#B3B3B3] mt-1">
                           {(hasFilters || !!search)
                             ? 'Try adjusting your filters'
                             : (activeTab as string) === 'completed'
@@ -1199,7 +1199,7 @@ export default function TasksPage() {
                   return (
                     <tr
                       key={task.id}
-                      className="border-b border-[#F0F3F7] hover:bg-[#F6F9FC] transition-colors group"
+                      className="border-b border-[#F1F1F1] hover:bg-[#FAFAFA] transition-colors group"
                       style={{ opacity: isDone ? 0.65 : 1 }}
                     >
                       {/* Checkbox */}
@@ -1208,7 +1208,7 @@ export default function TasksPage() {
                           type="checkbox"
                           checked={selectedIds.has(task.id)}
                           onChange={() => toggleOne(task.id)}
-                          className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#FF7A59]"
+                          className="w-3.5 h-3.5 rounded border-[#EBEBEB] accent-[#4762D5]"
                         />
                       </td>
 
@@ -1224,7 +1224,7 @@ export default function TasksPage() {
                             href={`/contacts/${contactId}?taskId=${task.id}`}
                             className="font-semibold text-xs truncate block max-w-full hover:underline"
                             style={{
-                              color: isDone ? '#7C98B6' : '#0091AE',
+                              color: isDone ? '#999999' : '#4762D5',
                               textDecoration: isDone ? 'line-through' : 'none',
                             }}
                           >
@@ -1236,7 +1236,7 @@ export default function TasksPage() {
                             onClick={() => openEditDrawer(task)}
                             className="font-semibold text-xs truncate block max-w-full text-left hover:underline"
                             style={{
-                              color: isDone ? '#7C98B6' : '#0091AE',
+                              color: isDone ? '#999999' : '#4762D5',
                               textDecoration: isDone ? 'line-through' : 'none',
                             }}
                           >
@@ -1244,13 +1244,13 @@ export default function TasksPage() {
                           </button>
                         )}
                         {task.due_date && (
-                          <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: isOverdue ? '#E8674A' : '#99ACC2' }}>
+                          <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: isOverdue ? '#3A52C0' : '#B3B3B3' }}>
                             {isOverdue && <span className="font-semibold">Overdue · </span>}
                             {fmtDueDate(task.due_date)}
                           </p>
                         )}
                         {task.reminder_minutes != null && task.reminder_minutes >= 0 && (
-                          <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] text-[#FF7A59]">
+                          <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] text-[#4762D5]">
                             <Bell className="w-2.5 h-2.5" />
                             {task.reminder_minutes === 0 ? 'At due time' : task.reminder_minutes < 60 ? `${task.reminder_minutes}m` : task.reminder_minutes < 1440 ? `${task.reminder_minutes / 60}h` : '1d'}
                           </span>
@@ -1263,14 +1263,14 @@ export default function TasksPage() {
                           <Link
                             href={`/contacts/${contactId}?taskId=${task.id}`}
                             className="font-medium text-xs hover:underline"
-                            style={{ color: '#0091AE' }}
+                            style={{ color: '#4762D5' }}
                           >
                             {contactName}
                           </Link>
                         ) : contactName ? (
-                          <span className="font-medium text-xs" style={{ color: '#0091AE' }}>{contactName}</span>
+                          <span className="font-medium text-xs" style={{ color: '#4762D5' }}>{contactName}</span>
                         ) : (
-                          <span className="text-[#B0C1D4]">--</span>
+                          <span className="text-[#D6D6D6]">--</span>
                         )}
                       </td>
 
@@ -1280,25 +1280,25 @@ export default function TasksPage() {
                           <Link
                             href={`/companies/${companyId}`}
                             className="text-xs hover:underline font-medium"
-                            style={{ color: '#2D3E50' }}
+                            style={{ color: '#333333' }}
                           >
                             {companyName}
                           </Link>
                         ) : companyName ? (
-                          <span className="text-xs text-[#2D3E50]">{companyName}</span>
+                          <span className="text-xs text-[#333333]">{companyName}</span>
                         ) : (
-                          <span className="text-[#B0C1D4]">--</span>
+                          <span className="text-[#D6D6D6]">--</span>
                         )}
                       </td>
 
                       {/* Last Contacted */}
-                      <td className="px-4 py-3 text-xs" style={{ color: '#516F90' }}>
+                      <td className="px-4 py-3 text-xs" style={{ color: '#666666' }}>
                         {lastContacted}
                       </td>
 
                       {/* Task Type */}
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1.5 text-xs text-[#516F90]">
+                        <span className="inline-flex items-center gap-1.5 text-xs text-[#666666]">
                           {taskTypeIcon(task.task_type)}
                           {task.task_type || 'To-do'}
                         </span>
@@ -1310,7 +1310,7 @@ export default function TasksPage() {
                           <button
                             type="button"
                             onClick={() => openEditDrawer(task)}
-                            className="p-1 rounded hover:bg-[#F0F3F7] text-[#99ACC2] hover:text-[#425B76] transition-colors"
+                            className="p-1 rounded hover:bg-[#F1F1F1] text-[#B3B3B3] hover:text-[#555555] transition-colors"
                             title="Edit"
                           >
                             <MoreHorizontal className="w-3.5 h-3.5" />
@@ -1318,7 +1318,7 @@ export default function TasksPage() {
                           <button
                             type="button"
                             onClick={() => deleteTask(task.id)}
-                            className="p-1 rounded hover:bg-red-50 text-[#99ACC2] hover:text-red-400 transition-colors"
+                            className="p-1 rounded hover:bg-red-50 text-[#B3B3B3] hover:text-red-400 transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1335,22 +1335,22 @@ export default function TasksPage() {
 
         {/* Pagination */}
         {filtered.length > 0 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-[#DFE3EB] bg-white flex-shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[#EBEBEB] bg-white flex-shrink-0">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border border-[#DFE3EB] rounded-[3px] disabled:opacity-40 hover:bg-[#F6F9FC] text-[#425B76] transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border border-[#EBEBEB] rounded-[3px] disabled:opacity-40 hover:bg-[#FAFAFA] text-[#555555] transition-colors"
               >
                 ← Prev
               </button>
-              <span className="px-3 py-1.5 text-xs font-bold text-white rounded-[3px]" style={{ backgroundColor: '#2D3E50' }}>
+              <span className="px-3 py-1.5 text-xs font-bold text-white rounded-[3px]" style={{ backgroundColor: '#333333' }}>
                 {page}
               </span>
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border border-[#DFE3EB] rounded-[3px] disabled:opacity-40 hover:bg-[#F6F9FC] text-[#425B76] transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border border-[#EBEBEB] rounded-[3px] disabled:opacity-40 hover:bg-[#FAFAFA] text-[#555555] transition-colors"
               >
                 Next →
               </button>
@@ -1361,19 +1361,19 @@ export default function TasksPage() {
               <button
                 type="button"
                 onClick={() => setPageSizeOpen(v => !v)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-[#DFE3EB] rounded-[3px] text-[#425B76] hover:bg-[#F6F9FC] transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-[#EBEBEB] rounded-[3px] text-[#555555] hover:bg-[#FAFAFA] transition-colors"
               >
                 {pageSize} per page <ChevronDown className="w-3 h-3" />
               </button>
               {pageSizeOpen && (
-                <div className="absolute bottom-full right-0 mb-1 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 z-40">
+                <div className="absolute bottom-full right-0 mb-1 bg-white border border-[#EBEBEB] rounded-[3px] shadow-xl py-1 z-40">
                   {PAGE_SIZES.map(s => (
                     <button
                       key={s}
                       type="button"
                       onClick={() => { setPageSize(s); setPage(1); setPageSizeOpen(false); }}
-                      className="w-full px-4 py-2 text-xs text-left transition-colors hover:bg-[#F6F9FC]"
-                      style={{ color: pageSize === s ? '#FF7A59' : '#2D3E50', fontWeight: pageSize === s ? 600 : 400 }}
+                      className="w-full px-4 py-2 text-xs text-left transition-colors hover:bg-[#FAFAFA]"
+                      style={{ color: pageSize === s ? '#4762D5' : '#333333', fontWeight: pageSize === s ? 600 : 400 }}
                     >
                       {s} per page
                     </button>

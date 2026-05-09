@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useCustomFields } from '@/hooks/useCustomFields';
@@ -34,13 +34,13 @@ export function CustomFieldsSection({ module, recordId }: Props) {
   if (filled.length === 0) return null;
 
   return (
-    <div className="bg-white border border-[#DFE3EB] rounded-xl p-5">
-      <h2 className="text-sm font-semibold text-[#2D3E50] mb-4">Custom fields</h2>
+    <div className="bg-white border border-[#EBEBEB] rounded-xl p-5">
+      <h2 className="text-sm font-semibold text-[#333333] mb-4">Custom fields</h2>
       <div className="grid grid-cols-2 gap-4">
         {filled.map((d) => (
           <div key={d.key}>
-            <p className="text-xs text-[#7C98B6] mb-0.5">{d.name}</p>
-            <p className="text-sm text-[#2D3E50]">{vals[d.key]}</p>
+            <p className="text-xs text-[#999999] mb-0.5">{d.name}</p>
+            <p className="text-sm text-[#333333]">{vals[d.key]}</p>
           </div>
         ))}
       </div>

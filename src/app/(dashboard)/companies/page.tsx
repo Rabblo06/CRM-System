@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -50,17 +50,17 @@ type ColumnId = (typeof ALL_COLUMNS)[number]['id'];
 const DEFAULT_VISIBLE: ColumnId[] = ['company','domain','phone','industry','deals','deals_value','status'];
 
 /* ── Constants ─────────────────────────────────────────────── */
-const DEFAULT_GROUP: Group = { id: 'all', name: 'All Companies', color: '#0091AE', order: 0 };
+const DEFAULT_GROUP: Group = { id: 'all', name: 'All Companies', color: '#4762D5', order: 0 };
 
 const GROUP_COLORS = [
-  '#0091AE','#00A38D','#8B5CF6','#F59E0B','#EF4444',
+  '#4762D5','#4762D5','#8B5CF6','#F59E0B','#EF4444',
   '#3B82F6','#10B981','#F97316','#EC4899','#6366F1',
 ];
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
   active:   { label: 'Active',   bg: '#ECFDF5', text: '#10B981' },
   prospect: { label: 'Prospect', bg: '#EFF6FF', text: '#3B82F6' },
-  customer: { label: 'Customer', bg: '#F0FDFA', text: '#0091AE' },
+  customer: { label: 'Customer', bg: '#F0FDFA', text: '#4762D5' },
   churned:  { label: 'Churned',  bg: '#FFF7ED', text: '#F97316' },
 };
 
@@ -82,7 +82,7 @@ const THREE_DOT_ITEMS = [
   { id: 'archive',        label: 'Archive group' },
 ];
 
-const AVATAR_COLORS = ['#ff7a59','#0091AE','#00a38d','#3b82f6','#8b5cf6','#f59e0b','#10b981','#6366f1'];
+const AVATAR_COLORS = ['#4762D5','#4762D5','#4762D5','#3b82f6','#8b5cf6','#f59e0b','#10b981','#6366f1'];
 function avatarColor(name: string) { return AVATAR_COLORS[(name.charCodeAt(0) || 65) % AVATAR_COLORS.length]; }
 function companyInitials(name: string) { return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
 function storageKey(suffix: string, email: string) { return `crm_co_${suffix}_${email}`; }
@@ -112,15 +112,15 @@ function StatusBadge({ status, onChange }: { status: Status; onChange?: (s: Stat
     <div ref={ref} className="relative">
       <button onClick={() => onChange && setOpen(v => !v)}
         className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
-        style={cfg ? { backgroundColor: cfg.bg, color: cfg.text } : { backgroundColor: '#F6F9FC', color: '#99ACC2' }}>
+        style={cfg ? { backgroundColor: cfg.bg, color: cfg.text } : { backgroundColor: '#FAFAFA', color: '#B3B3B3' }}>
         {cfg ? cfg.label : '—'}
       </button>
       {open && onChange && (
-        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[120px]">
-          <button onClick={() => { onChange(''); setOpen(false); }} className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] text-[#99ACC2]">— None</button>
+        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-xl py-1 min-w-[120px]">
+          <button onClick={() => { onChange(''); setOpen(false); }} className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#FAFAFA] text-[#B3B3B3]">— None</button>
           {Object.entries(STATUS_CONFIG).map(([k, v]) => (
             <button key={k} onClick={() => { onChange(k as Status); setOpen(false); }}
-              className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] flex items-center gap-2">
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#FAFAFA] flex items-center gap-2">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: v.text }} />
               <span style={{ color: v.text, fontWeight: 600 }}>{v.label}</span>
             </button>
@@ -132,7 +132,7 @@ function StatusBadge({ status, onChange }: { status: Status; onChange?: (s: Stat
 }
 
 /* ── Pill ───────────────────────────────────────────────────── */
-function Pill({ label, color = '#0091AE' }: { label: string; color?: string }) {
+function Pill({ label, color = '#4762D5' }: { label: string; color?: string }) {
   return (
     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border"
       style={{ borderColor: `${color}40`, color, backgroundColor: `${color}10` }}>
@@ -144,7 +144,7 @@ function Pill({ label, color = '#0091AE' }: { label: string; color?: string }) {
 /* ── Priority badge ─────────────────────────────────────────── */
 type Priority = 'high' | 'medium' | 'low' | '';
 const PRIORITY_CONFIG: Record<string, { label: string; badge: string }> = {
-  high:   { label: 'High',   badge: '#FF7A59' },
+  high:   { label: 'High',   badge: '#4762D5' },
   medium: { label: 'Medium', badge: '#3B82F6' },
   low:    { label: 'Low',    badge: '#10B981' },
 };
@@ -162,16 +162,16 @@ function PriorityBadge({ priority, onChange }: { priority: Priority; onChange?: 
     <div ref={ref} className="relative">
       <button onClick={() => onChange && setOpen(v => !v)}
         className="inline-flex items-center px-3 py-1 rounded text-xs font-bold min-w-[64px] justify-center"
-        style={cfg ? { backgroundColor: cfg.badge, color: '#fff' } : { backgroundColor: '#F0F3F7', color: '#99ACC2' }}>
+        style={cfg ? { backgroundColor: cfg.badge, color: '#fff' } : { backgroundColor: '#F1F1F1', color: '#B3B3B3' }}>
         {cfg ? cfg.label : '—'}
       </button>
       {open && onChange && (
-        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[110px]">
+        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-2xl py-1 min-w-[110px]">
           <button onClick={() => { onChange(''); setOpen(false); }}
-            className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] text-[#99ACC2]">— None</button>
+            className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#FAFAFA] text-[#B3B3B3]">— None</button>
           {(['high','medium','low'] as Priority[]).map(k => (
             <button key={k} onClick={() => { onChange(k); setOpen(false); }}
-              className="w-full px-2 py-1.5 text-xs hover:bg-[#F6F9FC]">
+              className="w-full px-2 py-1.5 text-xs hover:bg-[#FAFAFA]">
               <span className="flex-1 font-bold text-center py-0.5 rounded text-white text-xs block"
                 style={{ backgroundColor: PRIORITY_CONFIG[k].badge }}>
                 {PRIORITY_CONFIG[k].label}
@@ -201,15 +201,15 @@ function ThreeDotMenu({ groupId, isFixed, onAction }: {
         <MoreHorizontal className="w-4 h-4 text-white" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[230px]">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-2xl py-1 min-w-[230px]">
           {THREE_DOT_ITEMS.map((item, i) => {
-            if (!item) return <div key={i} className="my-1 border-t border-[#DFE3EB]" />;
+            if (!item) return <div key={i} className="my-1 border-t border-[#EBEBEB]" />;
             const disabled = isFixed && ['delete','archive'].includes(item.id);
             return (
               <button key={item.id} disabled={disabled}
                 onClick={() => { setOpen(false); onAction(item.id, groupId); }}
-                className="w-full px-4 py-2 text-xs text-left hover:bg-[#F6F9FC] disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ color: item.danger ? '#EF4444' : '#2D3E50' }}>
+                className="w-full px-4 py-2 text-xs text-left hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ color: item.danger ? '#EF4444' : '#333333' }}>
                 {item.label}
               </button>
             );
@@ -236,14 +236,14 @@ function MoveToGroupDropdown({ companyId, currentGroupId, groups, onMove }: {
   return (
     <div ref={ref} className="relative">
       <button onClick={() => setOpen(v => !v)} title="Move to group" className="p-0.5 rounded hover:bg-[#E8F4FD]">
-        <MoveRight className="w-3 h-3 text-[#7C98B6]" />
+        <MoveRight className="w-3 h-3 text-[#999999]" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[180px]">
-          <p className="px-3 py-1.5 text-[10px] font-semibold text-[#99ACC2] uppercase tracking-wide">Move to group</p>
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-2xl py-1 min-w-[180px]">
+          <p className="px-3 py-1.5 text-[10px] font-semibold text-[#B3B3B3] uppercase tracking-wide">Move to group</p>
           {available.map(g => (
             <button key={g.id} onClick={() => { onMove(companyId, g.id); setOpen(false); }}
-              className="w-full px-3 py-2 text-xs text-left hover:bg-[#F6F9FC] flex items-center gap-2 text-[#2D3E50]">
+              className="w-full px-3 py-2 text-xs text-left hover:bg-[#FAFAFA] flex items-center gap-2 text-[#333333]">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: g.color }} />
               {g.name}
             </button>
@@ -260,18 +260,18 @@ function ColorPickerModal({ groupName, current, onSelect, onClose }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-      <div className="bg-white rounded-[3px] shadow-2xl w-80" style={{ border: '1px solid #DFE3EB' }}>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[#DFE3EB]">
-          <span className="text-sm font-bold text-[#2D3E50]">Change group color</span>
-          <button onClick={onClose}><X className="w-4 h-4 text-[#99ACC2]" /></button>
+      <div className="bg-white rounded-[3px] shadow-2xl w-80" style={{ border: '1px solid #EBEBEB' }}>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#EBEBEB]">
+          <span className="text-sm font-bold text-[#333333]">Change group color</span>
+          <button onClick={onClose}><X className="w-4 h-4 text-[#B3B3B3]" /></button>
         </div>
         <div className="px-5 py-4">
-          <p className="text-xs text-[#7C98B6] mb-3">{groupName}</p>
+          <p className="text-xs text-[#999999] mb-3">{groupName}</p>
           <div className="grid grid-cols-5 gap-2">
             {GROUP_COLORS.map(c => (
               <button key={c} onClick={() => { onSelect(c); onClose(); }}
                 className="w-10 h-10 rounded-full border-2 hover:scale-110 transition-transform"
-                style={{ backgroundColor: c, borderColor: c === current ? '#2D3E50' : 'transparent' }} />
+                style={{ backgroundColor: c, borderColor: c === current ? '#333333' : 'transparent' }} />
             ))}
           </div>
         </div>
@@ -287,19 +287,19 @@ function DeleteGroupModal({ groupName, onConfirm, onClose }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-      <div className="bg-white rounded-[3px] shadow-2xl w-[420px]" style={{ border: '1px solid #DFE3EB' }}>
-        <div className="px-5 py-4 border-b border-[#DFE3EB]">
-          <p className="text-sm font-bold text-[#2D3E50]">Delete group?</p>
+      <div className="bg-white rounded-[3px] shadow-2xl w-[420px]" style={{ border: '1px solid #EBEBEB' }}>
+        <div className="px-5 py-4 border-b border-[#EBEBEB]">
+          <p className="text-sm font-bold text-[#333333]">Delete group?</p>
         </div>
         <div className="px-5 py-4">
-          <p className="text-sm text-[#516F90]">
-            Are you sure you want to delete <strong className="text-[#2D3E50]">"{groupName}"</strong>?
+          <p className="text-sm text-[#666666]">
+            Are you sure you want to delete <strong className="text-[#333333]">"{groupName}"</strong>?
             All companies inside this group will also be deleted. This action cannot be undone.
           </p>
         </div>
-        <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#DFE3EB]">
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#EBEBEB]">
           <button onClick={onClose}
-            className="px-4 py-1.5 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">
+            className="px-4 py-1.5 text-sm text-[#555555] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA]">
             Cancel
           </button>
           <button onClick={() => { onConfirm(); onClose(); }}
@@ -320,7 +320,7 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
   }, [onClose]);
   return (
     <div className="fixed bottom-5 right-5 z-[100] flex items-center gap-3 px-4 py-3 rounded-[3px] shadow-xl text-white text-sm font-semibold"
-      style={{ backgroundColor: type === 'success' ? '#00A38D' : '#EF4444' }}>
+      style={{ backgroundColor: type === 'success' ? '#4762D5' : '#EF4444' }}>
       {message}
       <button onClick={onClose}><X className="w-4 h-4 opacity-80 hover:opacity-100" /></button>
     </div>
@@ -343,15 +343,15 @@ function InlineCell({ value, onSave, placeholder = 'Add…' }: {
         onChange={e => setVal(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setVal(value); setEditing(false); } }}
         onBlur={commit}
-        className="w-full text-xs px-1 py-0.5 border border-[#0091AE] rounded outline-none text-[#2D3E50] bg-white"
+        className="w-full text-xs px-1 py-0.5 border border-[#4762D5] rounded outline-none text-[#333333] bg-white"
       />
     );
   }
   return (
     <button onClick={() => setEditing(true)} className="text-xs text-left w-full truncate max-w-[160px]">
       {val
-        ? <span className="text-[#2D3E50]">{val}</span>
-        : <span className="opacity-0 group-hover/row:opacity-60 text-[#B0C1D4]">{placeholder}</span>}
+        ? <span className="text-[#333333]">{val}</span>
+        : <span className="opacity-0 group-hover/row:opacity-60 text-[#D6D6D6]">{placeholder}</span>}
     </button>
   );
 }
@@ -374,12 +374,12 @@ function InlineAddRow({ onSave, onCancel }: {
     setSaving(false);
   };
 
-  const inp = "h-7 px-2 text-xs border border-[#CBD6E2] rounded outline-none text-[#2D3E50] w-full";
-  const focus = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#0091AE'; };
-  const blur  = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#CBD6E2'; };
+  const inp = "h-7 px-2 text-xs border border-[#EBEBEB] rounded outline-none text-[#333333] w-full";
+  const focus = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#4762D5'; };
+  const blur  = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#EBEBEB'; };
 
   return (
-    <tr className="border-b border-[#F0F3F7] bg-blue-50/20">
+    <tr className="border-b border-[#F1F1F1] bg-blue-50/20">
       <td className="w-10 px-3 py-2" />
       {/* Company name */}
       <td className="px-2 py-2 min-w-[200px]">
@@ -416,11 +416,11 @@ function InlineAddRow({ onSave, onCancel }: {
         <div className="flex items-center gap-1">
           <button onClick={handleSave} disabled={saving || !name.trim()}
             className="px-2.5 py-1 text-xs font-bold text-white rounded-[3px] disabled:opacity-40"
-            style={{ backgroundColor: '#0091AE' }}>
+            style={{ backgroundColor: '#4762D5' }}>
             {saving ? '…' : 'Add'}
           </button>
           <button onClick={onCancel}
-            className="px-2 py-1 text-xs text-[#7C98B6] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">✕</button>
+            className="px-2 py-1 text-xs text-[#999999] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA]">✕</button>
         </div>
       </td>
     </tr>
@@ -442,12 +442,12 @@ function CompanyRow({
   onFieldSave: (id: string, field: string, value: string) => Promise<void>;
 }) {
   const vc = visibleColumns;
-  const cc = "border-r border-[#F0F3F7]";
+  const cc = "border-r border-[#F1F1F1]";
   return (
-    <tr className="border-b border-[#F0F3F7] hover:bg-[#F8FAFC] transition-colors group/row">
+    <tr className="border-b border-[#F1F1F1] hover:bg-[#F8FAFC] transition-colors group/row">
       <td className={`w-10 px-3 py-2.5 ${cc}`}>
         <input type="checkbox" checked={selected} onChange={() => onSelect(company.id)}
-          className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
+          className="w-3.5 h-3.5 rounded border-[#EBEBEB] accent-[#4762D5]" />
       </td>
 
       {/* Company name — always visible */}
@@ -459,15 +459,15 @@ function CompanyRow({
           </div>
           <Link href={`/companies/${company.id}`}
             className="text-xs font-semibold hover:underline truncate max-w-[140px]"
-            style={{ color: '#0091AE' }}>
+            style={{ color: '#4762D5' }}>
             {company.name}
           </Link>
           <div className="opacity-0 group-hover/row:opacity-100 flex items-center gap-1 flex-shrink-0">
             <button onClick={() => onEdit(company)} title="Edit" className="p-0.5 rounded hover:bg-[#E8F4FD]">
-              <Edit2 className="w-3 h-3 text-[#7C98B6]" />
+              <Edit2 className="w-3 h-3 text-[#999999]" />
             </button>
             <button onClick={() => onDelete(company.id)} title="Delete" className="p-0.5 rounded hover:bg-red-50">
-              <Trash2 className="w-3 h-3 text-[#99ACC2] hover:text-red-400" />
+              <Trash2 className="w-3 h-3 text-[#B3B3B3] hover:text-red-400" />
             </button>
             <MoveToGroupDropdown companyId={company.id} currentGroupId={currentGroupId} groups={allGroups} onMove={onMoveToGroup} />
           </div>
@@ -478,8 +478,8 @@ function CompanyRow({
         <td className={`px-3 py-2.5 min-w-[160px] ${cc}`}>
           {company.domain ? (
             <a href={`https://${company.domain}`} target="_blank" rel="noopener noreferrer"
-              className="text-xs hover:underline" style={{ color: '#0091AE' }}>{company.domain}</a>
-          ) : <span className="text-xs text-[#B0C1D4]">—</span>}
+              className="text-xs hover:underline" style={{ color: '#4762D5' }}>{company.domain}</a>
+          ) : <span className="text-xs text-[#D6D6D6]">—</span>}
         </td>
       )}
       {vc.has('email') && (
@@ -491,19 +491,19 @@ function CompanyRow({
         <td className={`px-3 py-2.5 w-[100px] ${cc}`}>
           <div className="flex items-end gap-0.5">
             {[false,false,false,false,false].map((_, i) => (
-              <div key={i} style={{ width: 4, height: 14, borderRadius: 2, backgroundColor: '#DFE3EB' }} />
+              <div key={i} style={{ width: 4, height: 14, borderRadius: 2, backgroundColor: '#EBEBEB' }} />
             ))}
           </div>
         </td>
       )}
       {vc.has('accounts') && (
-        <td className={`px-3 py-2.5 w-[80px] ${cc}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
+        <td className={`px-3 py-2.5 w-[80px] ${cc}`}><span className="text-xs text-[#D6D6D6]">—</span></td>
       )}
       {vc.has('deals') && (
-        <td className={`px-3 py-2.5 w-[80px] ${cc}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
+        <td className={`px-3 py-2.5 w-[80px] ${cc}`}><span className="text-xs text-[#D6D6D6]">—</span></td>
       )}
       {vc.has('deals_value') && (
-        <td className={`px-3 py-2.5 w-[100px] ${cc}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
+        <td className={`px-3 py-2.5 w-[100px] ${cc}`}><span className="text-xs text-[#D6D6D6]">—</span></td>
       )}
       {vc.has('phone') && (
         <td className={`px-3 py-2.5 min-w-[140px] ${cc}`}>
@@ -527,12 +527,12 @@ function CompanyRow({
       )}
       {vc.has('industry') && (
         <td className={`px-3 py-2.5 min-w-[120px] ${cc}`}>
-          {company.industry ? <Pill label={company.industry} color="#0091AE" />
+          {company.industry ? <Pill label={company.industry} color="#4762D5" />
             : <InlineCell value="" onSave={v => onFieldSave(company.id, 'industry', v)} placeholder="Add industry" />}
         </td>
       )}
       {vc.has('owner') && (
-        <td className={`px-3 py-2.5 min-w-[120px] ${cc}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
+        <td className={`px-3 py-2.5 min-w-[120px] ${cc}`}><span className="text-xs text-[#D6D6D6]">—</span></td>
       )}
       {vc.has('email_note') && (
         <td className={`px-3 py-2.5 min-w-[160px] ${cc}`}>
@@ -644,19 +644,19 @@ function GroupSection({
       {!collapsed && (
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-[#DFE3EB] bg-white">
+            <tr className="border-b border-[#EBEBEB] bg-white">
               <th className="w-10 px-3 py-2">
                 <input type="checkbox"
                   checked={companies.length > 0 && companies.every(c => selectedIds.has(c.id))}
                   onChange={() => onSelectAll(group.id, companies.map(c => c.id))}
-                  className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
+                  className="w-3.5 h-3.5 rounded border-[#EBEBEB] accent-[#4762D5]" />
               </th>
               {/* Company column — always shown */}
-              <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap" style={{ fontSize: 10 }}>
+              <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#666666] whitespace-nowrap" style={{ fontSize: 10 }}>
                 Name of company
               </th>
               {ALL_COLUMNS.filter(c => c.id !== 'company' && visibleColumns.has(c.id)).map(col => (
-                <th key={col.id} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap" style={{ fontSize: 10 }}>
+                <th key={col.id} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#666666] whitespace-nowrap" style={{ fontSize: 10 }}>
                   {col.label}
                 </th>
               ))}
@@ -664,18 +664,18 @@ function GroupSection({
               <th className="px-2 py-2 w-8">
                 <div ref={colPickerRef} className="relative">
                   <button onClick={() => setShowColPicker(v => !v)}
-                    className="w-6 h-6 flex items-center justify-center rounded border border-dashed border-[#CBD6E2] hover:border-[#0091AE] hover:bg-[#E8F4FD] transition-colors"
+                    className="w-6 h-6 flex items-center justify-center rounded border border-dashed border-[#EBEBEB] hover:border-[#4762D5] hover:bg-[#E8F4FD] transition-colors"
                     title="Show/hide columns">
-                    <Plus className="w-3 h-3 text-[#99ACC2]" />
+                    <Plus className="w-3 h-3 text-[#B3B3B3]" />
                   </button>
                   {showColPicker && (
-                    <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-2 min-w-[190px]">
-                      <p className="px-3 pb-1.5 text-[10px] font-semibold text-[#516F90] uppercase tracking-wide">Show / hide columns</p>
+                    <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-2xl py-2 min-w-[190px]">
+                      <p className="px-3 pb-1.5 text-[10px] font-semibold text-[#666666] uppercase tracking-wide">Show / hide columns</p>
                       {ALL_COLUMNS.filter(c => c.id !== 'company').map(col => (
-                        <label key={col.id} className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-[#F6F9FC] cursor-pointer">
+                        <label key={col.id} className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-[#FAFAFA] cursor-pointer">
                           <input type="checkbox" checked={visibleColumns.has(col.id)} onChange={() => onToggleColumn(col.id)}
-                            className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
-                          <span className="text-xs text-[#2D3E50]">{col.label}</span>
+                            className="w-3.5 h-3.5 rounded border-[#EBEBEB] accent-[#4762D5]" />
+                          <span className="text-xs text-[#333333]">{col.label}</span>
                         </label>
                       ))}
                     </div>
@@ -701,8 +701,8 @@ function GroupSection({
               <td />
               <td className="px-3 py-2.5" colSpan={8}>
                 <button onClick={() => onStartAdd(group.id)}
-                  className="flex items-center gap-1.5 text-xs font-medium hover:text-[#0091AE] transition-colors"
-                  style={{ color: '#7C98B6' }}>
+                  className="flex items-center gap-1.5 text-xs font-medium hover:text-[#4762D5] transition-colors"
+                  style={{ color: '#999999' }}>
                   <Plus className="w-3.5 h-3.5" /> Add company
                 </button>
               </td>
@@ -1059,62 +1059,62 @@ export default function CompaniesPage() {
     <div className="flex flex-col h-full bg-white">
 
       {/* ── Top bar ── */}
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#DFE3EB] flex-shrink-0">
+      <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#EBEBEB] flex-shrink-0">
         <div className="flex items-center gap-2">
           <div ref={newBtnRef} className="relative">
-            <div className="flex items-center border border-[#FF7A59] rounded-[3px] overflow-hidden">
+            <div className="flex items-center border border-[#4762D5] rounded-[3px] overflow-hidden">
               <button onClick={() => { setEditCompany(null); setAddingToGroup(null); setEditForm(EMPTY_FORM); setShowEditModal(true); }}
                 className="px-4 py-1.5 text-sm font-bold text-white"
-                style={{ backgroundColor: '#FF7A59' }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}>
+                style={{ backgroundColor: '#4762D5' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3A52C0')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#4762D5')}>
                 New company
               </button>
               <button onClick={() => setShowNewDropdown(v => !v)}
                 className="px-2 py-1.5 text-white border-l border-white/30"
-                style={{ backgroundColor: '#FF7A59' }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}>
+                style={{ backgroundColor: '#4762D5' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3A52C0')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#4762D5')}>
                 <ChevronDown className="w-3.5 h-3.5" />
               </button>
             </div>
             {showNewDropdown && (
-              <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
+              <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
                 <button onClick={() => { setEditCompany(null); setAddingToGroup(null); setEditForm(EMPTY_FORM); setShowEditModal(true); setShowNewDropdown(false); }}
-                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
-                  <Building2 className="w-4 h-4 text-[#7C98B6]" /> New company
+                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
+                  <Building2 className="w-4 h-4 text-[#999999]" /> New company
                 </button>
                 <button onClick={() => { handleGroupAction('add_group', 'all'); setShowNewDropdown(false); }}
-                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
-                  <FolderPlus className="w-4 h-4 text-[#7C98B6]" /> New group of companies
+                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
+                  <FolderPlus className="w-4 h-4 text-[#999999]" /> New group of companies
                 </button>
                 <button onClick={() => { setShowImport(true); setShowNewDropdown(false); }}
-                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
-                  <Download className="w-4 h-4 text-[#7C98B6]" /> Import companies
+                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
+                  <Download className="w-4 h-4 text-[#999999]" /> Import companies
                 </button>
               </div>
             )}
           </div>
 
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#99ACC2]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#B3B3B3]" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search"
-              className="h-8 pl-8 pr-3 text-sm border border-[#DFE3EB] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] w-56"
-              onFocus={e => { e.currentTarget.style.borderColor = '#99ACC2'; }}
-              onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }} />
-            {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-[#99ACC2]" /></button>}
+              className="h-8 pl-8 pr-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] placeholder:text-[#D6D6D6] w-56"
+              onFocus={e => { e.currentTarget.style.borderColor = '#B3B3B3'; }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }} />
+            {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-[#B3B3B3]" /></button>}
           </div>
-          <span className="text-xs text-[#7C98B6]">{companies.length} companies</span>
+          <span className="text-xs text-[#999999]">{companies.length} companies</span>
         </div>
 
         {selectedIds.size > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-[#516F90]">{selectedIds.size} selected</span>
+            <span className="text-xs text-[#666666]">{selectedIds.size} selected</span>
             <button onClick={async () => { if (!confirm(`Delete ${selectedIds.size} companies?`)) return; for (const id of selectedIds) await deleteCompany(id); setSelectedIds(new Set()); }}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-red-200 text-red-500 rounded-[3px] hover:bg-red-50">
               <Trash2 className="w-3.5 h-3.5" /> Delete
             </button>
-            <button onClick={() => setSelectedIds(new Set())} className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2]"><X className="w-4 h-4" /></button>
+            <button onClick={() => setSelectedIds(new Set())} className="p-1.5 rounded hover:bg-[#F1F1F1] text-[#B3B3B3]"><X className="w-4 h-4" /></button>
           </div>
         )}
       </div>
@@ -1122,7 +1122,7 @@ export default function CompaniesPage() {
       {/* ── Groups ── */}
       <div className="flex-1 overflow-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-sm text-[#7C98B6]">Loading companies…</div>
+          <div className="flex items-center justify-center py-20 text-sm text-[#999999]">Loading companies…</div>
         ) : allGroups.map(group => (
           <GroupSection key={group.id} group={group}
             companies={getGroupCompanies(group.id)}
@@ -1169,20 +1169,20 @@ export default function CompaniesPage() {
         const ef = editForm;
         const set = (k: keyof typeof editForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
           setEditForm(prev => ({ ...prev, [k]: e.target.value }));
-        const fieldCls = "w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] focus:border-[#FF7A59]";
+        const fieldCls = "w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] focus:border-[#4762D5]";
         const label = (text: string, required = false) => (
-          <label className="block text-xs font-semibold text-[#425B76] uppercase tracking-wide mb-1">
-            {text}{required && <span className="text-[#FF7A59] ml-0.5">*</span>}
+          <label className="block text-xs font-semibold text-[#555555] uppercase tracking-wide mb-1">
+            {text}{required && <span className="text-[#4762D5] ml-0.5">*</span>}
           </label>
         );
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-            <div className="bg-white rounded-[3px] shadow-2xl w-[560px] max-w-[95vw] flex flex-col max-h-[90vh]" style={{ border: '1px solid #DFE3EB' }}>
+            <div className="bg-white rounded-[3px] shadow-2xl w-[560px] max-w-[95vw] flex flex-col max-h-[90vh]" style={{ border: '1px solid #EBEBEB' }}>
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-[#DFE3EB] flex-shrink-0">
-                <h2 className="text-sm font-bold text-[#2D3E50]">{editCompany ? 'Edit company' : 'New company'}</h2>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-[#EBEBEB] flex-shrink-0">
+                <h2 className="text-sm font-bold text-[#333333]">{editCompany ? 'Edit company' : 'New company'}</h2>
                 <button onClick={() => { setShowEditModal(false); setEditCompany(null); setAddingToGroup(null); }}>
-                  <X className="w-4 h-4 text-[#99ACC2]" />
+                  <X className="w-4 h-4 text-[#B3B3B3]" />
                 </button>
               </div>
 
@@ -1230,7 +1230,7 @@ export default function CompaniesPage() {
                   <div>
                     {label('Company size')}
                     <select value={ef.size} onChange={set('size')}
-                      className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] focus:border-[#FF7A59] bg-white">
+                      className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] focus:border-[#4762D5] bg-white">
                       <option value="">Select size…</option>
                       {['1-10','11-50','51-200','201-500','501-1000','1001-5000','5000+'].map(s => (
                         <option key={s} value={s}>{s} employees</option>
@@ -1280,7 +1280,7 @@ export default function CompaniesPage() {
                   <div>
                     {label('Status')}
                     <select value={ef.status} onChange={set('status')}
-                      className="w-full h-9 px-3 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] focus:border-[#FF7A59] bg-white">
+                      className="w-full h-9 px-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] focus:border-[#4762D5] bg-white">
                       <option value="">Select status…</option>
                       {['Lead','Prospect','Active','Inactive','Customer','Partner','Vendor'].map(s => (
                         <option key={s} value={s}>{s}</option>
@@ -1297,19 +1297,19 @@ export default function CompaniesPage() {
                 <div>
                   {label('Notes')}
                   <textarea value={ef.description} onChange={set('description')} placeholder="Add any notes…" rows={3}
-                    className="w-full px-3 py-2 text-sm border border-[#CBD6E2] rounded-[3px] outline-none text-[#2D3E50] focus:border-[#FF7A59] resize-none" />
+                    className="w-full px-3 py-2 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] focus:border-[#4762D5] resize-none" />
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="flex justify-end gap-2 px-6 py-4 border-t border-[#DFE3EB] flex-shrink-0">
+              <div className="flex justify-end gap-2 px-6 py-4 border-t border-[#EBEBEB] flex-shrink-0">
                 <button onClick={() => { setShowEditModal(false); setEditCompany(null); setAddingToGroup(null); }}
-                  className="px-4 py-2 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">
+                  className="px-4 py-2 text-sm text-[#555555] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA]">
                   Cancel
                 </button>
                 <button onClick={saveEdit} disabled={!ef.name.trim()}
                   className="px-5 py-2 text-sm font-bold text-white rounded-[3px] disabled:opacity-40"
-                  style={{ backgroundColor: '#FF7A59' }}>
+                  style={{ backgroundColor: '#4762D5' }}>
                   {editCompany ? 'Save' : 'Create'}
                 </button>
               </div>

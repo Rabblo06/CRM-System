@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -28,17 +28,17 @@ type Priority = 'high' | 'medium' | 'low' | '';
 
 /* ── Constants ─────────────────────────────────────────────── */
 const FIXED_GROUPS: Group[] = [
-  { id: 'active',   name: 'Active Contacts',  color: '#00A38D', order: 0 },
-  { id: 'inactive', name: 'Inactive Contacts', color: '#7C98B6', order: 1 },
+  { id: 'active',   name: 'Active Contacts',  color: '#4762D5', order: 0 },
+  { id: 'inactive', name: 'Inactive Contacts', color: '#999999', order: 1 },
 ];
 
 const GROUP_COLORS = [
-  '#00A38D','#0091AE','#8B5CF6','#F59E0B','#EF4444',
+  '#4762D5','#4762D5','#8B5CF6','#F59E0B','#EF4444',
   '#3B82F6','#10B981','#F97316','#EC4899','#6366F1',
 ];
 
 const PRIORITY_CONFIG: Record<string, { label: string; bg: string; text: string; badge: string }> = {
-  high:   { label: 'High',   bg: '#FFF3F0', text: '#FF7A59', badge: '#FF7A59' },
+  high:   { label: 'High',   bg: '#EEF0FB', text: '#4762D5', badge: '#4762D5' },
   medium: { label: 'Medium', bg: '#EFF6FF', text: '#3B82F6', badge: '#3B82F6' },
   low:    { label: 'Low',    bg: '#ECFDF5', text: '#10B981', badge: '#10B981' },
 };
@@ -82,7 +82,7 @@ const THREE_DOT_ITEMS = [
   { id: 'archive',       label: 'Archive group' },
 ];
 
-const AVATAR_COLORS = ['#ff7a59','#f2547d','#00a38d','#3b82f6','#8b5cf6','#f59e0b','#10b981','#6366f1'];
+const AVATAR_COLORS = ['#4762D5','#D45353','#4762D5','#3b82f6','#8b5cf6','#f59e0b','#10b981','#6366f1'];
 function avatarColor(name: string) { return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]; }
 function initials(c: Contact) { return `${c.first_name?.[0] || ''}${c.last_name?.[0] || ''}`.toUpperCase(); }
 function fullName(c: Contact) { return `${c.first_name || ''} ${c.last_name || ''}`.trim(); }
@@ -113,11 +113,11 @@ function ActivityTimeline({ contact }: { contact: Contact }) {
     const count = days < 7 ? 5 : days < 30 ? 4 : days < 60 ? 3 : days < 90 ? 2 : 1;
     return Array.from({ length: 5 }, (_, i) => i < count);
   }, [contact.last_contacted_at]);
-  const colors = ['#FF7A59','#0091AE','#00BDA5','#8B5CF6','#F59E0B'];
+  const colors = ['#4762D5','#4762D5','#4CAF8E','#8B5CF6','#F59E0B'];
   return (
     <div className="flex items-end gap-0.5">
       {bars.map((active, i) => (
-        <div key={i} style={{ width: 4, height: 14, borderRadius: 2, backgroundColor: active ? colors[i] : '#DFE3EB' }} />
+        <div key={i} style={{ width: 4, height: 14, borderRadius: 2, backgroundColor: active ? colors[i] : '#EBEBEB' }} />
       ))}
     </div>
   );
@@ -141,26 +141,26 @@ function PriorityBadge({ priority, onChange }: { priority: Priority; onChange?: 
       <button
         onClick={() => onChange && setOpen(v => !v)}
         className="inline-flex items-center px-3 py-1 rounded text-xs font-bold min-w-[64px] justify-center transition-colors"
-        style={cfg ? { backgroundColor: cfg.badge, color: '#fff' } : { backgroundColor: '#F0F3F7', color: '#99ACC2' }}>
+        style={cfg ? { backgroundColor: cfg.badge, color: '#fff' } : { backgroundColor: '#F1F1F1', color: '#B3B3B3' }}>
         {cfg ? cfg.label : '—'}
       </button>
       {open && onChange && (
-        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[130px]">
+        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-2xl py-1 min-w-[130px]">
           <button onClick={() => { onChange(''); setOpen(false); }}
-            className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] text-[#99ACC2]">— None</button>
+            className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#FAFAFA] text-[#B3B3B3]">— None</button>
           {(['high','medium','low'] as Priority[]).map(k => {
             const v = PRIORITY_CONFIG[k];
             return (
               <button key={k} onClick={() => { onChange(k); setOpen(false); }}
-                className="w-full px-2 py-1.5 text-xs text-left hover:bg-[#F6F9FC] flex items-center gap-2">
+                className="w-full px-2 py-1.5 text-xs text-left hover:bg-[#FAFAFA] flex items-center gap-2">
                 <span className="flex-1 font-bold text-center py-0.5 rounded text-white text-xs" style={{ backgroundColor: v.badge }}>
                   {v.label}
                 </span>
               </button>
             );
           })}
-          <div className="border-t border-[#DFE3EB] mt-1 pt-1">
-            <button className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#F6F9FC] flex items-center gap-2 text-[#516F90]">
+          <div className="border-t border-[#EBEBEB] mt-1 pt-1">
+            <button className="w-full px-3 py-1.5 text-xs text-left hover:bg-[#FAFAFA] flex items-center gap-2 text-[#666666]">
               <Edit2 className="w-3 h-3" /> Edit Labels
             </button>
           </div>
@@ -198,33 +198,33 @@ function EmailCellPopover({ email, onSave, onClose }: {
 
   return (
     <div ref={ref} className="absolute left-0 top-full mt-1 z-50 bg-white rounded-[3px] shadow-2xl p-3 min-w-[240px]"
-      style={{ border: '1px solid #DFE3EB' }}>
-      <p className="text-[10px] font-semibold text-[#516F90] uppercase tracking-wide mb-1.5">Email address</p>
+      style={{ border: '1px solid #EBEBEB' }}>
+      <p className="text-[10px] font-semibold text-[#666666] uppercase tracking-wide mb-1.5">Email address</p>
       <input
         ref={inputRef}
         value={val}
         onChange={e => { setVal(e.target.value); setErr(''); }}
         onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onClose(); }}
         placeholder="user@example.com"
-        className="w-full h-8 px-2.5 text-xs border rounded outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] mb-1"
-        style={{ borderColor: err ? '#EF4444' : '#CBD6E2' }}
-        onFocus={e => { if (!err) e.currentTarget.style.borderColor = '#0091AE'; }}
-        onBlur={e => { if (!err) e.currentTarget.style.borderColor = '#CBD6E2'; }}
+        className="w-full h-8 px-2.5 text-xs border rounded outline-none text-[#333333] placeholder:text-[#D6D6D6] mb-1"
+        style={{ borderColor: err ? '#EF4444' : '#EBEBEB' }}
+        onFocus={e => { if (!err) e.currentTarget.style.borderColor = '#4762D5'; }}
+        onBlur={e => { if (!err) e.currentTarget.style.borderColor = '#EBEBEB'; }}
       />
       {err && <p className="text-[10px] text-red-500 mb-1">{err}</p>}
       <div className="flex gap-1.5 mt-2">
         <button onClick={handleSave}
           className="flex-1 py-1 text-xs font-bold text-white rounded-[3px]"
-          style={{ backgroundColor: '#0091AE' }}>Save</button>
+          style={{ backgroundColor: '#4762D5' }}>Save</button>
         <button onClick={onClose}
-          className="flex-1 py-1 text-xs text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">Cancel</button>
+          className="flex-1 py-1 text-xs text-[#555555] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA]">Cancel</button>
       </div>
     </div>
   );
 }
 
 /* ── Pill badge ─────────────────────────────────────────────── */
-function Pill({ label, color = '#0091AE' }: { label: string; color?: string }) {
+function Pill({ label, color = '#4762D5' }: { label: string; color?: string }) {
   return (
     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border"
       style={{ borderColor: `${color}40`, color, backgroundColor: `${color}10` }}>
@@ -254,15 +254,15 @@ function ThreeDotMenu({ groupId, isFixed, onAction }: {
         <MoreHorizontal className="w-4 h-4 text-white" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[230px]">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-2xl py-1 min-w-[230px]">
           {THREE_DOT_ITEMS.map((item, i) => {
-            if (!item) return <div key={i} className="my-1 border-t border-[#DFE3EB]" />;
+            if (!item) return <div key={i} className="my-1 border-t border-[#EBEBEB]" />;
             const disabled = isFixed && ['delete','archive'].includes(item.id);
             return (
               <button key={item.id} disabled={disabled}
                 onClick={() => { setOpen(false); onAction(item.id, groupId); }}
-                className="w-full px-4 py-2 text-xs text-left hover:bg-[#F6F9FC] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                style={{ color: item.danger ? '#EF4444' : '#2D3E50' }}>
+                className="w-full px-4 py-2 text-xs text-left hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                style={{ color: item.danger ? '#EF4444' : '#333333' }}>
                 {item.label}
               </button>
             );
@@ -295,14 +295,14 @@ function MoveToGroupDropdown({ contactId, currentGroupId, groups, onMove }: {
     <div ref={ref} className="relative">
       <button onClick={() => setOpen(v => !v)} title="Move to group"
         className="p-0.5 rounded hover:bg-[#E8F4FD]">
-        <MoveRight className="w-3 h-3 text-[#7C98B6]" />
+        <MoveRight className="w-3 h-3 text-[#999999]" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-1 min-w-[180px]">
-          <p className="px-3 py-1.5 text-[10px] font-semibold text-[#99ACC2] uppercase tracking-wide">Move to group</p>
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-2xl py-1 min-w-[180px]">
+          <p className="px-3 py-1.5 text-[10px] font-semibold text-[#B3B3B3] uppercase tracking-wide">Move to group</p>
           {available.map(g => (
             <button key={g.id} onClick={() => { onMove(contactId, g.id); setOpen(false); }}
-              className="w-full px-3 py-2 text-xs text-left hover:bg-[#F6F9FC] flex items-center gap-2 text-[#2D3E50]">
+              className="w-full px-3 py-2 text-xs text-left hover:bg-[#FAFAFA] flex items-center gap-2 text-[#333333]">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: g.color }} />
               {g.name}
             </button>
@@ -319,18 +319,18 @@ function ColorPickerModal({ groupName, current, onSelect, onClose }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-      <div className="bg-white rounded-[3px] shadow-2xl w-80" style={{ border: '1px solid #DFE3EB' }}>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[#DFE3EB]">
-          <span className="text-sm font-bold text-[#2D3E50]">Change group color</span>
-          <button onClick={onClose}><X className="w-4 h-4 text-[#99ACC2]" /></button>
+      <div className="bg-white rounded-[3px] shadow-2xl w-80" style={{ border: '1px solid #EBEBEB' }}>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#EBEBEB]">
+          <span className="text-sm font-bold text-[#333333]">Change group color</span>
+          <button onClick={onClose}><X className="w-4 h-4 text-[#B3B3B3]" /></button>
         </div>
         <div className="px-5 py-4">
-          <p className="text-xs text-[#7C98B6] mb-3">{groupName}</p>
+          <p className="text-xs text-[#999999] mb-3">{groupName}</p>
           <div className="grid grid-cols-5 gap-2">
             {GROUP_COLORS.map(c => (
               <button key={c} onClick={() => { onSelect(c); onClose(); }}
                 className="w-10 h-10 rounded-full border-2 transition-transform hover:scale-110"
-                style={{ backgroundColor: c, borderColor: c === current ? '#2D3E50' : 'transparent' }} />
+                style={{ backgroundColor: c, borderColor: c === current ? '#333333' : 'transparent' }} />
             ))}
           </div>
         </div>
@@ -346,19 +346,19 @@ function DeleteGroupModal({ groupName, onConfirm, onClose }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-      <div className="bg-white rounded-[3px] shadow-2xl w-[420px]" style={{ border: '1px solid #DFE3EB' }}>
-        <div className="px-5 py-4 border-b border-[#DFE3EB]">
-          <p className="text-sm font-bold text-[#2D3E50]">Delete group?</p>
+      <div className="bg-white rounded-[3px] shadow-2xl w-[420px]" style={{ border: '1px solid #EBEBEB' }}>
+        <div className="px-5 py-4 border-b border-[#EBEBEB]">
+          <p className="text-sm font-bold text-[#333333]">Delete group?</p>
         </div>
         <div className="px-5 py-4">
-          <p className="text-sm text-[#516F90]">
-            Are you sure you want to delete <strong className="text-[#2D3E50]">"{groupName}"</strong>?
+          <p className="text-sm text-[#666666]">
+            Are you sure you want to delete <strong className="text-[#333333]">"{groupName}"</strong>?
             All contacts inside this group will also be deleted. This action cannot be undone.
           </p>
         </div>
-        <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#DFE3EB]">
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#EBEBEB]">
           <button onClick={onClose}
-            className="px-4 py-1.5 text-sm text-[#425B76] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">
+            className="px-4 py-1.5 text-sm text-[#555555] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA]">
             Cancel
           </button>
           <button onClick={() => { onConfirm(); onClose(); }}
@@ -379,7 +379,7 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
   }, [onClose]);
   return (
     <div className="fixed bottom-5 right-5 z-[100] flex items-center gap-3 px-4 py-3 rounded-[3px] shadow-xl text-white text-sm font-semibold"
-      style={{ backgroundColor: type === 'success' ? '#00A38D' : '#EF4444' }}>
+      style={{ backgroundColor: type === 'success' ? '#4762D5' : '#EF4444' }}>
       {message}
       <button onClick={onClose}><X className="w-4 h-4 opacity-80 hover:opacity-100" /></button>
     </div>
@@ -409,16 +409,16 @@ function InlineAddRow({ onSave, onCancel, visibleColumns }: {
     setSaving(false);
   };
 
-  const inp = "h-7 px-2 text-xs border border-[#CBD6E2] rounded outline-none text-[#2D3E50] w-full";
-  const fi = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#0091AE'; };
-  const bl = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#CBD6E2'; };
+  const inp = "h-7 px-2 text-xs border border-[#EBEBEB] rounded outline-none text-[#333333] w-full";
+  const fi = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#4762D5'; };
+  const bl = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = '#EBEBEB'; };
   const kd = (e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onCancel(); };
 
   return (
-    <tr className="border-b border-[#F0F3F7] bg-blue-50/20">
-      <td className="w-10 px-3 py-2 border-r border-[#F0F3F7]" />
+    <tr className="border-b border-[#F1F1F1] bg-blue-50/20">
+      <td className="w-10 px-3 py-2 border-r border-[#F1F1F1]" />
       {/* Contact name — always */}
-      <td className="px-2 py-2 min-w-[180px] border-r border-[#F0F3F7]">
+      <td className="px-2 py-2 min-w-[180px] border-r border-[#F1F1F1]">
         <div className="flex gap-1">
           <input autoFocus placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value)}
             onKeyDown={kd} className={inp} style={{ width: '50%' }} onFocus={fi} onBlur={bl} />
@@ -427,40 +427,40 @@ function InlineAddRow({ onSave, onCancel, visibleColumns }: {
         </div>
       </td>
       {vc.has('email') && (
-        <td className="px-2 py-2 min-w-[200px] border-r border-[#F0F3F7]">
+        <td className="px-2 py-2 min-w-[200px] border-r border-[#F1F1F1]">
           <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={kd} className={inp} onFocus={fi} onBlur={bl} />
         </td>
       )}
-      {vc.has('activities') && <td className="px-2 py-2 w-[100px] border-r border-[#F0F3F7]" />}
-      {vc.has('accounts')   && <td className="px-2 py-2 min-w-[130px] border-r border-[#F0F3F7]" />}
-      {vc.has('deals')      && <td className="px-2 py-2 w-[80px] border-r border-[#F0F3F7]" />}
-      {vc.has('deals_value')&& <td className="px-2 py-2 w-[100px] border-r border-[#F0F3F7]" />}
+      {vc.has('activities') && <td className="px-2 py-2 w-[100px] border-r border-[#F1F1F1]" />}
+      {vc.has('accounts')   && <td className="px-2 py-2 min-w-[130px] border-r border-[#F1F1F1]" />}
+      {vc.has('deals')      && <td className="px-2 py-2 w-[80px] border-r border-[#F1F1F1]" />}
+      {vc.has('deals_value')&& <td className="px-2 py-2 w-[100px] border-r border-[#F1F1F1]" />}
       {vc.has('phone') && (
-        <td className="px-2 py-2 min-w-[150px] border-r border-[#F0F3F7]">
+        <td className="px-2 py-2 min-w-[150px] border-r border-[#F1F1F1]">
           <input placeholder="Phone" value={phone} onChange={e => setPhone(e.target.value)} onKeyDown={kd} className={inp} onFocus={fi} onBlur={bl} />
         </td>
       )}
-      {vc.has('mobile')       && <td className="px-2 py-2 min-w-[140px] border-r border-[#F0F3F7]" />}
+      {vc.has('mobile')       && <td className="px-2 py-2 min-w-[140px] border-r border-[#F1F1F1]" />}
       {vc.has('title') && (
-        <td className="px-2 py-2 min-w-[120px] border-r border-[#F0F3F7]">
+        <td className="px-2 py-2 min-w-[120px] border-r border-[#F1F1F1]">
           <input placeholder="Job title" value={title} onChange={e => setTitle(e.target.value)} onKeyDown={kd} className={inp} onFocus={fi} onBlur={bl} />
         </td>
       )}
-      {vc.has('address')      && <td className="px-2 py-2 min-w-[160px] border-r border-[#F0F3F7]" />}
-      {vc.has('manager_name') && <td className="px-2 py-2 min-w-[140px] border-r border-[#F0F3F7]" />}
-      {vc.has('email_note')   && <td className="px-2 py-2 min-w-[160px] border-r border-[#F0F3F7]" />}
-      {vc.has('next_step')    && <td className="px-2 py-2 min-w-[160px] border-r border-[#F0F3F7]" />}
-      {vc.has('priority')     && <td className="px-2 py-2 w-[110px] border-r border-[#F0F3F7]" />}
+      {vc.has('address')      && <td className="px-2 py-2 min-w-[160px] border-r border-[#F1F1F1]" />}
+      {vc.has('manager_name') && <td className="px-2 py-2 min-w-[140px] border-r border-[#F1F1F1]" />}
+      {vc.has('email_note')   && <td className="px-2 py-2 min-w-[160px] border-r border-[#F1F1F1]" />}
+      {vc.has('next_step')    && <td className="px-2 py-2 min-w-[160px] border-r border-[#F1F1F1]" />}
+      {vc.has('priority')     && <td className="px-2 py-2 w-[110px] border-r border-[#F1F1F1]" />}
       {/* Actions */}
       <td className="px-2 py-2 w-[120px]">
         <div className="flex items-center gap-1">
           <button onClick={handleSave} disabled={saving || !canSave}
             className="px-2.5 py-1 text-xs font-bold text-white rounded-[3px] disabled:opacity-40"
-            style={{ backgroundColor: '#0091AE' }}>
+            style={{ backgroundColor: '#4762D5' }}>
             {saving ? '…' : 'Add'}
           </button>
           <button onClick={onCancel}
-            className="px-2 py-1 text-xs text-[#7C98B6] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">✕</button>
+            className="px-2 py-1 text-xs text-[#999999] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA]">✕</button>
         </div>
       </td>
     </tr>
@@ -483,15 +483,15 @@ function InlineCell({ value, onSave, placeholder = 'Add…' }: {
         onChange={e => setVal(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setVal(value); setEditing(false); } }}
         onBlur={commit}
-        className="w-full text-xs px-1 py-0.5 border border-[#0091AE] rounded outline-none text-[#2D3E50] bg-white"
+        className="w-full text-xs px-1 py-0.5 border border-[#4762D5] rounded outline-none text-[#333333] bg-white"
       />
     );
   }
   return (
     <button onClick={() => setEditing(true)} className="text-xs text-left w-full truncate max-w-[160px]">
       {val
-        ? <span className="text-[#2D3E50]">{val}</span>
-        : <span className="opacity-0 group-hover/row:opacity-60 text-[#B0C1D4]">{placeholder}</span>}
+        ? <span className="text-[#333333]">{val}</span>
+        : <span className="opacity-0 group-hover/row:opacity-60 text-[#D6D6D6]">{placeholder}</span>}
     </button>
   );
 }
@@ -521,13 +521,13 @@ function ContactRow({
   const company = (contact as { company?: { name?: string } }).company?.name;
 
   const vc = visibleColumns;
-  const cellCls = "border-r border-[#F0F3F7]";
+  const cellCls = "border-r border-[#F1F1F1]";
   return (
-    <tr className="border-b border-[#F0F3F7] hover:bg-[#F8FAFC] transition-colors group/row">
+    <tr className="border-b border-[#F1F1F1] hover:bg-[#F8FAFC] transition-colors group/row">
       {/* Checkbox */}
       <td className={`w-10 px-3 py-2.5 sticky left-0 bg-inherit ${cellCls}`}>
         <input type="checkbox" checked={selected} onChange={() => onSelect(contact.id)}
-          className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
+          className="w-3.5 h-3.5 rounded border-[#EBEBEB] accent-[#4762D5]" />
       </td>
 
       {/* Contact name — always visible */}
@@ -539,15 +539,15 @@ function ContactRow({
           </div>
           <button onClick={() => onView(contact.id)}
             className="text-xs font-semibold hover:underline text-left truncate max-w-[130px]"
-            style={{ color: '#0091AE' }}>
+            style={{ color: '#4762D5' }}>
             {name || '—'}
           </button>
           <div className="opacity-0 group-hover/row:opacity-100 flex items-center gap-1 flex-shrink-0">
             <button onClick={() => onEdit(contact)} title="Edit properties" className="p-0.5 rounded hover:bg-[#E8F4FD]">
-              <Edit2 className="w-3 h-3 text-[#7C98B6]" />
+              <Edit2 className="w-3 h-3 text-[#999999]" />
             </button>
             <button onClick={() => onDelete(contact.id)} title="Delete" className="p-0.5 rounded hover:bg-red-50">
-              <Trash2 className="w-3 h-3 text-[#99ACC2] hover:text-red-400" />
+              <Trash2 className="w-3 h-3 text-[#B3B3B3] hover:text-red-400" />
             </button>
             <MoveToGroupDropdown contactId={contact.id} currentGroupId={currentGroupId} groups={allGroups} onMove={onMoveToGroup} />
           </div>
@@ -560,7 +560,7 @@ function ContactRow({
             <EmailCellPopover email={contact.email || ''} onSave={async (e) => { await onEmailSave(contact.id, e); }} onClose={() => setEmailEditing(false)} />
           ) : (
             <button onClick={() => setEmailEditing(true)} className="flex items-center gap-1 text-xs hover:underline text-left truncate max-w-[180px]"
-              style={{ color: contact.email ? '#0091AE' : '#B0C1D4' }}>
+              style={{ color: contact.email ? '#4762D5' : '#D6D6D6' }}>
               {contact.email || <span className="flex items-center gap-1 opacity-0 group-hover/row:opacity-60"><Mail className="w-3 h-3" /> Add email</span>}
             </button>
           )}
@@ -571,23 +571,23 @@ function ContactRow({
       )}
       {vc.has('accounts') && (
         <td className={`px-3 py-2.5 min-w-[130px] ${cellCls}`}>
-          {company ? <Pill label={company} color="#0091AE" /> : <span className="text-xs text-[#B0C1D4]">—</span>}
+          {company ? <Pill label={company} color="#4762D5" /> : <span className="text-xs text-[#D6D6D6]">—</span>}
         </td>
       )}
       {vc.has('deals') && (
-        <td className={`px-3 py-2.5 w-[80px] ${cellCls}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
+        <td className={`px-3 py-2.5 w-[80px] ${cellCls}`}><span className="text-xs text-[#D6D6D6]">—</span></td>
       )}
       {vc.has('deals_value') && (
-        <td className={`px-3 py-2.5 w-[100px] ${cellCls}`}><span className="text-xs text-[#B0C1D4]">—</span></td>
+        <td className={`px-3 py-2.5 w-[100px] ${cellCls}`}><span className="text-xs text-[#D6D6D6]">—</span></td>
       )}
       {vc.has('phone') && (
         <td className={`px-3 py-2.5 min-w-[150px] ${cellCls}`}>
           {contact.phone ? (
-            <span className="flex items-center gap-1.5 text-xs text-[#2D3E50]">
+            <span className="flex items-center gap-1.5 text-xs text-[#333333]">
               <span>{getPhoneFlag(contact.phone)}</span>
               <span className="truncate">{contact.phone}</span>
             </span>
-          ) : <span className="text-xs text-[#B0C1D4]">—</span>}
+          ) : <span className="text-xs text-[#D6D6D6]">—</span>}
         </td>
       )}
       {/* mobile comes before title — matches ALL_COLUMNS order */}
@@ -732,17 +732,17 @@ function GroupSection({
       {!collapsed && (
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-[#DFE3EB] bg-white">
-              <th className="w-10 px-3 py-2 sticky left-0 bg-white z-10 border-r border-[#DFE3EB]">
+            <tr className="border-b border-[#EBEBEB] bg-white">
+              <th className="w-10 px-3 py-2 sticky left-0 bg-white z-10 border-r border-[#EBEBEB]">
                 <input type="checkbox"
                   checked={contacts.length > 0 && contacts.every(c => selectedIds.has(c.id))}
                   onChange={() => onSelectAll(group.id, contacts.map(c => c.id))}
-                  className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
+                  className="w-3.5 h-3.5 rounded border-[#EBEBEB] accent-[#4762D5]" />
               </th>
               {/* Contact column header — always shown */}
-              <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap border-r border-[#DFE3EB]" style={{ fontSize: 10 }}>Contact</th>
+              <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#666666] whitespace-nowrap border-r border-[#EBEBEB]" style={{ fontSize: 10 }}>Contact</th>
               {ALL_COLUMNS.filter(c => c.id !== 'contact' && visibleColumns.has(c.id)).map(col => (
-                <th key={col.id} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#516F90] whitespace-nowrap border-r border-[#DFE3EB]" style={{ fontSize: 10 }}>
+                <th key={col.id} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-[#666666] whitespace-nowrap border-r border-[#EBEBEB]" style={{ fontSize: 10 }}>
                   {col.label}
                 </th>
               ))}
@@ -750,18 +750,18 @@ function GroupSection({
               <th className="px-2 py-2 w-8">
                 <div ref={colPickerRef} className="relative">
                   <button onClick={() => setShowColPicker(v => !v)}
-                    className="w-6 h-6 flex items-center justify-center rounded border border-dashed border-[#CBD6E2] hover:border-[#0091AE] hover:bg-[#E8F4FD] transition-colors"
+                    className="w-6 h-6 flex items-center justify-center rounded border border-dashed border-[#EBEBEB] hover:border-[#4762D5] hover:bg-[#E8F4FD] transition-colors"
                     title="Show/hide columns">
-                    <Plus className="w-3 h-3 text-[#99ACC2]" />
+                    <Plus className="w-3 h-3 text-[#B3B3B3]" />
                   </button>
                   {showColPicker && (
-                    <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-2xl py-2 min-w-[190px]">
-                      <p className="px-3 pb-1.5 text-[10px] font-semibold text-[#516F90] uppercase tracking-wide">Show / hide columns</p>
+                    <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-2xl py-2 min-w-[190px]">
+                      <p className="px-3 pb-1.5 text-[10px] font-semibold text-[#666666] uppercase tracking-wide">Show / hide columns</p>
                       {ALL_COLUMNS.filter(c => c.id !== 'contact').map(col => (
-                        <label key={col.id} className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-[#F6F9FC] cursor-pointer">
+                        <label key={col.id} className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-[#FAFAFA] cursor-pointer">
                           <input type="checkbox" checked={visibleColumns.has(col.id)} onChange={() => onToggleColumn(col.id)}
-                            className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
-                          <span className="text-xs text-[#2D3E50]">{col.label}</span>
+                            className="w-3.5 h-3.5 rounded border-[#EBEBEB] accent-[#4762D5]" />
+                          <span className="text-xs text-[#333333]">{col.label}</span>
                         </label>
                       ))}
                     </div>
@@ -805,8 +805,8 @@ function GroupSection({
               <td />
               <td className="px-3 py-2.5" colSpan={9}>
                 <button onClick={() => onStartAdd(group.id)}
-                  className="flex items-center gap-1.5 text-xs font-medium hover:text-[#0091AE] transition-colors"
-                  style={{ color: '#7C98B6' }}>
+                  className="flex items-center gap-1.5 text-xs font-medium hover:text-[#4762D5] transition-colors"
+                  style={{ color: '#999999' }}>
                   <Plus className="w-3.5 h-3.5" /> Add contact
                 </button>
               </td>
@@ -1205,93 +1205,93 @@ export default function ContactsPage() {
     <div className="flex flex-col h-full bg-white">
 
       {/* ── Row 1: Title + right actions ── */}
-      <div className="flex items-center justify-between px-5 py-2 border-b border-[#DFE3EB] flex-shrink-0">
+      <div className="flex items-center justify-between px-5 py-2 border-b border-[#EBEBEB] flex-shrink-0">
         <div className="flex items-center gap-1">
-          <h1 className="text-xl font-bold text-[#2D3E50]">Contacts</h1>
-          <ChevronDown className="w-4 h-4 text-[#99ACC2]" />
+          <h1 className="text-xl font-bold text-[#333333]">Contacts</h1>
+          <ChevronDown className="w-4 h-4 text-[#B3B3B3]" />
         </div>
         <div className="flex items-center gap-1.5">
           <button onClick={() => setShowImport(true)}
-            className="px-3 py-1.5 text-xs font-semibold text-[#516F90] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC] flex items-center gap-1.5">
+            className="px-3 py-1.5 text-xs font-semibold text-[#666666] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA] flex items-center gap-1.5">
             <Download className="w-3.5 h-3.5" /> Import
           </button>
           {['Integrate','Automate','Invite'].map(label => (
-            <button key={label} className="px-3 py-1.5 text-xs font-semibold text-[#516F90] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC]">{label}</button>
+            <button key={label} className="px-3 py-1.5 text-xs font-semibold text-[#666666] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA]">{label}</button>
           ))}
-          <button className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2]"><MoreHorizontal className="w-4 h-4" /></button>
+          <button className="p-1.5 rounded hover:bg-[#F1F1F1] text-[#B3B3B3]"><MoreHorizontal className="w-4 h-4" /></button>
         </div>
       </div>
 
       {/* ── Row 2: Tabs ── */}
-      <div className="flex items-center px-5 border-b border-[#DFE3EB] flex-shrink-0">
-        <button className="px-3 py-2 text-sm font-semibold border-b-2 -mb-px" style={{ color: '#0091AE', borderColor: '#0091AE' }}>
+      <div className="flex items-center px-5 border-b border-[#EBEBEB] flex-shrink-0">
+        <button className="px-3 py-2 text-sm font-semibold border-b-2 -mb-px" style={{ color: '#4762D5', borderColor: '#4762D5' }}>
           Main table
         </button>
-        <button className="px-2 py-2 text-[#99ACC2] hover:text-[#516F90]"><MoreHorizontal className="w-4 h-4" /></button>
-        <button className="px-2 py-2 text-[#99ACC2] hover:text-[#516F90]"><Plus className="w-4 h-4" /></button>
+        <button className="px-2 py-2 text-[#B3B3B3] hover:text-[#666666]"><MoreHorizontal className="w-4 h-4" /></button>
+        <button className="px-2 py-2 text-[#B3B3B3] hover:text-[#666666]"><Plus className="w-4 h-4" /></button>
         {selectedIds.size > 0 && (
           <div className="ml-auto flex items-center gap-2 py-1">
-            <span className="text-xs text-[#516F90]">{selectedIds.size} selected</span>
+            <span className="text-xs text-[#666666]">{selectedIds.size} selected</span>
             <button onClick={async () => { if (!confirm(`Delete ${selectedIds.size} contacts?`)) return; for (const id of selectedIds) await deleteContact(id); setSelectedIds(new Set()); }}
               className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold border border-red-200 text-red-500 rounded-[3px] hover:bg-red-50">
               <Trash2 className="w-3.5 h-3.5" /> Delete
             </button>
-            <button onClick={() => setSelectedIds(new Set())} className="p-1 rounded hover:bg-[#F0F3F7] text-[#99ACC2]"><X className="w-4 h-4" /></button>
+            <button onClick={() => setSelectedIds(new Set())} className="p-1 rounded hover:bg-[#F1F1F1] text-[#B3B3B3]"><X className="w-4 h-4" /></button>
           </div>
         )}
       </div>
 
       {/* ── Row 3: Toolbar ── */}
-      <div className="flex items-center gap-2 px-5 py-2 border-b border-[#DFE3EB] flex-shrink-0">
+      <div className="flex items-center gap-2 px-5 py-2 border-b border-[#EBEBEB] flex-shrink-0">
         {/* New contact dropdown */}
         <div ref={newBtnRef} className="relative">
-          <div className="flex items-center border border-[#FF7A59] rounded-[3px] overflow-hidden">
+          <div className="flex items-center border border-[#4762D5] rounded-[3px] overflow-hidden">
             <button onClick={() => { setEditContact(null); setShowForm(true); }}
               className="px-4 py-1.5 text-sm font-bold text-white"
-              style={{ backgroundColor: '#FF7A59' }}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}>
+              style={{ backgroundColor: '#4762D5' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3A52C0')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#4762D5')}>
               New contact
             </button>
             <button onClick={() => setShowNewDropdown(v => !v)}
               className="px-2 py-1.5 text-white border-l border-white/30"
-              style={{ backgroundColor: '#FF7A59' }}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FF8F73')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#FF7A59')}>
+              style={{ backgroundColor: '#4762D5' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3A52C0')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#4762D5')}>
               <ChevronDown className="w-3.5 h-3.5" />
             </button>
           </div>
           {showNewDropdown && (
-            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#DFE3EB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
+            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
               <button onClick={() => { setEditContact(null); setShowForm(true); setShowNewDropdown(false); }}
-                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
-                <Users className="w-4 h-4 text-[#7C98B6]" /> New contact
+                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
+                <Users className="w-4 h-4 text-[#999999]" /> New contact
               </button>
               <button onClick={() => { handleGroupAction('add_group', 'active'); setShowNewDropdown(false); }}
-                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
-                <FolderPlus className="w-4 h-4 text-[#7C98B6]" /> New group of contacts
+                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
+                <FolderPlus className="w-4 h-4 text-[#999999]" /> New group of contacts
               </button>
               <button onClick={() => { setShowImport(true); setShowNewDropdown(false); }}
-                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#F6F9FC] flex items-center gap-2.5 text-[#2D3E50]">
-                <Download className="w-4 h-4 text-[#7C98B6]" /> Import contacts
+                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
+                <Download className="w-4 h-4 text-[#999999]" /> Import contacts
               </button>
             </div>
           )}
         </div>
 
-        <div className="w-px h-5 bg-[#DFE3EB]" />
+        <div className="w-px h-5 bg-[#EBEBEB]" />
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#99ACC2]" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#B3B3B3]" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search"
-            className="h-8 pl-8 pr-3 text-sm border border-[#DFE3EB] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] w-48"
-            onFocus={e => { e.currentTarget.style.borderColor = '#99ACC2'; }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }} />
-          {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-[#99ACC2]" /></button>}
+            className="h-8 pl-8 pr-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] placeholder:text-[#D6D6D6] w-48"
+            onFocus={e => { e.currentTarget.style.borderColor = '#B3B3B3'; }}
+            onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }} />
+          {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-[#B3B3B3]" /></button>}
         </div>
 
-        <button className="px-3 py-1.5 text-xs font-semibold text-[#516F90] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC] flex items-center gap-1.5">
+        <button className="px-3 py-1.5 text-xs font-semibold text-[#666666] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA] flex items-center gap-1.5">
           <Users className="w-3.5 h-3.5" /> Person
         </button>
 
@@ -1300,30 +1300,30 @@ export default function ContactsPage() {
             onClick={() => setShowFilter(v => !v)}
             className="px-3 py-1.5 text-xs font-semibold rounded-[3px] border flex items-center gap-1.5 transition-colors"
             style={showFilter || filterPriorities.size > 0 || filterCompany
-              ? { color: '#0091AE', borderColor: '#0091AE', backgroundColor: '#E8F4FD' }
-              : { color: '#516F90', borderColor: '#DFE3EB', backgroundColor: 'transparent' }}>
+              ? { color: '#4762D5', borderColor: '#4762D5', backgroundColor: '#E8F4FD' }
+              : { color: '#666666', borderColor: '#EBEBEB', backgroundColor: 'transparent' }}>
             <Search className="w-3.5 h-3.5" /> Filter
             {(filterPriorities.size > 0 || filterCompany) && (
-              <span className="ml-0.5 px-1 py-0.5 rounded text-[10px] font-bold text-white" style={{ backgroundColor: '#0091AE' }}>
+              <span className="ml-0.5 px-1 py-0.5 rounded text-[10px] font-bold text-white" style={{ backgroundColor: '#4762D5' }}>
                 {filterPriorities.size + (filterCompany ? 1 : 0)}
               </span>
             )}
           </button>
         </div>
 
-        <button className="px-3 py-1.5 text-xs font-semibold text-[#516F90] border border-[#DFE3EB] rounded-[3px] hover:bg-[#F6F9FC] flex items-center gap-1.5">
+        <button className="px-3 py-1.5 text-xs font-semibold text-[#666666] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA] flex items-center gap-1.5">
           <ChevronDown className="w-3.5 h-3.5" /> Group by
         </button>
 
-        <span className="text-xs text-[#99ACC2] ml-auto">{contacts.length} contacts</span>
-        <button className="p-1.5 rounded hover:bg-[#F0F3F7] text-[#99ACC2]"><MoreHorizontal className="w-4 h-4" /></button>
+        <span className="text-xs text-[#B3B3B3] ml-auto">{contacts.length} contacts</span>
+        <button className="p-1.5 rounded hover:bg-[#F1F1F1] text-[#B3B3B3]"><MoreHorizontal className="w-4 h-4" /></button>
       </div>
 
       {/* ── Filter panel ── */}
       {showFilter && (
-        <div className="flex items-start gap-6 px-5 py-3 border-b border-[#DFE3EB] bg-[#F6F9FC] flex-shrink-0">
+        <div className="flex items-start gap-6 px-5 py-3 border-b border-[#EBEBEB] bg-[#FAFAFA] flex-shrink-0">
           <div>
-            <p className="text-[10px] font-semibold text-[#516F90] uppercase tracking-wide mb-2">Priority</p>
+            <p className="text-[10px] font-semibold text-[#666666] uppercase tracking-wide mb-2">Priority</p>
             <div className="flex flex-col gap-1">
               {(['high','medium','low'] as const).map(p => {
                 const cfg = PRIORITY_CONFIG[p];
@@ -1331,7 +1331,7 @@ export default function ContactsPage() {
                   <label key={p} className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={filterPriorities.has(p)}
                       onChange={() => setFilterPriorities(prev => { const n = new Set(prev); n.has(p) ? n.delete(p) : n.add(p); return n; })}
-                      className="w-3.5 h-3.5 rounded border-[#CBD6E2] accent-[#0091AE]" />
+                      className="w-3.5 h-3.5 rounded border-[#EBEBEB] accent-[#4762D5]" />
                     <span className="text-xs font-bold px-2 py-0.5 rounded text-white" style={{ backgroundColor: cfg.badge }}>{cfg.label}</span>
                   </label>
                 );
@@ -1340,21 +1340,21 @@ export default function ContactsPage() {
           </div>
 
           <div>
-            <p className="text-[10px] font-semibold text-[#516F90] uppercase tracking-wide mb-2">Company</p>
+            <p className="text-[10px] font-semibold text-[#666666] uppercase tracking-wide mb-2">Company</p>
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#99ACC2]" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#B3B3B3]" />
               <input value={filterCompany} onChange={e => setFilterCompany(e.target.value)} placeholder="Filter by company…"
-                className="h-7 pl-6 pr-3 text-xs border border-[#DFE3EB] rounded-[3px] outline-none text-[#2D3E50] placeholder:text-[#B0C1D4] w-44"
-                onFocus={e => { e.currentTarget.style.borderColor = '#0091AE'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#DFE3EB'; }} />
-              {filterCompany && <button onClick={() => setFilterCompany('')} className="absolute right-1.5 top-1/2 -translate-y-1/2"><X className="w-3 h-3 text-[#99ACC2]" /></button>}
+                className="h-7 pl-6 pr-3 text-xs border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] placeholder:text-[#D6D6D6] w-44"
+                onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }} />
+              {filterCompany && <button onClick={() => setFilterCompany('')} className="absolute right-1.5 top-1/2 -translate-y-1/2"><X className="w-3 h-3 text-[#B3B3B3]" /></button>}
             </div>
           </div>
 
           {(filterPriorities.size > 0 || filterCompany) && (
             <div className="flex items-end pb-0.5 ml-auto self-end">
               <button onClick={() => { setFilterPriorities(new Set()); setFilterCompany(''); }}
-                className="px-3 py-1.5 text-xs font-semibold text-[#516F90] border border-[#DFE3EB] rounded-[3px] hover:bg-white flex items-center gap-1.5">
+                className="px-3 py-1.5 text-xs font-semibold text-[#666666] border border-[#EBEBEB] rounded-[3px] hover:bg-white flex items-center gap-1.5">
                 <X className="w-3 h-3" /> Clear filters
               </button>
             </div>
@@ -1365,7 +1365,7 @@ export default function ContactsPage() {
       {/* ── Groups ── */}
       <div className="flex-1 overflow-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-sm text-[#7C98B6]">Loading contacts…</div>
+          <div className="flex items-center justify-center py-20 text-sm text-[#999999]">Loading contacts…</div>
         ) : (
           allGroups.map(group => (
             <GroupSection

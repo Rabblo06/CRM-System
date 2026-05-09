@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Plus, Package, Search, TrendingUp, DollarSign, ShoppingCart, CheckCircle2, Clock, XCircle, MoreHorizontal, Truck } from 'lucide-react';
@@ -29,11 +29,11 @@ const MOCK_ORDERS: Order[] = [
 ];
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  pending: { label: 'Pending', color: '#F5C26B', bg: '#FEF9EE', icon: Clock },
-  processing: { label: 'Processing', color: '#0091AE', bg: '#E5F5F8', icon: ShoppingCart },
-  shipped: { label: 'Shipped', color: '#425B76', bg: '#EBF0F5', icon: Truck },
-  delivered: { label: 'Delivered', color: '#00BDA5', bg: '#E5F8F6', icon: CheckCircle2 },
-  cancelled: { label: 'Cancelled', color: '#7C98B6', bg: '#F0F3F7', icon: XCircle },
+  pending: { label: 'Pending', color: '#E8882A', bg: '#FEF9EE', icon: Clock },
+  processing: { label: 'Processing', color: '#4762D5', bg: '#E5F5F8', icon: ShoppingCart },
+  shipped: { label: 'Shipped', color: '#555555', bg: '#EBF0F5', icon: Truck },
+  delivered: { label: 'Delivered', color: '#4CAF8E', bg: '#E5F8F6', icon: CheckCircle2 },
+  cancelled: { label: 'Cancelled', color: '#999999', bg: '#F1F1F1', icon: XCircle },
 };
 
 function formatCurrency(amount: number, currency: string) {
@@ -56,12 +56,12 @@ export default function OrdersPage() {
   const deliveredCount = orders.filter(o => o.status === 'delivered').length;
 
   return (
-    <div className="p-6 space-y-5" style={{ backgroundColor: '#F6F9FC', minHeight: '100%' }}>
+    <div className="p-6 space-y-5" style={{ backgroundColor: '#FAFAFA', minHeight: '100%' }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold" style={{ color: '#2D3E50' }}>Orders</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#7C98B6' }}>Manage customer orders and subscriptions</p>
+          <h1 className="text-lg font-semibold" style={{ color: '#333333' }}>Orders</h1>
+          <p className="text-xs mt-0.5" style={{ color: '#999999' }}>Manage customer orders and subscriptions</p>
         </div>
         <Button className="gap-1.5 text-xs">
           <Plus className="w-3.5 h-3.5" />
@@ -72,22 +72,22 @@ export default function OrdersPage() {
       {/* Summary stats */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'Total Revenue', value: formatCurrency(totalRevenue, 'USD'), icon: DollarSign, color: '#00BDA5', bg: '#E5F8F6' },
-          { label: 'Total Orders', value: String(orders.length), icon: Package, color: '#0091AE', bg: '#E5F5F8' },
-          { label: 'Active Orders', value: String(pendingCount), icon: Clock, color: '#F5C26B', bg: '#FEF9EE' },
-          { label: 'Delivered', value: String(deliveredCount), icon: CheckCircle2, color: '#FF7A59', bg: '#FFF3F0' },
+          { label: 'Total Revenue', value: formatCurrency(totalRevenue, 'USD'), icon: DollarSign, color: '#4CAF8E', bg: '#E5F8F6' },
+          { label: 'Total Orders', value: String(orders.length), icon: Package, color: '#4762D5', bg: '#E5F5F8' },
+          { label: 'Active Orders', value: String(pendingCount), icon: Clock, color: '#E8882A', bg: '#FEF9EE' },
+          { label: 'Delivered', value: String(deliveredCount), icon: CheckCircle2, color: '#4762D5', bg: '#EEF0FB' },
         ].map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="bg-white border border-[#DFE3EB] rounded-xl p-4">
+            <div key={stat.label} className="bg-white border border-[#EBEBEB] rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: stat.bg }}>
                   <Icon className="w-3.5 h-3.5" style={{ color: stat.color }} />
                 </div>
-                <TrendingUp className="w-3.5 h-3.5" style={{ color: '#DFE3EB' }} />
+                <TrendingUp className="w-3.5 h-3.5" style={{ color: '#EBEBEB' }} />
               </div>
-              <p className="text-xl font-bold" style={{ color: '#2D3E50' }}>{stat.value}</p>
-              <p className="text-xs mt-0.5" style={{ color: '#7C98B6' }}>{stat.label}</p>
+              <p className="text-xl font-bold" style={{ color: '#333333' }}>{stat.value}</p>
+              <p className="text-xs mt-0.5" style={{ color: '#999999' }}>{stat.label}</p>
             </div>
           );
         })}
@@ -96,7 +96,7 @@ export default function OrdersPage() {
       {/* Filters */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: '#99ACC2' }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: '#B3B3B3' }} />
           <Input
             placeholder="Search orders..."
             value={search}
@@ -111,9 +111,9 @@ export default function OrdersPage() {
               onClick={() => setStatusFilter(s)}
               className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
               style={{
-                backgroundColor: statusFilter === s ? '#2D3E50' : '#ffffff',
-                color: statusFilter === s ? '#ffffff' : '#516F90',
-                border: '1px solid #DFE3EB',
+                backgroundColor: statusFilter === s ? '#333333' : '#ffffff',
+                color: statusFilter === s ? '#ffffff' : '#666666',
+                border: '1px solid #EBEBEB',
               }}
             >
               {s === 'all' ? 'All' : statusConfig[s].label}
@@ -123,16 +123,16 @@ export default function OrdersPage() {
       </div>
 
       {/* Orders table */}
-      <div className="bg-white border border-[#DFE3EB] rounded-xl overflow-hidden">
+      <div className="bg-white border border-[#EBEBEB] rounded-xl overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr style={{ borderBottom: '1px solid #DFE3EB', backgroundColor: '#F6F9FC' }}>
-              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Order</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Customer</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Product</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Amount</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Status</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#7C98B6' }}>Date</th>
+            <tr style={{ borderBottom: '1px solid #EBEBEB', backgroundColor: '#FAFAFA' }}>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Order</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Customer</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Product</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Amount</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Status</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: '#999999' }}>Date</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -143,22 +143,22 @@ export default function OrdersPage() {
               return (
                 <tr
                   key={order.id}
-                  className="transition-colors hover:bg-[#F6F9FC] cursor-pointer"
-                  style={{ borderTop: i > 0 ? '1px solid #DFE3EB' : undefined }}
+                  className="transition-colors hover:bg-[#FAFAFA] cursor-pointer"
+                  style={{ borderTop: i > 0 ? '1px solid #EBEBEB' : undefined }}
                 >
                   <td className="px-4 py-3">
-                    <span className="text-xs font-mono font-medium" style={{ color: '#516F90' }}>{order.id}</span>
+                    <span className="text-xs font-mono font-medium" style={{ color: '#666666' }}>{order.id}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-xs font-medium" style={{ color: '#2D3E50' }}>{order.customer}</p>
-                    <p className="text-xs" style={{ color: '#7C98B6' }}>{order.company}</p>
+                    <p className="text-xs font-medium" style={{ color: '#333333' }}>{order.customer}</p>
+                    <p className="text-xs" style={{ color: '#999999' }}>{order.company}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-xs" style={{ color: '#2D3E50' }}>{order.product}</p>
-                    <p className="text-xs" style={{ color: '#7C98B6' }}>{order.items} item{order.items > 1 ? 's' : ''}</p>
+                    <p className="text-xs" style={{ color: '#333333' }}>{order.product}</p>
+                    <p className="text-xs" style={{ color: '#999999' }}>{order.items} item{order.items > 1 ? 's' : ''}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-xs font-semibold" style={{ color: '#2D3E50' }}>{formatCurrency(order.amount, order.currency)}</span>
+                    <span className="text-xs font-semibold" style={{ color: '#333333' }}>{formatCurrency(order.amount, order.currency)}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -170,11 +170,11 @@ export default function OrdersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-xs" style={{ color: '#7C98B6' }}>{order.date}</span>
+                    <span className="text-xs" style={{ color: '#999999' }}>{order.date}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <button className="p-1 rounded hover:bg-[#F0F3F7]">
-                      <MoreHorizontal className="w-4 h-4" style={{ color: '#99ACC2' }} />
+                    <button className="p-1 rounded hover:bg-[#F1F1F1]">
+                      <MoreHorizontal className="w-4 h-4" style={{ color: '#B3B3B3' }} />
                     </button>
                   </td>
                 </tr>
@@ -183,8 +183,8 @@ export default function OrdersPage() {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={7} className="text-center py-12">
-                  <Package className="w-8 h-8 mx-auto mb-2" style={{ color: '#DFE3EB' }} />
-                  <p className="text-sm" style={{ color: '#7C98B6' }}>No orders found</p>
+                  <Package className="w-8 h-8 mx-auto mb-2" style={{ color: '#EBEBEB' }} />
+                  <p className="text-sm" style={{ color: '#999999' }}>No orders found</p>
                 </td>
               </tr>
             )}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Users, Building2, TrendingUp, DollarSign, Target, Zap } from 'lucide-react';
 import { MetricCard } from '@/components/dashboard/MetricCard';
@@ -18,8 +18,8 @@ export default function DashboardPage() {
     <div className="p-6 space-y-6">
       {/* Page Title */}
       <div>
-        <h1 className="text-2xl font-bold text-[#2D3E50]">Dashboard</h1>
-        <p className="text-[#516F90] text-sm mt-1">Welcome back! Here&apos;s your sales overview.</p>
+        <h1 className="text-2xl font-bold text-[#333333]">Dashboard</h1>
+        <p className="text-[#666666] text-sm mt-1">Welcome back! Here&apos;s your sales overview.</p>
       </div>
 
       {/* Metrics Grid */}
@@ -61,8 +61,8 @@ export default function DashboardPage() {
           value={`${metrics.winRate}%`}
           change={3}
           icon={Target}
-          iconColor="text-[#FF7A59]"
-          iconBg="bg-[#FFF3F0]"
+          iconColor="text-[#4762D5]"
+          iconBg="bg-[#EEF0FB]"
         />
         <MetricCard
           title="Monthly Growth"
@@ -90,8 +90,8 @@ export default function DashboardPage() {
 
         {/* Quick Stats */}
         <div className="space-y-4">
-          <div className="bg-white border border-[#DFE3EB] rounded-xl p-5">
-            <h3 className="text-base font-semibold text-[#2D3E50] mb-4">Pipeline Health</h3>
+          <div className="bg-white border border-[#EBEBEB] rounded-xl p-5">
+            <h3 className="text-base font-semibold text-[#333333] mb-4">Pipeline Health</h3>
             <div className="space-y-3">
               {[
                 { label: 'Early Stage (0-30%)', value: deals.filter(d => (d.probability || 0) <= 30).length, color: '#60A5FA' },
@@ -100,15 +100,15 @@ export default function DashboardPage() {
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-3">
                   <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                  <span className="text-sm text-[#516F90] flex-1">{item.label}</span>
-                  <span className="text-sm font-semibold text-[#2D3E50]">{item.value}</span>
+                  <span className="text-sm text-[#666666] flex-1">{item.label}</span>
+                  <span className="text-sm font-semibold text-[#333333]">{item.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-white border border-[#DFE3EB] rounded-xl p-5">
-            <h3 className="text-base font-semibold text-[#2D3E50] mb-4">Top Deals by Value</h3>
+          <div className="bg-white border border-[#EBEBEB] rounded-xl p-5">
+            <h3 className="text-base font-semibold text-[#333333] mb-4">Top Deals by Value</h3>
             <div className="space-y-3">
               {deals
                 .sort((a, b) => b.amount - a.amount)
@@ -116,8 +116,8 @@ export default function DashboardPage() {
                 .map((deal) => (
                   <div key={deal.id} className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-[#2D3E50] font-medium truncate">{deal.title}</p>
-                      <p className="text-xs text-[#7C98B6]">{deal.company?.name || 'No company'}</p>
+                      <p className="text-sm text-[#333333] font-medium truncate">{deal.title}</p>
+                      <p className="text-xs text-[#999999]">{deal.company?.name || 'No company'}</p>
                     </div>
                     <span className="text-sm font-bold text-green-400 ml-3 flex-shrink-0">
                       {formatCurrency(deal.amount)}

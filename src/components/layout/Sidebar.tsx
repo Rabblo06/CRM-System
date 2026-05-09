@@ -5,65 +5,85 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   LayoutDashboard, Users, Building2, TrendingUp, Activity,
-  CheckSquare, Mail, Upload, Settings, Calendar, Zap, LogOut,
-  MoreHorizontal, Pin, PinOff, GripVertical, X, ChevronRight, Home,
-  Ticket, Package, Filter, Inbox, Phone, MessageSquare,
+  CheckSquare, Mail, Upload, Settings, Calendar, LogOut,
+  MoreHorizontal, Pin, PinOff, GripVertical, X, ChevronRight,
+  Ticket, Package, Filter, Inbox, Phone, MessageSquare, Search,
+  ChevronDown,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useNotificationBadges } from '@/hooks/useNotificationBadges';
 
-/* ── All CRM items by category ─────────────────────────── */
+/* ── Types ──────────────────────────────────────────────── */
 type NavItem = { id: string; name: string; href: string; icon: React.ElementType };
 
 const ALL_ITEMS: NavItem[] = [
-  { id: 'dashboard',          name: 'Dashboard',          href: '/dashboard',          icon: LayoutDashboard },
-  { id: 'contacts',           name: 'Contacts',           href: '/contacts',           icon: Users },
-  { id: 'companies',          name: 'Companies',          href: '/companies',          icon: Building2 },
-  { id: 'deals',              name: 'Pipeline',           href: '/deals',              icon: TrendingUp },
-  { id: 'tickets',            name: 'Tickets',            href: '/tickets',            icon: Ticket },
-  { id: 'orders',             name: 'Orders',             href: '/orders',             icon: Package },
-  { id: 'segments',           name: 'Segments (Lists)',   href: '/segments',           icon: Filter },
-  { id: 'inbox',              name: 'Inbox',              href: '/inbox',              icon: Inbox },
-  { id: 'calls',              name: 'Calls',              href: '/calls',              icon: Phone },
-  { id: 'tasks',              name: 'Tasks',              href: '/tasks',              icon: CheckSquare },
-  { id: 'activities',         name: 'Activities',         href: '/activities',         icon: Activity },
-  { id: 'meetings',           name: 'Meetings',           href: '/meetings',           icon: Calendar },
-  { id: 'emails',             name: 'Email Templates',    href: '/emails',             icon: Mail },
-  { id: 'message-templates',  name: 'Message Templates',  href: '/message-templates',  icon: MessageSquare },
-  { id: 'import',             name: 'Import / Export',    href: '/import',             icon: Upload },
-  { id: 'settings',           name: 'Settings',           href: '/settings',           icon: Settings },
+  { id: 'dashboard',         name: 'Dashboard',         href: '/dashboard',         icon: LayoutDashboard },
+  { id: 'contacts',          name: 'Contacts',          href: '/contacts',          icon: Users },
+  { id: 'companies',         name: 'Companies',         href: '/companies',         icon: Building2 },
+  { id: 'deals',             name: 'Pipeline',          href: '/deals',             icon: TrendingUp },
+  { id: 'tickets',           name: 'Tickets',           href: '/tickets',           icon: Ticket },
+  { id: 'orders',            name: 'Orders',            href: '/orders',            icon: Package },
+  { id: 'segments',          name: 'Segments',          href: '/segments',          icon: Filter },
+  { id: 'inbox',             name: 'Inbox',             href: '/inbox',             icon: Inbox },
+  { id: 'calls',             name: 'Calls',             href: '/calls',             icon: Phone },
+  { id: 'tasks',             name: 'Tasks',             href: '/tasks',             icon: CheckSquare },
+  { id: 'activities',        name: 'Activities',        href: '/activities',        icon: Activity },
+  { id: 'meetings',          name: 'Meetings',          href: '/meetings',          icon: Calendar },
+  { id: 'emails',            name: 'Email Templates',   href: '/emails',            icon: Mail },
+  { id: 'message-templates', name: 'Msg Templates',     href: '/message-templates', icon: MessageSquare },
+  { id: 'import',            name: 'Import / Export',   href: '/import',            icon: Upload },
+  { id: 'settings',          name: 'Settings',          href: '/settings',          icon: Settings },
 ];
 
 const CATEGORIES: { label: string; ids: string[] }[] = [
-  { label: 'CRM',         ids: ['contacts', 'companies', 'deals', 'tickets', 'orders', 'segments', 'inbox', 'calls', 'tasks'] },
-  { label: 'Marketing',   ids: ['emails', 'message-templates', 'import'] },
-  { label: 'Meetings',    ids: ['meetings', 'activities'] },
-  { label: 'Reports',     ids: ['dashboard'] },
-  { label: 'Settings',    ids: ['settings'] },
+  { label: 'CRM',       ids: ['contacts', 'companies', 'deals', 'tickets', 'orders', 'segments', 'inbox', 'calls', 'tasks'] },
+  { label: 'Marketing', ids: ['emails', 'message-templates', 'import'] },
+  { label: 'Meetings',  ids: ['meetings', 'activities'] },
+  { label: 'Reports',   ids: ['dashboard'] },
+  { label: 'Settings',  ids: ['settings'] },
 ];
 
 const DEFAULT_PINS = ['dashboard', 'contacts', 'companies', 'deals', 'tasks'];
 
 function itemById(id: string) { return ALL_ITEMS.find((i) => i.id === id)!; }
 
-/* ── Sidebar nav link ───────────────────────────────────── */
-function NavLink({ item, isActive, badge = 0, onClick }: { item: NavItem; isActive: boolean; badge?: number; onClick?: () => void }) {
+/* ── Nav link ───────────────────────────────────────────── */
+function NavLink({
+  item, isActive, badge = 0, onClick,
+}: { item: NavItem; isActive: boolean; badge?: number; onClick?: () => void }) {
   return (
     <Link
       href={item.href}
       onClick={onClick}
-      className="group flex items-center gap-3 px-3 py-2 rounded-md text-xs font-medium transition-all duration-150"
-      style={isActive ? { backgroundColor: '#FF7A59', color: '#fff' } : { color: '#99ACC2' }}
-      onMouseEnter={(e) => { if (!isActive) { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.color = '#fff'; } }}
-      onMouseLeave={(e) => { if (!isActive) { (e.currentTarget as HTMLElement).style.backgroundColor = ''; (e.currentTarget as HTMLElement).style.color = '#99ACC2'; } }}
+      className="group flex items-center gap-2 px-2 py-1.5 rounded-sm text-xs font-medium transition-colors duration-100"
+      style={
+        isActive
+          ? { backgroundColor: '#EBEBEB', color: '#333333' }
+          : { color: '#666666' }
+      }
+      onMouseEnter={(e) => {
+        if (!isActive) {
+          (e.currentTarget as HTMLElement).style.backgroundColor = '#F1F1F1';
+          (e.currentTarget as HTMLElement).style.color = '#333333';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          (e.currentTarget as HTMLElement).style.backgroundColor = '';
+          (e.currentTarget as HTMLElement).style.color = '#666666';
+        }
+      }}
     >
-      <item.icon size={15} style={{ color: isActive ? '#fff' : '#7C98B6', flexShrink: 0 }} />
+      <item.icon
+        size={14}
+        style={{ color: isActive ? '#4762D5' : '#999999', flexShrink: 0, strokeWidth: 2 }}
+      />
       <span className="flex-1 truncate">{item.name}</span>
       {badge > 0 && (
         <span
-          className="flex-shrink-0 flex items-center justify-center rounded-full text-white font-bold"
+          className="flex-shrink-0 flex items-center justify-center rounded-full text-white font-semibold"
           style={{
-            backgroundColor: isActive ? 'rgba(255,255,255,0.35)' : '#FF7A59',
+            backgroundColor: '#4762D5',
             fontSize: 9,
             minWidth: 16,
             height: 16,
@@ -95,26 +115,23 @@ function ManageSidebarModal({
     setLocal(next);
   };
   const onDragEnd = () => { dragIdx.current = null; };
-
   const togglePin = (id: string) => {
     setLocal((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-      <div className="bg-white rounded-[3px] shadow-xl w-[460px] max-h-[90vh] flex flex-col" style={{ border: '1px solid #dfe3eb' }}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#dfe3eb]">
-          <h2 className="text-base font-bold text-[#2d3e50]">Manage sidebar</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-[#f6f9fc] transition-colors">
-            <X size={16} style={{ color: '#7c98b6' }} />
+      <div className="bg-white rounded-md shadow-xl w-[460px] max-h-[90vh] flex flex-col" style={{ border: '1px solid #EBEBEB' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#EBEBEB]">
+          <h2 className="text-sm font-semibold text-[#333333]">Manage sidebar</h2>
+          <button onClick={onClose} className="p-1 rounded-sm hover:bg-[#F1F1F1] transition-colors">
+            <X size={14} style={{ color: '#999999' }} />
           </button>
         </div>
 
-        {/* Pinned items — draggable */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#7c98b6] mb-3 px-2">Pinned items</p>
-          <div className="space-y-1 mb-6">
+          <p className="text-xs font-medium uppercase tracking-wider text-[#999999] mb-2 px-2">Pinned</p>
+          <div className="space-y-0.5 mb-5">
             {local.map((id, i) => {
               const item = itemById(id);
               if (!item) return null;
@@ -125,45 +142,46 @@ function ManageSidebarModal({
                   onDragStart={() => onDragStart(i)}
                   onDragOver={(e) => onDragOver(e, i)}
                   onDragEnd={onDragEnd}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-[3px] border border-[#dfe3eb] bg-white hover:bg-[#f6f9fc] transition-colors cursor-grab active:cursor-grabbing"
+                  className="flex items-center gap-2 px-3 py-2 rounded-sm border border-[#EBEBEB] bg-white hover:bg-[#F1F1F1] transition-colors cursor-grab active:cursor-grabbing"
                 >
-                  <GripVertical size={14} style={{ color: '#b0c1d4', flexShrink: 0 }} />
-                  <item.icon size={14} style={{ color: '#425b76', flexShrink: 0 }} />
-                  <span className="flex-1 text-sm font-medium text-[#2d3e50]">{item.name}</span>
-                  <button onClick={() => togglePin(id)} className="p-1 rounded hover:bg-[#fff3f0] transition-colors" title="Unpin">
-                    <Pin size={13} style={{ color: '#ff7a59' }} />
+                  <GripVertical size={12} style={{ color: '#D6D6D6', flexShrink: 0 }} />
+                  <item.icon size={13} style={{ color: '#666666', flexShrink: 0 }} />
+                  <span className="flex-1 text-xs font-medium text-[#333333]">{item.name}</span>
+                  <button onClick={() => togglePin(id)} className="p-1 rounded-sm hover:bg-[#EBEBEB] transition-colors" title="Unpin">
+                    <Pin size={12} style={{ color: '#4762D5' }} />
                   </button>
                 </div>
               );
             })}
           </div>
 
-          {/* Other items */}
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#7c98b6] mb-3 px-2">All items</p>
-          <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wider text-[#999999] mb-2 px-2">All items</p>
+          <div className="space-y-0.5">
             {ALL_ITEMS.filter((item) => !local.includes(item.id)).map((item) => (
-              <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-[3px] hover:bg-[#f6f9fc] transition-colors">
-                <item.icon size={14} style={{ color: '#b0c1d4', flexShrink: 0 }} />
-                <span className="flex-1 text-sm text-[#7c98b6]">{item.name}</span>
-                <button onClick={() => togglePin(item.id)} className="p-1 rounded hover:bg-[#f0faf8] transition-colors" title="Pin">
-                  <PinOff size={13} style={{ color: '#b0c1d4' }} />
+              <div key={item.id} className="flex items-center gap-2 px-3 py-2 rounded-sm hover:bg-[#F1F1F1] transition-colors">
+                <item.icon size={13} style={{ color: '#B3B3B3', flexShrink: 0 }} />
+                <span className="flex-1 text-xs text-[#666666]">{item.name}</span>
+                <button onClick={() => togglePin(item.id)} className="p-1 rounded-sm hover:bg-[#EBEBEB] transition-colors" title="Pin">
+                  <PinOff size={12} style={{ color: '#B3B3B3' }} />
                 </button>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[#dfe3eb]">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-semibold text-[#425b76] border border-[#dfe3eb] rounded-[3px] hover:bg-[#f6f9fc] transition-colors">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[#EBEBEB]">
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 text-xs font-medium text-[#666666] border border-[#EBEBEB] rounded-sm hover:bg-[#F1F1F1] transition-colors"
+          >
             Cancel
           </button>
           <button
             onClick={() => { onSave(local); onClose(); }}
-            className="px-5 py-2 text-sm font-bold text-white rounded-[3px] transition-colors"
-            style={{ backgroundColor: '#ff7a59' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ff8f73')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ff7a59')}
+            className="px-4 py-1.5 text-xs font-semibold text-white rounded-sm transition-colors"
+            style={{ backgroundColor: '#4762D5' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#3A52C0')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#4762D5')}
           >
             Save
           </button>
@@ -179,67 +197,61 @@ function MegaMenu({ pinnedIds, onTogglePin, onClose }: {
 }) {
   const [activeCategory, setActiveCategory] = useState('CRM');
   const categoryItems = CATEGORIES.find((c) => c.label === activeCategory)?.ids.map(itemById) ?? [];
-  const pathname = usePathname();
 
   return (
-    <div
-      className="fixed top-0 left-64 h-full z-40 flex shadow-xl"
-      style={{ width: 480 }}
-    >
+    <div className="fixed top-0 left-[220px] h-full z-40 flex shadow-xl" style={{ width: 400 }}>
       {/* Category list */}
-      <div className="w-44 h-full flex flex-col py-4 border-r border-[#dfe3eb]" style={{ backgroundColor: '#2d3e50' }}>
-        <div className="px-4 pb-3 border-b mb-2" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
-          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#7c98b6' }}>All features</span>
+      <div className="w-36 h-full flex flex-col py-3 border-r border-[#EBEBEB] bg-[#FAFAFA]">
+        <div className="px-3 pb-2 mb-1 border-b border-[#EBEBEB]">
+          <span className="text-xs font-medium uppercase tracking-wider text-[#999999]">All features</span>
         </div>
         {CATEGORIES.map((cat) => (
           <button
             key={cat.label}
             type="button"
             onClick={() => setActiveCategory(cat.label)}
-            className="flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-all"
+            className="flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors"
             style={{
-              color: activeCategory === cat.label ? '#fff' : '#99ACC2',
-              backgroundColor: activeCategory === cat.label ? 'rgba(255,255,255,0.1)' : 'transparent',
+              color: activeCategory === cat.label ? '#333333' : '#666666',
+              backgroundColor: activeCategory === cat.label ? '#EBEBEB' : 'transparent',
             }}
-            onMouseEnter={(e) => { if (activeCategory !== cat.label) (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.05)'; }}
+            onMouseEnter={(e) => { if (activeCategory !== cat.label) (e.currentTarget as HTMLElement).style.backgroundColor = '#F1F1F1'; }}
             onMouseLeave={(e) => { if (activeCategory !== cat.label) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           >
             {cat.label}
-            <ChevronRight size={13} style={{ color: '#7c98b6' }} />
+            <ChevronRight size={11} style={{ color: '#B3B3B3' }} />
           </button>
         ))}
       </div>
 
       {/* Sub-items */}
-      <div className="flex-1 h-full bg-white py-4 overflow-y-auto">
-        <div className="px-4 pb-3 border-b border-[#dfe3eb] mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-[#7c98b6]">{activeCategory}</span>
+      <div className="flex-1 h-full bg-white py-3 overflow-y-auto border-r border-[#EBEBEB]">
+        <div className="px-3 pb-2 mb-1 border-b border-[#EBEBEB]">
+          <span className="text-xs font-medium uppercase tracking-wider text-[#999999]">{activeCategory}</span>
         </div>
         {categoryItems.map((item) => {
           if (!item) return null;
           const isPinned = pinnedIds.includes(item.id);
-          const isActive = typeof window !== 'undefined' && window.location.pathname.startsWith(item.href);
           return (
-            <div key={item.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#f6f9fc] transition-colors group">
-              <Link href={item.href} onClick={onClose} className="flex items-center gap-3 flex-1 min-w-0">
-                <item.icon size={15} style={{ color: isActive ? '#ff7a59' : '#425b76', flexShrink: 0 }} />
-                <span className="text-sm font-medium text-[#2d3e50] truncate">{item.name}</span>
+            <div key={item.id} className="flex items-center gap-2 px-3 py-2 hover:bg-[#F1F1F1] transition-colors group">
+              <Link href={item.href} onClick={onClose} className="flex items-center gap-2 flex-1 min-w-0">
+                <item.icon size={13} style={{ color: '#666666', flexShrink: 0 }} />
+                <span className="text-xs font-medium text-[#333333] truncate">{item.name}</span>
               </Link>
               <button
                 type="button"
                 onClick={() => onTogglePin(item.id)}
                 title={isPinned ? 'Unpin' : 'Pin to sidebar'}
-                className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all"
-                style={{ color: isPinned ? '#ff7a59' : '#b0c1d4' }}
+                className="opacity-0 group-hover:opacity-100 p-1 rounded-sm transition-all"
+                style={{ color: isPinned ? '#4762D5' : '#B3B3B3' }}
               >
-                {isPinned ? <Pin size={13} /> : <PinOff size={13} />}
+                {isPinned ? <Pin size={11} /> : <PinOff size={11} />}
               </button>
             </div>
           );
         })}
       </div>
 
-      {/* Backdrop */}
       <div className="fixed inset-0 -z-10" onClick={onClose} />
     </div>
   );
@@ -256,7 +268,7 @@ export function Sidebar() {
   const [pinnedIds, setPinnedIds] = useState<string[]>(DEFAULT_PINS);
   const [megaOpen, setMegaOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
-  const [showManageTip, setShowManageTip] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser()
@@ -295,7 +307,6 @@ export function Sidebar() {
   };
 
   const { badges, markInboxRead, markTasksRead, markMeetingsRead } = useNotificationBadges();
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const badgeFor = (id: string) => {
     if (id === 'inbox') return badges.inbox;
@@ -314,31 +325,46 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="fixed left-0 top-0 h-full w-64 flex flex-col z-30" style={{ backgroundColor: '#2D3E50' }}>
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FF7A59' }}>
-            <Zap className="w-4 h-4 text-white" />
+      <aside
+        className="fixed left-0 top-0 h-full flex flex-col z-30 bg-white"
+        style={{ width: 220, borderRight: '1px solid #EBEBEB' }}
+      >
+        {/* Workspace header */}
+        <div
+          className="flex items-center gap-2.5 px-4 py-3 cursor-pointer group"
+          style={{ borderBottom: '1px solid #EBEBEB' }}
+        >
+          {/* Workspace logo */}
+          <div
+            className="w-6 h-6 rounded-sm flex items-center justify-center flex-shrink-0 text-white text-xs font-bold select-none"
+            style={{ backgroundColor: '#4762D5', fontSize: 10 }}
+          >
+            C
           </div>
-          <div>
-            <span className="text-white font-bold text-base tracking-tight">CRM Pro</span>
-            <p className="text-xs" style={{ color: '#7C98B6' }}>Sales Platform</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-[#333333] truncate leading-tight">CRM Pro</p>
+            <p className="text-[10px] text-[#999999] truncate leading-tight">Workspace</p>
           </div>
+          <ChevronDown size={12} style={{ color: '#B3B3B3', flexShrink: 0 }} />
         </div>
 
-        {/* Pinned nav items */}
-        <nav className="flex-1 px-3 py-3 overflow-y-auto">
-          {/* Home shortcut */}
-          <NavLink item={itemById('dashboard')} isActive={pathname === '/dashboard'} onClick={() => setMegaOpen(false)} />
+        {/* Search */}
+        <div className="px-3 py-2" style={{ borderBottom: '1px solid #EBEBEB' }}>
+          <button
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-xs text-[#999999] transition-colors hover:bg-[#F1F1F1]"
+            style={{ border: '1px solid #EBEBEB' }}
+          >
+            <Search size={12} style={{ color: '#B3B3B3' }} />
+            <span>Search...</span>
+            <span className="ml-auto text-[10px] text-[#B3B3B3] font-mono">⌘K</span>
+          </button>
+        </div>
 
-          {/* Separator */}
-          {pinnedItems.filter((i) => i.id !== 'dashboard').length > 0 && (
-            <div className="my-2 mx-3 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
-          )}
-
-          {/* Pinned items (excluding dashboard which is always shown) */}
+        {/* Navigation */}
+        <nav className="flex-1 px-2 py-2 overflow-y-auto">
+          {/* Pinned items */}
           <div className="space-y-0.5">
-            {pinnedItems.filter((i) => i.id !== 'dashboard').map((item) => (
+            {pinnedItems.map((item) => (
               <NavLink
                 key={item.id}
                 item={item}
@@ -349,58 +375,57 @@ export function Sidebar() {
             ))}
           </div>
 
-          {/* More button */}
-          <div className="mt-2 mx-0">
+          {/* More */}
+          <div className="mt-1">
             <button
               type="button"
               onClick={() => setMegaOpen((o) => !o)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-xs font-medium transition-all"
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-xs font-medium transition-colors"
               style={{
-                color: megaOpen ? '#fff' : '#99ACC2',
-                backgroundColor: megaOpen ? 'rgba(255,255,255,0.1)' : 'transparent',
+                color: megaOpen ? '#333333' : '#666666',
+                backgroundColor: megaOpen ? '#EBEBEB' : 'transparent',
               }}
-              onMouseEnter={(e) => { if (!megaOpen) { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.color = '#fff'; } }}
-              onMouseLeave={(e) => { if (!megaOpen) { (e.currentTarget as HTMLElement).style.backgroundColor = ''; (e.currentTarget as HTMLElement).style.color = '#99ACC2'; } }}
+              onMouseEnter={(e) => { if (!megaOpen) { (e.currentTarget as HTMLElement).style.backgroundColor = '#F1F1F1'; (e.currentTarget as HTMLElement).style.color = '#333333'; } }}
+              onMouseLeave={(e) => { if (!megaOpen) { (e.currentTarget as HTMLElement).style.backgroundColor = ''; (e.currentTarget as HTMLElement).style.color = '#666666'; } }}
             >
-              <MoreHorizontal size={15} style={{ color: megaOpen ? '#fff' : '#7C98B6', flexShrink: 0 }} />
-              <span className="flex-1">More</span>
+              <MoreHorizontal size={14} style={{ color: megaOpen ? '#666666' : '#999999', flexShrink: 0 }} />
+              <span>More</span>
             </button>
           </div>
         </nav>
 
         {/* Footer */}
-        <div className="border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+        <div style={{ borderTop: '1px solid #EBEBEB' }}>
           {/* Manage sidebar */}
-          <div className="relative px-3 pt-2">
+          <div className="px-2 pt-1.5">
             <button
               type="button"
               onClick={() => setManageOpen(true)}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.07)'; setShowManageTip(true); }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = ''; setShowManageTip(false); }}
-              className="flex items-center gap-2 px-3 py-2 w-full rounded-md transition-all"
-              style={{ color: '#7c98b6' }}
+              className="flex items-center gap-2 px-2 py-1.5 w-full rounded-sm transition-colors text-xs text-[#999999] hover:bg-[#F1F1F1] hover:text-[#666666]"
             >
-              <Settings size={14} style={{ color: '#7c98b6' }} />
-              <span className="text-xs font-medium">Manage sidebar</span>
+              <Settings size={13} style={{ color: '#B3B3B3' }} />
+              <span className="font-medium">Manage sidebar</span>
             </button>
-            {showManageTip && (
-              <div className="absolute bottom-10 left-5 bg-[#2d3e50] text-white text-xs px-2.5 py-1.5 rounded-[3px] whitespace-nowrap shadow-lg border" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>
-                Manage sidebar
-              </div>
-            )}
           </div>
 
           {/* User row */}
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: '#FF7A59' }}>
+          <div className="flex items-center gap-2 px-3 py-2.5">
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 select-none"
+              style={{ backgroundColor: '#4762D5', fontSize: 10 }}
+            >
               {userInitials || '?'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-white truncate">{userName || 'Loading…'}</p>
-              <p className="text-xs truncate" style={{ color: '#7C98B6' }}>{userEmail}</p>
+              <p className="text-xs font-medium text-[#333333] truncate leading-tight">{userName || '…'}</p>
+              <p className="text-[10px] text-[#999999] truncate leading-tight">{userEmail}</p>
             </div>
-            <button onClick={() => setShowLogoutConfirm(true)} title="Sign out" className="flex-shrink-0 p-1 rounded transition-colors hover:bg-white/10">
-              <LogOut size={14} style={{ color: '#7C98B6' }} />
+            <button
+              onClick={() => setShowLogoutConfirm(true)}
+              title="Sign out"
+              className="flex-shrink-0 p-1 rounded-sm hover:bg-[#F1F1F1] transition-colors"
+            >
+              <LogOut size={12} style={{ color: '#B3B3B3' }} />
             </button>
           </div>
         </div>
@@ -424,33 +449,33 @@ export function Sidebar() {
         />
       )}
 
-      {/* Logout confirmation modal */}
+      {/* Logout confirmation */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-          <div className="bg-white rounded-[3px] shadow-2xl w-[400px]" style={{ border: '1px solid #dfe3eb' }}>
-            <div className="px-6 py-5 border-b border-[#dfe3eb]">
-              <h2 className="text-base font-bold text-[#2d3e50]">Confirm logout</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="bg-white rounded-md shadow-xl w-[360px]" style={{ border: '1px solid #EBEBEB' }}>
+            <div className="px-5 py-4 border-b border-[#EBEBEB]">
+              <h2 className="text-sm font-semibold text-[#333333]">Sign out</h2>
             </div>
-            <div className="px-6 py-5">
-              <p className="text-sm text-[#516f90]">
-                Are you sure you want to log out? You will be signed out of your CRM session.
+            <div className="px-5 py-4">
+              <p className="text-xs text-[#666666]">
+                Are you sure you want to sign out of your CRM session?
               </p>
             </div>
-            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[#dfe3eb]">
+            <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[#EBEBEB]">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
-                className="px-4 py-2 text-sm font-semibold text-[#425b76] border border-[#dfe3eb] rounded-[3px] hover:bg-[#f6f9fc] transition-colors"
+                className="px-3 py-1.5 text-xs font-medium text-[#666666] border border-[#EBEBEB] rounded-sm hover:bg-[#F1F1F1] transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={doSignOut}
-                className="px-5 py-2 text-sm font-bold text-white rounded-[3px] transition-colors"
-                style={{ backgroundColor: '#ff7a59' }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ff8f73')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#ff7a59')}
+                className="px-4 py-1.5 text-xs font-semibold text-white rounded-sm transition-colors"
+                style={{ backgroundColor: '#D45353' }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#C04040')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#D45353')}
               >
-                Log out
+                Sign out
               </button>
             </div>
           </div>

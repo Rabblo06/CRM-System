@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -36,13 +36,13 @@ function Tile({ label, selected, onClick, cols = 2 }: { label: string; selected:
       onClick={onClick}
       className="flex items-center justify-center py-4 px-3 text-sm font-bold rounded-[3px] border transition-all text-center"
       style={{
-        borderColor: selected ? '#ff7a59' : '#dfe3eb',
-        backgroundColor: selected ? '#fff3f0' : '#fff',
-        color: selected ? '#ff7a59' : '#2d3e50',
+        borderColor: selected ? '#4762D5' : '#EBEBEB',
+        backgroundColor: selected ? '#EEF0FB' : '#fff',
+        color: selected ? '#4762D5' : '#333333',
         minHeight: cols === 3 ? 60 : 56,
       }}
       onMouseEnter={(e) => { if (!selected) (e.currentTarget as HTMLElement).style.borderColor = '#c5ced8'; }}
-      onMouseLeave={(e) => { if (!selected) (e.currentTarget as HTMLElement).style.borderColor = '#dfe3eb'; }}
+      onMouseLeave={(e) => { if (!selected) (e.currentTarget as HTMLElement).style.borderColor = '#EBEBEB'; }}
     >
       {label}
     </button>
@@ -54,14 +54,14 @@ function OnboardInput(props: React.InputHTMLAttributes<HTMLInputElement> & { lab
   const { label, ...rest } = props;
   return (
     <div>
-      <label className="block text-xs font-semibold text-[#425b76] mb-1.5">
-        {label} {rest.required && <span style={{ color: '#ff7a59' }}>*</span>}
+      <label className="block text-xs font-semibold text-[#555555] mb-1.5">
+        {label} {rest.required && <span style={{ color: '#4762D5' }}>*</span>}
       </label>
       <input
-        className="h-10 px-3 text-sm border rounded-[3px] outline-none text-[#2d3e50] bg-white placeholder:text-[#b0c1d4]"
-        style={{ borderColor: '#cbd6e2', width: 420 }}
+        className="h-10 px-3 text-sm border rounded-[3px] outline-none text-[#333333] bg-white placeholder:text-[#D6D6D6]"
+        style={{ borderColor: '#EBEBEB', width: 420 }}
         onFocus={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.boxShadow = '0 0 0 1px #3b82f6'; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = '#cbd6e2'; e.currentTarget.style.boxShadow = 'none'; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = '#EBEBEB'; e.currentTarget.style.boxShadow = 'none'; }}
         {...rest}
       />
     </div>
@@ -87,7 +87,7 @@ function LeftPanel() {
     >
       {/* Logo */}
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-[3px] flex items-center justify-center" style={{ backgroundColor: '#ff7a59' }}>
+        <div className="w-8 h-8 rounded-[3px] flex items-center justify-center" style={{ backgroundColor: '#4762D5' }}>
           <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
@@ -115,22 +115,22 @@ function BottomNav({
 }) {
   return (
     <div className="absolute bottom-0 left-0 right-0 px-16 pb-10">
-      <div className="border-t border-[#dfe3eb] pt-5 flex items-center justify-between">
+      <div className="border-t border-[#EBEBEB] pt-5 flex items-center justify-between">
         {showBack && onBack ? (
-          <button type="button" onClick={onBack} className="flex items-center gap-1 text-sm text-[#425b76] hover:text-[#2d3e50] transition-colors font-medium">
+          <button type="button" onClick={onBack} className="flex items-center gap-1 text-sm text-[#555555] hover:text-[#333333] transition-colors font-medium">
             <ChevronLeft size={16} /> Back
           </button>
         ) : <div />}
 
         <div className="flex items-center gap-6">
           {legalNote && (
-            <p className="text-xs text-[#7c98b6] text-right max-w-[280px] leading-relaxed">
+            <p className="text-xs text-[#999999] text-right max-w-[280px] leading-relaxed">
               Your data will be hosted in the <strong>European Union</strong>. By creating an account you are agreeing to the{' '}
-              <a href="#" className="underline hover:text-[#425b76]">CRM Pro Terms of Service</a>.
+              <a href="#" className="underline hover:text-[#555555]">CRM Pro Terms of Service</a>.
             </p>
           )}
           {onSkip && (
-            <button type="button" onClick={onSkip} className="text-sm text-[#425b76] font-semibold hover:text-[#2d3e50]">
+            <button type="button" onClick={onSkip} className="text-sm text-[#555555] font-semibold hover:text-[#333333]">
               Skip, for now
             </button>
           )}
@@ -138,9 +138,9 @@ function BottomNav({
             <button
               type="button" onClick={onNext} disabled={nextDisabled}
               className="px-6 py-2.5 text-sm font-bold rounded-[3px] text-white transition-colors disabled:opacity-40"
-              style={{ backgroundColor: nextDisabled ? '#7c98b6' : '#2d3e50' }}
+              style={{ backgroundColor: nextDisabled ? '#999999' : '#333333' }}
               onMouseEnter={(e) => { if (!nextDisabled) (e.currentTarget as HTMLElement).style.backgroundColor = '#1a2b3c'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = nextDisabled ? '#7c98b6' : '#2d3e50'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = nextDisabled ? '#999999' : '#333333'; }}
             >
               {nextLabel}
             </button>
@@ -197,7 +197,7 @@ export default function OnboardingPage() {
           {step === 'role' && (
             <>
               <h2 className="text-2xl font-bold text-[#1a1a1a] mb-1">Which best describes your role?</h2>
-              <p className="text-sm text-[#7c98b6] mb-8">This helps us surface the right tools and tips.</p>
+              <p className="text-sm text-[#999999] mb-8">This helps us surface the right tools and tips.</p>
               <div className="grid grid-cols-2 gap-3" style={{ maxWidth: 580 }}>
                 {ROLES.map((r) => <Tile key={r} label={r} selected={role === r} onClick={() => setRole(r)} />)}
               </div>
@@ -208,7 +208,7 @@ export default function OnboardingPage() {
           {step === 'website' && (
             <>
               <h2 className="text-2xl font-bold text-[#1a1a1a] mb-1">What is your company&apos;s website?</h2>
-              <p className="text-sm text-[#7c98b6] mb-8">This was our best guess based on your email address.</p>
+              <p className="text-sm text-[#999999] mb-8">This was our best guess based on your email address.</p>
               <OnboardInput label="Company website *" placeholder="www.companywebsite.com" value={website} onChange={(e) => setWebsite(e.target.value)} required />
             </>
           )}
@@ -217,13 +217,13 @@ export default function OnboardingPage() {
           {step === 'industry' && (
             <>
               <h2 className="text-2xl font-bold text-[#1a1a1a] mb-1">What industry are you in?</h2>
-              <p className="text-sm text-[#7c98b6] mb-8">We&apos;ll focus your experience based on your choice.</p>
+              <p className="text-sm text-[#999999] mb-8">We&apos;ll focus your experience based on your choice.</p>
               <div className="grid grid-cols-3 gap-3" style={{ maxWidth: 720 }}>
                 {INDUSTRIES.map((ind) => <Tile key={ind} label={ind} selected={industry === ind} onClick={() => setIndustry(ind)} cols={3} />)}
               </div>
-              <p className="mt-4 text-sm text-[#7c98b6]">
+              <p className="mt-4 text-sm text-[#999999]">
                 Industry not listed?{' '}
-                <button type="button" onClick={goNext} className="font-bold underline" style={{ color: '#00a38d' }}>Search all</button>
+                <button type="button" onClick={goNext} className="font-bold underline" style={{ color: '#4762D5' }}>Search all</button>
               </p>
             </>
           )}
@@ -232,7 +232,7 @@ export default function OnboardingPage() {
           {step === 'size' && (
             <>
               <h2 className="text-2xl font-bold text-[#1a1a1a] mb-1">How big is your company?</h2>
-              <p className="text-sm text-[#7c98b6] mb-8">We&apos;ll use this to recommend the best plan for your business.</p>
+              <p className="text-sm text-[#999999] mb-8">We&apos;ll use this to recommend the best plan for your business.</p>
               <div className="grid grid-cols-3 gap-3" style={{ maxWidth: 720 }}>
                 {SIZES.map((s) => <Tile key={s} label={s} selected={size === s} onClick={() => setSize(s)} cols={3} />)}
               </div>
@@ -243,7 +243,7 @@ export default function OnboardingPage() {
           {step === 'company' && (
             <>
               <h2 className="text-2xl font-bold text-[#1a1a1a] mb-1">What is your company&apos;s name?</h2>
-              <p className="text-sm text-[#7c98b6] mb-8">We&apos;ll use your company name to make things feel more familiar.</p>
+              <p className="text-sm text-[#999999] mb-8">We&apos;ll use your company name to make things feel more familiar.</p>
               <OnboardInput label="Company name *" placeholder="Acme Corp" value={company} onChange={(e) => setCompany(e.target.value)} required />
             </>
           )}
@@ -255,14 +255,14 @@ export default function OnboardingPage() {
                 <h2 className="text-2xl font-bold text-[#1a1a1a] mb-3 leading-snug">
                   Connect your email to sync all your contacts and conversations in one place
                 </h2>
-                <p className="text-sm mb-8 leading-relaxed" style={{ color: '#00a38d' }}>
+                <p className="text-sm mb-8 leading-relaxed" style={{ color: '#4762D5' }}>
                   CRM Pro uses this connection to organise communication history and enrich profiles with accurate job titles, locations, and more.
                 </p>
                 <button
                   type="button"
                   onClick={finish}
                   disabled={saving}
-                  className="flex items-center gap-3 px-5 py-3 border border-[#dfe3eb] rounded-[3px] bg-white hover:bg-[#f6f9fc] transition-colors text-sm font-bold text-[#2d3e50]"
+                  className="flex items-center gap-3 px-5 py-3 border border-[#EBEBEB] rounded-[3px] bg-white hover:bg-[#FAFAFA] transition-colors text-sm font-bold text-[#333333]"
                   style={{ width: 340 }}
                 >
                   <GoogleIcon />

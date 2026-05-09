@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import {
@@ -102,59 +102,59 @@ export default function MakeCallModal({ contactName, contactPhone, onClose, onSa
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
-        <div className="bg-white rounded-2xl shadow-2xl w-80 overflow-hidden" style={{ border: '1px solid #DFE3EB' }}>
+        <div className="bg-white rounded-2xl shadow-2xl w-80 overflow-hidden" style={{ border: '1px solid #EBEBEB' }}>
           {/* Contact name header */}
-          <div className="px-4 py-3 border-b" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
-            <p className="text-sm font-semibold" style={{ color: '#2D3E50' }}>{contactName}</p>
+          <div className="px-4 py-3 border-b" style={{ borderColor: '#EBEBEB', backgroundColor: '#FAFAFA' }}>
+            <p className="text-sm font-semibold" style={{ color: '#333333' }}>{contactName}</p>
           </div>
 
           {/* Phone numbers */}
           <div className="py-1.5">
             {contactPhone ? (
               <button
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-[#F6F9FC] transition-colors text-left"
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-[#FAFAFA] transition-colors text-left"
                 onClick={() => handleDial(contactPhone)}
               >
-                <Phone className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#0091AE' }} />
-                <span style={{ color: '#2D3E50' }}>Call {contactPhone}</span>
+                <Phone className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#4762D5' }} />
+                <span style={{ color: '#333333' }}>Call {contactPhone}</span>
               </button>
             ) : (
-              <p className="px-4 py-3 text-xs" style={{ color: '#99ACC2' }}>No phone number on this contact</p>
+              <p className="px-4 py-3 text-xs" style={{ color: '#B3B3B3' }}>No phone number on this contact</p>
             )}
           </div>
 
           {/* Call from */}
-          <div className="px-4 py-2.5 border-t" style={{ borderColor: '#DFE3EB' }}>
+          <div className="px-4 py-2.5 border-t" style={{ borderColor: '#EBEBEB' }}>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs flex-shrink-0" style={{ color: '#7C98B6' }}>Call from:</span>
+              <span className="text-xs flex-shrink-0" style={{ color: '#999999' }}>Call from:</span>
               {savedPhones.length > 0 ? (
                 <select
                   value={callFrom}
                   onChange={(e) => setCallFrom(e.target.value)}
                   className="flex-1 text-xs bg-transparent border-none outline-none cursor-pointer text-right truncate"
-                  style={{ color: '#2D3E50' }}
+                  style={{ color: '#333333' }}
                 >
                   {savedPhones.map((p) => (
                     <option key={p.number} value={p.number}>{p.number}</option>
                   ))}
                 </select>
               ) : (
-                <span className="text-xs" style={{ color: '#99ACC2' }}>No number (Settings → Calling)</span>
+                <span className="text-xs" style={{ color: '#B3B3B3' }}>No number (Settings → Calling)</span>
               )}
             </div>
           </div>
 
           {/* Device */}
           <div
-            className="px-4 py-2.5 border-t flex items-center justify-between cursor-pointer hover:bg-[#F6F9FC] transition-colors"
-            style={{ borderColor: '#DFE3EB' }}
+            className="px-4 py-2.5 border-t flex items-center justify-between cursor-pointer hover:bg-[#FAFAFA] transition-colors"
+            style={{ borderColor: '#EBEBEB' }}
           >
-            <span className="text-xs" style={{ color: '#2D3E50' }}>Device: Browser</span>
-            <ChevronRight className="w-3.5 h-3.5" style={{ color: '#99ACC2' }} />
+            <span className="text-xs" style={{ color: '#333333' }}>Device: Browser</span>
+            <ChevronRight className="w-3.5 h-3.5" style={{ color: '#B3B3B3' }} />
           </div>
 
           {/* Cancel */}
-          <div className="px-4 py-3 border-t" style={{ borderColor: '#DFE3EB' }}>
+          <div className="px-4 py-3 border-t" style={{ borderColor: '#EBEBEB' }}>
             <Button variant="outline" size="sm" className="w-full text-xs h-8" onClick={onClose}>Cancel</Button>
           </div>
         </div>
@@ -166,10 +166,10 @@ export default function MakeCallModal({ contactName, contactPhone, onClose, onSa
   if (phase === 'calling') {
     return (
       <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 w-[520px] max-w-[95vw]">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden" style={{ border: '1px solid #DFE3EB' }}>
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden" style={{ border: '1px solid #EBEBEB' }}>
 
           {/* Active call bar */}
-          <div className="flex items-center gap-3 px-4 py-3" style={{ backgroundColor: '#2D3E50' }}>
+          <div className="flex items-center gap-3 px-4 py-3" style={{ backgroundColor: '#333333' }}>
             <button onClick={() => {}} className="p-1 rounded hover:bg-white/10">
               <ChevronRight className="w-4 h-4 text-white rotate-90" />
             </button>
@@ -190,7 +190,7 @@ export default function MakeCallModal({ contactName, contactPhone, onClose, onSa
           </div>
 
           {/* Recording notice */}
-          <div className="flex items-start justify-between gap-2 px-4 py-2.5 text-xs border-b" style={{ borderColor: '#DFE3EB', backgroundColor: '#FFFBF0', color: '#8B6914' }}>
+          <div className="flex items-start justify-between gap-2 px-4 py-2.5 text-xs border-b" style={{ borderColor: '#EBEBEB', backgroundColor: '#FFFBF0', color: '#8B6914' }}>
             <span>Your call is set to record automatically. Please inform the other party this call is being recorded.</span>
             <button className="flex-shrink-0 hover:opacity-70">
               <X className="w-3.5 h-3.5" />
@@ -198,7 +198,7 @@ export default function MakeCallModal({ contactName, contactPhone, onClose, onSa
           </div>
 
           {/* Call controls */}
-          <div className="flex items-center gap-1 px-4 py-3 border-b" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
+          <div className="flex items-center gap-1 px-4 py-3 border-b" style={{ borderColor: '#EBEBEB', backgroundColor: '#FAFAFA' }}>
             {[
               { icon: <Circle className="w-4 h-4" />, label: 'Record' },
               { icon: muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />, label: muted ? 'Unmute' : 'Mute', onClick: () => setMuted(!muted) },
@@ -210,7 +210,7 @@ export default function MakeCallModal({ contactName, contactPhone, onClose, onSa
                 key={label}
                 onClick={onClick}
                 className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg text-[10px] font-medium hover:bg-[#E8EDF5] transition-colors"
-                style={{ color: '#516F90' }}
+                style={{ color: '#666666' }}
               >
                 {icon}
                 {label}
@@ -220,14 +220,14 @@ export default function MakeCallModal({ contactName, contactPhone, onClose, onSa
 
           {/* Notes */}
           <div className="px-4 pt-3 pb-4">
-            <p className="text-xs font-medium mb-1.5" style={{ color: '#516F90' }}>Notes</p>
+            <p className="text-xs font-medium mb-1.5" style={{ color: '#666666' }}>Notes</p>
             <Textarea
               placeholder="Take notes on this call..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={6}
               className="text-xs resize-none bg-transparent border-0 p-0 focus-visible:ring-0 shadow-none"
-              style={{ color: '#2D3E50' }}
+              style={{ color: '#333333' }}
             />
           </div>
         </div>
@@ -238,18 +238,18 @@ export default function MakeCallModal({ contactName, contactPhone, onClose, onSa
   /* ─── Phase 3: Post-call ─── */
   return (
     <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 w-[520px] max-w-[95vw]">
-      <div className="bg-white rounded-2xl shadow-2xl overflow-hidden" style={{ border: '1px solid #DFE3EB' }}>
+      <div className="bg-white rounded-2xl shadow-2xl overflow-hidden" style={{ border: '1px solid #EBEBEB' }}>
 
         {/* Header — outcome + call type */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
+        <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: '#EBEBEB', backgroundColor: '#FAFAFA' }}>
           <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#E5F8F6' }}>
-            <Check className="w-3 h-3" style={{ color: '#00BDA5' }} />
+            <Check className="w-3 h-3" style={{ color: '#4CAF8E' }} />
           </div>
           <select
             value={outcome}
             onChange={(e) => setOutcome(e.target.value)}
             className="text-xs font-semibold bg-transparent border-none outline-none cursor-pointer"
-            style={{ color: '#2D3E50' }}
+            style={{ color: '#333333' }}
           >
             <option value="no_answer">No answer</option>
             <option value="connected">Connected</option>
@@ -258,12 +258,12 @@ export default function MakeCallModal({ contactName, contactPhone, onClose, onSa
             <option value="wrong_number">Wrong number</option>
             <option value="left_message">Left message</option>
           </select>
-          <span className="text-[#DFE3EB]">·</span>
+          <span className="text-[#EBEBEB]">·</span>
           <select
             value={callType}
             onChange={(e) => setCallType(e.target.value)}
             className="text-xs bg-transparent border-none outline-none cursor-pointer"
-            style={{ color: '#7C98B6' }}
+            style={{ color: '#999999' }}
           >
             <option value="">Select call type</option>
             <option value="prospecting">Prospecting</option>
@@ -274,13 +274,13 @@ export default function MakeCallModal({ contactName, contactPhone, onClose, onSa
           </select>
           <div className="flex-1" />
           <button onClick={onClose} className="p-1 rounded hover:bg-[#E8EDF5]">
-            <X className="w-4 h-4" style={{ color: '#99ACC2' }} />
+            <X className="w-4 h-4" style={{ color: '#B3B3B3' }} />
           </button>
         </div>
 
         {/* Notes */}
-        <div className="px-4 py-3 border-b" style={{ borderColor: '#DFE3EB' }}>
-          <p className="text-xs font-medium mb-1.5" style={{ color: '#516F90' }}>Notes</p>
+        <div className="px-4 py-3 border-b" style={{ borderColor: '#EBEBEB' }}>
+          <p className="text-xs font-medium mb-1.5" style={{ color: '#666666' }}>Notes</p>
           <Textarea
             placeholder="Take notes on this call..."
             value={notes}
@@ -288,19 +288,19 @@ export default function MakeCallModal({ contactName, contactPhone, onClose, onSa
             rows={6}
             className="text-xs resize-none"
           />
-          <p className="text-xs mt-1.5" style={{ color: '#0091AE' }}>Associated with 1 record</p>
+          <p className="text-xs mt-1.5" style={{ color: '#4762D5' }}>Associated with 1 record</p>
         </div>
 
         {/* Rating + Save */}
         <div className="px-4 py-3">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs" style={{ color: '#516F90' }}>Rate call quality</span>
+            <span className="text-xs" style={{ color: '#666666' }}>Rate call quality</span>
             <div className="flex gap-0.5">
               {[1, 2, 3, 4, 5].map((s) => (
                 <button key={s} onClick={() => setRating(s)}>
                   <Star
                     className="w-4 h-4 transition-colors"
-                    style={{ color: s <= rating ? '#F5C26B' : '#DFE3EB', fill: s <= rating ? '#F5C26B' : 'none' }}
+                    style={{ color: s <= rating ? '#E8882A' : '#EBEBEB', fill: s <= rating ? '#E8882A' : 'none' }}
                   />
                 </button>
               ))}
@@ -310,17 +310,17 @@ export default function MakeCallModal({ contactName, contactPhone, onClose, onSa
             <Button
               size="sm"
               className="text-xs h-8"
-              style={{ backgroundColor: '#FF7A59', borderColor: '#FF7A59' }}
+              style={{ backgroundColor: '#4762D5', borderColor: '#4762D5' }}
               onClick={handleSave}
             >
               Save call
             </Button>
-            <label className="flex items-center gap-1.5 text-xs cursor-pointer" style={{ color: '#516F90' }}>
+            <label className="flex items-center gap-1.5 text-xs cursor-pointer" style={{ color: '#666666' }}>
               <input
                 type="checkbox"
                 checked={createFollowUp}
                 onChange={(e) => setCreateFollowUp(e.target.checked)}
-                className="w-3.5 h-3.5 accent-[#FF7A59]"
+                className="w-3.5 h-3.5 accent-[#4762D5]"
               />
               Create a follow up task
             </label>

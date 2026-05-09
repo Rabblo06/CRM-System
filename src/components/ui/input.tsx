@@ -9,22 +9,22 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          'flex h-8 w-full rounded border px-3 py-1 text-xs transition-colors file:border-0 file:bg-transparent file:text-xs file:font-medium placeholder:text-[#99ACC2] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-8 w-full rounded-sm border px-3 py-1 text-xs transition-colors file:border-0 file:bg-transparent file:text-xs file:font-medium placeholder:text-[#B3B3B3] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
         style={{
-          borderColor: '#CBD6E2',
-          backgroundColor: '#ffffff',
-          color: '#2D3E50',
+          borderColor: '#EBEBEB',
+          backgroundColor: '#FFFFFF',
+          color: '#333333',
           ...style,
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = '#FF7A59';
-          e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,122,89,0.25)';
+          e.currentTarget.style.borderColor = '#4762D5';
+          e.currentTarget.style.boxShadow = '0 0 0 2px rgba(71,98,213,0.12)';
           onFocus?.(e);
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = '#CBD6E2';
+          e.currentTarget.style.borderColor = '#EBEBEB';
           e.currentTarget.style.boxShadow = '';
           onBlur?.(e);
         }}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Send, Bell, X, ChevronDown } from 'lucide-react';
@@ -71,7 +71,7 @@ export function SendEmailModal({ open, onClose, toEmail = '', contactId, contact
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Send className="w-4 h-4 text-[#FF7A59]" />
+            <Send className="w-4 h-4 text-[#4762D5]" />
             Send Email{contactName ? ` to ${contactName}` : ''}
           </DialogTitle>
         </DialogHeader>
@@ -83,7 +83,7 @@ export function SendEmailModal({ open, onClose, toEmail = '', contactId, contact
               <button
                 type="button"
                 onClick={() => setShowCc(v => !v)}
-                className="text-xs text-[#7C98B6] hover:text-[#516F90] flex items-center gap-1"
+                className="text-xs text-[#999999] hover:text-[#666666] flex items-center gap-1"
               >
                 Cc <ChevronDown className={`w-3 h-3 transition-transform ${showCc ? 'rotate-180' : ''}`} />
               </button>
@@ -130,11 +130,11 @@ export function SendEmailModal({ open, onClose, toEmail = '', contactId, contact
           </div>
 
           {/* ── Follow-up reminder section ─────────────────────── */}
-          <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: followUpEnabled ? '#FF7A59' : '#DFE3EB', backgroundColor: followUpEnabled ? '#FFF8F6' : '#F6F9FC' }}>
+          <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: followUpEnabled ? '#4762D5' : '#EBEBEB', backgroundColor: followUpEnabled ? '#FFF8F6' : '#FAFAFA' }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Bell className={`w-3.5 h-3.5 ${followUpEnabled ? 'text-[#FF7A59]' : 'text-[#99ACC2]'}`} />
-                <span className="text-xs font-semibold" style={{ color: followUpEnabled ? '#FF7A59' : '#516F90' }}>
+                <Bell className={`w-3.5 h-3.5 ${followUpEnabled ? 'text-[#4762D5]' : 'text-[#B3B3B3]'}`} />
+                <span className="text-xs font-semibold" style={{ color: followUpEnabled ? '#4762D5' : '#666666' }}>
                   Smart Follow-up Reminder
                 </span>
               </div>
@@ -143,7 +143,7 @@ export function SendEmailModal({ open, onClose, toEmail = '', contactId, contact
                 type="button"
                 onClick={() => setFollowUpEnabled(v => !v)}
                 className="w-9 h-5 rounded-full relative transition-colors flex-shrink-0"
-                style={{ backgroundColor: followUpEnabled ? '#FF7A59' : '#DFE3EB' }}
+                style={{ backgroundColor: followUpEnabled ? '#4762D5' : '#EBEBEB' }}
               >
                 <div
                   className="w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform shadow-sm"
@@ -154,7 +154,7 @@ export function SendEmailModal({ open, onClose, toEmail = '', contactId, contact
 
             {followUpEnabled && (
               <div className="flex items-center gap-2 pt-1">
-                <span className="text-xs text-[#516F90] whitespace-nowrap">If no reply in</span>
+                <span className="text-xs text-[#666666] whitespace-nowrap">If no reply in</span>
                 <Select value={followUpDays} onValueChange={setFollowUpDays}>
                   <SelectTrigger className="h-7 w-28 text-xs">
                     <SelectValue />
@@ -167,12 +167,12 @@ export function SendEmailModal({ open, onClose, toEmail = '', contactId, contact
                     ))}
                   </SelectContent>
                 </Select>
-                <span className="text-xs text-[#516F90]">→ create follow-up task</span>
+                <span className="text-xs text-[#666666]">→ create follow-up task</span>
               </div>
             )}
 
             {!followUpEnabled && (
-              <p className="text-[11px] text-[#99ACC2]">
+              <p className="text-[11px] text-[#B3B3B3]">
                 Auto-create a task if the recipient doesn&apos;t reply
               </p>
             )}

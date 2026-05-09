@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 /**
  * React Error Boundary — catches render-time errors so the whole page
@@ -74,16 +74,16 @@ function DefaultFallback({
     <div className="flex flex-col items-center justify-center min-h-[360px] px-6 text-center gap-4">
       <div
         className="w-14 h-14 rounded-full flex items-center justify-center"
-        style={{ backgroundColor: '#FFF3F0' }}
+        style={{ backgroundColor: '#EEF0FB' }}
       >
-        <AlertTriangle className="w-7 h-7" style={{ color: '#FF7A59' }} />
+        <AlertTriangle className="w-7 h-7" style={{ color: '#4762D5' }} />
       </div>
 
       <div className="space-y-1 max-w-sm">
-        <h2 className="text-base font-semibold" style={{ color: '#2D3E50' }}>
+        <h2 className="text-base font-semibold" style={{ color: '#333333' }}>
           Something went wrong
         </h2>
-        <p className="text-sm" style={{ color: '#7C98B6' }}>
+        <p className="text-sm" style={{ color: '#999999' }}>
           {isDev && error
             ? error.message
             : 'An unexpected error occurred. Your data is safe — please try again.'}
@@ -94,15 +94,15 @@ function DefaultFallback({
         onClick={reset}
         className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition-colors"
         style={{
-          borderColor: '#DFE3EB',
-          color: '#516F90',
-          backgroundColor: '#F6F9FC',
+          borderColor: '#EBEBEB',
+          color: '#666666',
+          backgroundColor: '#FAFAFA',
         }}
         onMouseEnter={e => {
           (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#EEF2F7';
         }}
         onMouseLeave={e => {
-          (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#F6F9FC';
+          (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#FAFAFA';
         }}
       >
         <RefreshCw className="w-3.5 h-3.5" />
@@ -119,26 +119,26 @@ export function PageErrorBoundary({ children }: { children: ReactNode }) {
       fallback={
         <div
           className="flex flex-col items-center justify-center min-h-screen gap-4 text-center px-6"
-          style={{ backgroundColor: '#F6F9FC' }}
+          style={{ backgroundColor: '#FAFAFA' }}
         >
           <div
             className="w-16 h-16 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: '#FFF3F0' }}
+            style={{ backgroundColor: '#EEF0FB' }}
           >
-            <AlertTriangle className="w-8 h-8" style={{ color: '#FF7A59' }} />
+            <AlertTriangle className="w-8 h-8" style={{ color: '#4762D5' }} />
           </div>
           <div className="space-y-1 max-w-md">
-            <h1 className="text-lg font-semibold" style={{ color: '#2D3E50' }}>
+            <h1 className="text-lg font-semibold" style={{ color: '#333333' }}>
               Page failed to load
             </h1>
-            <p className="text-sm" style={{ color: '#7C98B6' }}>
+            <p className="text-sm" style={{ color: '#999999' }}>
               Something unexpected happened. Your data is safe.
             </p>
           </div>
           <button
             onClick={() => window.location.reload()}
             className="flex items-center gap-2 text-sm font-medium px-5 py-2 rounded-lg text-white"
-            style={{ backgroundColor: '#FF7A59' }}
+            style={{ backgroundColor: '#4762D5' }}
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Reload page

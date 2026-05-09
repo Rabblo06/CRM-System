@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -19,10 +19,10 @@ export interface CreateTaskModalProps {
 }
 
 const PRIORITY_OPTIONS = [
-  { value: 'none', label: 'None', color: '#99ACC2' },
-  { value: 'low', label: 'Low', color: '#00BDA5' },
-  { value: 'medium', label: 'Medium', color: '#F5C26B' },
-  { value: 'high', label: 'High', color: '#FF7A59' },
+  { value: 'none', label: 'None', color: '#B3B3B3' },
+  { value: 'low', label: 'Low', color: '#4CAF8E' },
+  { value: 'medium', label: 'Medium', color: '#E8882A' },
+  { value: 'high', label: 'High', color: '#4762D5' },
 ];
 
 const TASK_TYPES = [
@@ -136,11 +136,11 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
         {/* Header */}
         <div
           className="flex items-center gap-2 px-4 py-2.5 flex-shrink-0"
-          style={{ backgroundColor: '#2D3E50', cursor: isDragging ? 'grabbing' : 'grab' }}
+          style={{ backgroundColor: '#333333', cursor: isDragging ? 'grabbing' : 'grab' }}
           onMouseDown={handleMouseDown}
         >
           {/* Drag handle */}
-          <span style={{ color: '#7C98B6', fontSize: 16, lineHeight: 1, cursor: 'inherit' }}>⠿</span>
+          <span style={{ color: '#999999', fontSize: 16, lineHeight: 1, cursor: 'inherit' }}>⠿</span>
           <span className="text-sm font-semibold flex-1" style={{ color: '#ffffff' }}>
             Task{contactName ? ` — ${contactName}` : ''}
           </span>
@@ -172,8 +172,8 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
                 placeholder="Enter your task"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                className="w-full text-base font-semibold outline-none border-b-2 pb-2 placeholder:text-[#99ACC2]"
-                style={{ borderColor: title ? '#FF7A59' : '#DFE3EB', color: '#2D3E50' }}
+                className="w-full text-base font-semibold outline-none border-b-2 pb-2 placeholder:text-[#B3B3B3]"
+                style={{ borderColor: title ? '#4762D5' : '#EBEBEB', color: '#333333' }}
                 autoFocus
               />
             </div>
@@ -181,23 +181,23 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
             {/* Date + Time */}
             <div className="px-5 py-3 grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: '#516F90' }}>Activity date</label>
+                <label className="block text-xs font-semibold mb-1" style={{ color: '#666666' }}>Activity date</label>
                 <input
                   type="date"
                   value={dueDate}
                   onChange={e => setDueDate(e.target.value)}
                   className="w-full rounded border px-3 py-1.5 text-xs outline-none"
-                  style={{ borderColor: '#DFE3EB', color: '#2D3E50' }}
+                  style={{ borderColor: '#EBEBEB', color: '#333333' }}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: '#516F90' }}>Time</label>
+                <label className="block text-xs font-semibold mb-1" style={{ color: '#666666' }}>Time</label>
                 <input
                   type="time"
                   value={dueTime}
                   onChange={e => setDueTime(e.target.value)}
                   className="w-full rounded border px-3 py-1.5 text-xs outline-none"
-                  style={{ borderColor: '#DFE3EB', color: '#2D3E50' }}
+                  style={{ borderColor: '#EBEBEB', color: '#333333' }}
                 />
               </div>
             </div>
@@ -205,12 +205,12 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
             {/* Reminder */}
             <div className="px-5 pb-3 grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: '#516F90' }}>Send reminder</label>
+                <label className="block text-xs font-semibold mb-1" style={{ color: '#666666' }}>Send reminder</label>
                 <select
                   value={reminder}
                   onChange={e => setReminder(e.target.value)}
                   className="w-full rounded border px-3 py-1.5 text-xs outline-none"
-                  style={{ borderColor: '#DFE3EB', color: '#2D3E50', backgroundColor: '#fff' }}
+                  style={{ borderColor: '#EBEBEB', color: '#333333', backgroundColor: '#fff' }}
                 >
                   {REMINDERS.map(r => (
                     <option key={r.value} value={r.value}>{r.label}</option>
@@ -225,21 +225,21 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
                     onChange={e => setRepeat(e.target.checked)}
                     className="w-3.5 h-3.5 accent-orange-500"
                   />
-                  <span className="text-xs font-medium" style={{ color: '#516F90' }}>Set to repeat</span>
+                  <span className="text-xs font-medium" style={{ color: '#666666' }}>Set to repeat</span>
                 </label>
               </div>
             </div>
 
             {/* 4-column row */}
-            <div className="px-5 pb-3 grid grid-cols-4 gap-2 border-t border-b py-3" style={{ borderColor: '#DFE3EB' }}>
+            <div className="px-5 pb-3 grid grid-cols-4 gap-2 border-t border-b py-3" style={{ borderColor: '#EBEBEB' }}>
               {/* Task Type */}
               <div>
-                <label className="block text-[10px] font-semibold mb-1 uppercase tracking-wide" style={{ color: '#7C98B6' }}>Task Type</label>
+                <label className="block text-[10px] font-semibold mb-1 uppercase tracking-wide" style={{ color: '#999999' }}>Task Type</label>
                 <select
                   value={taskType}
                   onChange={e => setTaskType(e.target.value)}
                   className="w-full rounded border px-2 py-1 text-xs outline-none"
-                  style={{ borderColor: '#DFE3EB', color: '#2D3E50', backgroundColor: '#fff' }}
+                  style={{ borderColor: '#EBEBEB', color: '#333333', backgroundColor: '#fff' }}
                 >
                   {TASK_TYPES.map(t => (
                     <option key={t.value} value={t.value}>{t.label}</option>
@@ -249,12 +249,12 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
 
               {/* Priority */}
               <div>
-                <label className="block text-[10px] font-semibold mb-1 uppercase tracking-wide" style={{ color: '#7C98B6' }}>Priority</label>
+                <label className="block text-[10px] font-semibold mb-1 uppercase tracking-wide" style={{ color: '#999999' }}>Priority</label>
                 <select
                   value={priority}
                   onChange={e => setPriority(e.target.value)}
                   className="w-full rounded border px-2 py-1 text-xs outline-none"
-                  style={{ borderColor: '#DFE3EB', color: '#2D3E50', backgroundColor: '#fff' }}
+                  style={{ borderColor: '#EBEBEB', color: '#333333', backgroundColor: '#fff' }}
                 >
                   {PRIORITY_OPTIONS.map(p => (
                     <option key={p.value} value={p.value}>{p.label}</option>
@@ -268,10 +268,10 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
 
               {/* Queue */}
               <div>
-                <label className="block text-[10px] font-semibold mb-1 uppercase tracking-wide" style={{ color: '#7C98B6' }}>Queue</label>
+                <label className="block text-[10px] font-semibold mb-1 uppercase tracking-wide" style={{ color: '#999999' }}>Queue</label>
                 <select
                   className="w-full rounded border px-2 py-1 text-xs outline-none"
-                  style={{ borderColor: '#DFE3EB', color: '#2D3E50', backgroundColor: '#fff' }}
+                  style={{ borderColor: '#EBEBEB', color: '#333333', backgroundColor: '#fff' }}
                 >
                   <option value="none">None</option>
                 </select>
@@ -279,10 +279,10 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
 
               {/* Assigned to */}
               <div>
-                <label className="block text-[10px] font-semibold mb-1 uppercase tracking-wide" style={{ color: '#7C98B6' }}>Assigned to</label>
+                <label className="block text-[10px] font-semibold mb-1 uppercase tracking-wide" style={{ color: '#999999' }}>Assigned to</label>
                 <div
                   className="w-full rounded border px-2 py-1 text-xs truncate"
-                  style={{ borderColor: '#DFE3EB', color: '#2D3E50', backgroundColor: '#F6F9FC' }}
+                  style={{ borderColor: '#EBEBEB', color: '#333333', backgroundColor: '#FAFAFA' }}
                   title={userEmail}
                 >
                   {userEmail === 'Me' ? 'Me' : userEmail.split('@')[0]}
@@ -292,9 +292,9 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
 
             {/* Notes */}
             <div className="px-5 pt-3 pb-2 flex-1">
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: '#516F90' }}>Notes</label>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: '#666666' }}>Notes</label>
               {/* Formatting toolbar */}
-              <div className="flex items-center gap-0.5 mb-1.5 border rounded-t px-1 py-1" style={{ borderColor: '#DFE3EB', borderBottom: 'none', backgroundColor: '#F6F9FC' }}>
+              <div className="flex items-center gap-0.5 mb-1.5 border rounded-t px-1 py-1" style={{ borderColor: '#EBEBEB', borderBottom: 'none', backgroundColor: '#FAFAFA' }}>
                 {[
                   { cmd: 'bold', label: <strong>B</strong> },
                   { cmd: 'italic', label: <em>I</em> },
@@ -303,8 +303,8 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
                   <button
                     key={cmd}
                     onMouseDown={e => { e.preventDefault(); execFormat(cmd); }}
-                    className="px-2 py-0.5 text-xs rounded hover:bg-[#DFE3EB] transition-colors"
-                    style={{ color: '#516F90' }}
+                    className="px-2 py-0.5 text-xs rounded hover:bg-[#EBEBEB] transition-colors"
+                    style={{ color: '#666666' }}
                     title={cmd.charAt(0).toUpperCase() + cmd.slice(1)}
                   >
                     {label}
@@ -319,8 +319,8 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
                 onInput={e => setNotes((e.target as HTMLDivElement).innerHTML)}
                 className="w-full border rounded-b px-3 py-2 text-xs outline-none focus:border-orange-400 min-h-[80px]"
                 style={{
-                  borderColor: '#DFE3EB',
-                  color: '#2D3E50',
+                  borderColor: '#EBEBEB',
+                  color: '#333333',
                   lineHeight: 1.6,
                   position: 'relative',
                 }}
@@ -328,26 +328,26 @@ export default function CreateTaskModal({ contactName, contactId: _contactId, on
               <style>{`
                 [contenteditable][data-placeholder]:empty:before {
                   content: attr(data-placeholder);
-                  color: #99ACC2;
+                  color: #B3B3B3;
                   pointer-events: none;
                 }
               `}</style>
               <div className="flex justify-end mt-1.5">
-                <button className="text-xs hover:underline" style={{ color: '#0091AE' }}>
+                <button className="text-xs hover:underline" style={{ color: '#4762D5' }}>
                   Associated with 1 record
                 </button>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-3 border-t flex-shrink-0" style={{ borderColor: '#DFE3EB', backgroundColor: '#F6F9FC' }}>
+            <div className="px-5 py-3 border-t flex-shrink-0" style={{ borderColor: '#EBEBEB', backgroundColor: '#FAFAFA' }}>
               <button
                 onClick={handleSave}
                 disabled={!title.trim()}
                 className="w-full py-2 rounded text-sm font-semibold transition-colors"
                 style={{
-                  backgroundColor: title.trim() ? '#FF7A59' : '#DFE3EB',
-                  color: title.trim() ? '#ffffff' : '#99ACC2',
+                  backgroundColor: title.trim() ? '#4762D5' : '#EBEBEB',
+                  color: title.trim() ? '#ffffff' : '#B3B3B3',
                   cursor: title.trim() ? 'pointer' : 'not-allowed',
                 }}
               >

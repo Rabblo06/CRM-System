@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -27,10 +27,10 @@ function OutlookCallbackInner() {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F6F9FC' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAFAFA' }}>
       <div className="text-center">
         <div className="w-10 h-10 border-2 border-[#0078D4] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm" style={{ color: '#516F90' }}>Completing Outlook connection…</p>
+        <p className="text-sm" style={{ color: '#666666' }}>Completing Outlook connection…</p>
       </div>
     </div>
   );

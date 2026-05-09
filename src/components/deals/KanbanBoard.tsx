@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useCallback, useMemo } from 'react';
 import {
@@ -51,7 +51,7 @@ function KanbanColumn({
     <div className="flex flex-col w-64 flex-shrink-0">
       {/* Column Header */}
       <div
-        className="rounded-t-lg px-3 py-2.5 border border-b-0 border-[#DFE3EB] bg-[#F6F9FC]"
+        className="rounded-t-lg px-3 py-2.5 border border-b-0 border-[#EBEBEB] bg-[#FAFAFA]"
       >
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
@@ -59,13 +59,13 @@ function KanbanColumn({
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: stageColor }}
             />
-            <span className="text-xs font-semibold text-[#2D3E50]">{stageName}</span>
+            <span className="text-xs font-semibold text-[#333333]">{stageName}</span>
           </div>
-          <span className="bg-[#F0F3F7] text-[#516F90] text-xs px-1.5 py-0.5 rounded-full">
+          <span className="bg-[#F1F1F1] text-[#666666] text-xs px-1.5 py-0.5 rounded-full">
             {deals.length}
           </span>
         </div>
-        <p className="text-xs text-[#7C98B6]">{formatCurrency(totalValue)}</p>
+        <p className="text-xs text-[#999999]">{formatCurrency(totalValue)}</p>
       </div>
 
       {/* Column Body */}
@@ -73,8 +73,8 @@ function KanbanColumn({
         ref={setNodeRef}
         className={`flex-1 rounded-b-lg border p-2 min-h-48 transition-colors ${
           isOver
-            ? 'bg-[#FFF3F0] border-[#FF7A59]/50'
-            : 'bg-[#F6F9FC] border-[#DFE3EB]'
+            ? 'bg-[#EEF0FB] border-[#4762D5]/50'
+            : 'bg-[#FAFAFA] border-[#EBEBEB]'
         }`}
       >
         <SortableContext
@@ -95,7 +95,7 @@ function KanbanColumn({
 
         <button
           onClick={() => onAddDeal(stageId)}
-          className="mt-2 w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-[#99ACC2] hover:text-[#516F90] hover:bg-[#F0F3F7] rounded-md transition-colors"
+          className="mt-2 w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-[#B3B3B3] hover:text-[#666666] hover:bg-[#F1F1F1] rounded-md transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
           Add deal
