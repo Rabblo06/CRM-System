@@ -13,6 +13,7 @@ import { useContacts } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
 import type { Contact } from '@/types';
 import type { ImportResult } from '@/components/contacts/ImportWizard';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 
 /* ── Types ─────────────────────────────────────────────────── */
 interface Group {
@@ -1202,168 +1203,63 @@ export default function ContactsPage() {
   }, [router]);
 
   return (
-    <div className="flex flex-col h-full bg-white">
-
-      {/* ── Row 1: Title + right actions ── */}
-      <div className="flex items-center justify-between px-5 py-2 border-b border-[#EBEBEB] flex-shrink-0">
-        <div className="flex items-center gap-1">
-          <h1 className="text-xl font-bold text-[#333333]">Contacts</h1>
-          <ChevronDown className="w-4 h-4 text-[#B3B3B3]" />
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button onClick={() => setShowImport(true)}
-            className="px-3 py-1.5 text-xs font-semibold text-[#666666] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA] flex items-center gap-1.5">
-            <Download className="w-3.5 h-3.5" /> Import
-          </button>
-          {['Integrate','Automate','Invite'].map(label => (
-            <button key={label} className="px-3 py-1.5 text-xs font-semibold text-[#666666] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA]">{label}</button>
-          ))}
-          <button className="p-1.5 rounded hover:bg-[#F1F1F1] text-[#B3B3B3]"><MoreHorizontal className="w-4 h-4" /></button>
-        </div>
-      </div>
-
-      {/* ── Row 2: Tabs ── */}
-      <div className="flex items-center px-5 border-b border-[#EBEBEB] flex-shrink-0">
-        <button className="px-3 py-2 text-sm font-semibold border-b-2 -mb-px" style={{ color: '#4762D5', borderColor: '#4762D5' }}>
-          Main table
-        </button>
-        <button className="px-2 py-2 text-[#B3B3B3] hover:text-[#666666]"><MoreHorizontal className="w-4 h-4" /></button>
-        <button className="px-2 py-2 text-[#B3B3B3] hover:text-[#666666]"><Plus className="w-4 h-4" /></button>
-        {selectedIds.size > 0 && (
-          <div className="ml-auto flex items-center gap-2 py-1">
-            <span className="text-xs text-[#666666]">{selectedIds.size} selected</span>
-            <button onClick={async () => { if (!confirm(`Delete ${selectedIds.size} contacts?`)) return; for (const id of selectedIds) await deleteContact(id); setSelectedIds(new Set()); }}
-              className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold border border-red-200 text-red-500 rounded-[3px] hover:bg-red-50">
-              <Trash2 className="w-3.5 h-3.5" /> Delete
-            </button>
-            <button onClick={() => setSelectedIds(new Set())} className="p-1 rounded hover:bg-[#F1F1F1] text-[#B3B3B3]"><X className="w-4 h-4" /></button>
-          </div>
-        )}
-      </div>
-
-      {/* ── Row 3: Toolbar ── */}
-      <div className="flex items-center gap-2 px-5 py-2 border-b border-[#EBEBEB] flex-shrink-0">
-        {/* New contact dropdown */}
+    <TwentyPageLayout
+      icon={<Users size={15} style={{ color: '#7C3AED' }} />}
+      title="People"
+      actionLabel="+ New Person"
+      onAction={() => { setEditContact(null); setShowForm(true); }}
+      actionExtra={
         <div ref={newBtnRef} className="relative">
-          <div className="flex items-center border border-[#4762D5] rounded-[3px] overflow-hidden">
-            <button onClick={() => { setEditContact(null); setShowForm(true); }}
-              className="px-4 py-1.5 text-sm font-bold text-white"
-              style={{ backgroundColor: '#4762D5' }}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3A52C0')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#4762D5')}>
-              New contact
-            </button>
-            <button onClick={() => setShowNewDropdown(v => !v)}
-              className="px-2 py-1.5 text-white border-l border-white/30"
-              style={{ backgroundColor: '#4762D5' }}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3A52C0')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#4762D5')}>
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <button onClick={() => setShowNewDropdown(v => !v)}
+            className="p-1.5 rounded-sm hover:bg-[#F1F1F1] transition-colors"
+            style={{ border: '1px solid #EBEBEB' }}>
+            <ChevronDown className="w-3 h-3 text-[#999999]" />
+          </button>
           {showNewDropdown && (
-            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
+            <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-[#EBEBEB] rounded-sm shadow-lg py-1 min-w-[200px]">
               <button onClick={() => { setEditContact(null); setShowForm(true); setShowNewDropdown(false); }}
-                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
-                <Users className="w-4 h-4 text-[#999999]" /> New contact
+                className="w-full px-4 py-2 text-xs text-left hover:bg-[#F1F1F1] flex items-center gap-2 text-[#333333]">
+                <Users className="w-3.5 h-3.5 text-[#999999]" /> New contact
               </button>
               <button onClick={() => { handleGroupAction('add_group', 'active'); setShowNewDropdown(false); }}
-                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
-                <FolderPlus className="w-4 h-4 text-[#999999]" /> New group of contacts
+                className="w-full px-4 py-2 text-xs text-left hover:bg-[#F1F1F1] flex items-center gap-2 text-[#333333]">
+                <FolderPlus className="w-3.5 h-3.5 text-[#999999]" /> New group
               </button>
               <button onClick={() => { setShowImport(true); setShowNewDropdown(false); }}
-                className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
-                <Download className="w-4 h-4 text-[#999999]" /> Import contacts
+                className="w-full px-4 py-2 text-xs text-left hover:bg-[#F1F1F1] flex items-center gap-2 text-[#333333]">
+                <Download className="w-3.5 h-3.5 text-[#999999]" /> Import contacts
               </button>
             </div>
           )}
         </div>
-
-        <div className="w-px h-5 bg-[#EBEBEB]" />
-
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#B3B3B3]" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search"
-            className="h-8 pl-8 pr-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] placeholder:text-[#D6D6D6] w-48"
-            onFocus={e => { e.currentTarget.style.borderColor = '#B3B3B3'; }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }} />
-          {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-[#B3B3B3]" /></button>}
-        </div>
-
-        <button className="px-3 py-1.5 text-xs font-semibold text-[#666666] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA] flex items-center gap-1.5">
-          <Users className="w-3.5 h-3.5" /> Person
-        </button>
-
-        <div ref={filterRef} className="relative">
-          <button
-            onClick={() => setShowFilter(v => !v)}
-            className="px-3 py-1.5 text-xs font-semibold rounded-[3px] border flex items-center gap-1.5 transition-colors"
-            style={showFilter || filterPriorities.size > 0 || filterCompany
-              ? { color: '#4762D5', borderColor: '#4762D5', backgroundColor: '#E8F4FD' }
-              : { color: '#666666', borderColor: '#EBEBEB', backgroundColor: 'transparent' }}>
-            <Search className="w-3.5 h-3.5" /> Filter
-            {(filterPriorities.size > 0 || filterCompany) && (
-              <span className="ml-0.5 px-1 py-0.5 rounded text-[10px] font-bold text-white" style={{ backgroundColor: '#4762D5' }}>
-                {filterPriorities.size + (filterCompany ? 1 : 0)}
-              </span>
-            )}
-          </button>
-        </div>
-
-        <button className="px-3 py-1.5 text-xs font-semibold text-[#666666] border border-[#EBEBEB] rounded-[3px] hover:bg-[#FAFAFA] flex items-center gap-1.5">
-          <ChevronDown className="w-3.5 h-3.5" /> Group by
-        </button>
-
-        <span className="text-xs text-[#B3B3B3] ml-auto">{contacts.length} contacts</span>
-        <button className="p-1.5 rounded hover:bg-[#F1F1F1] text-[#B3B3B3]"><MoreHorizontal className="w-4 h-4" /></button>
-      </div>
-
-      {/* ── Filter panel ── */}
-      {showFilter && (
-        <div className="flex items-start gap-6 px-5 py-3 border-b border-[#EBEBEB] bg-[#FAFAFA] flex-shrink-0">
-          <div>
-            <p className="text-[10px] font-semibold text-[#666666] uppercase tracking-wide mb-2">Priority</p>
-            <div className="flex flex-col gap-1">
-              {(['high','medium','low'] as const).map(p => {
-                const cfg = PRIORITY_CONFIG[p];
-                return (
-                  <label key={p} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={filterPriorities.has(p)}
-                      onChange={() => setFilterPriorities(prev => { const n = new Set(prev); n.has(p) ? n.delete(p) : n.add(p); return n; })}
-                      className="w-3.5 h-3.5 rounded border-[#EBEBEB] accent-[#4762D5]" />
-                    <span className="text-xs font-bold px-2 py-0.5 rounded text-white" style={{ backgroundColor: cfg.badge }}>{cfg.label}</span>
-                  </label>
-                );
-              })}
-            </div>
+      }
+      toolbar={
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#B3B3B3]" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search people…"
+              className="h-7 pl-7 pr-3 text-xs border border-[#EBEBEB] rounded-sm outline-none text-[#333333] placeholder:text-[#D6D6D6] w-44"
+              onFocus={e => { e.currentTarget.style.borderColor = '#B3B3B3'; }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }} />
+            {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3 h-3 text-[#B3B3B3]" /></button>}
           </div>
-
-          <div>
-            <p className="text-[10px] font-semibold text-[#666666] uppercase tracking-wide mb-2">Company</p>
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#B3B3B3]" />
-              <input value={filterCompany} onChange={e => setFilterCompany(e.target.value)} placeholder="Filter by company…"
-                className="h-7 pl-6 pr-3 text-xs border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] placeholder:text-[#D6D6D6] w-44"
-                onFocus={e => { e.currentTarget.style.borderColor = '#4762D5'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }} />
-              {filterCompany && <button onClick={() => setFilterCompany('')} className="absolute right-1.5 top-1/2 -translate-y-1/2"><X className="w-3 h-3 text-[#B3B3B3]" /></button>}
-            </div>
-          </div>
-
-          {(filterPriorities.size > 0 || filterCompany) && (
-            <div className="flex items-end pb-0.5 ml-auto self-end">
-              <button onClick={() => { setFilterPriorities(new Set()); setFilterCompany(''); }}
-                className="px-3 py-1.5 text-xs font-semibold text-[#666666] border border-[#EBEBEB] rounded-[3px] hover:bg-white flex items-center gap-1.5">
-                <X className="w-3 h-3" /> Clear filters
+          <span className="text-xs text-[#B3B3B3]">{contacts.length}</span>
+          {selectedIds.size > 0 && (
+            <>
+              <span className="text-xs text-[#666666]">{selectedIds.size} selected</span>
+              <button onClick={async () => { if (!confirm(`Delete ${selectedIds.size} contacts?`)) return; for (const id of selectedIds) await deleteContact(id); setSelectedIds(new Set()); }}
+                className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-red-200 text-red-500 rounded-sm hover:bg-red-50">
+                <Trash2 className="w-3 h-3" /> Delete
               </button>
-            </div>
+              <button onClick={() => setSelectedIds(new Set())} className="p-1 rounded-sm hover:bg-[#F1F1F1] text-[#B3B3B3]"><X className="w-3.5 h-3.5" /></button>
+            </>
           )}
         </div>
-      )}
-
+      }
+      viewCount={contacts.length}
+    >
       {/* ── Groups ── */}
-      <div className="flex-1 overflow-auto">
+      <div className="h-full overflow-auto">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-sm text-[#999999]">Loading contacts…</div>
         ) : (
@@ -1440,6 +1336,6 @@ export default function ContactsPage() {
       })()}
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-    </div>
+    </TwentyPageLayout>
   );
 }

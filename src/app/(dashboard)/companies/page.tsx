@@ -12,6 +12,7 @@ import type { CompanyImportResult } from '@/components/contacts/CompanyImportWiz
 import { useCompanies } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
 import type { Company } from '@/types';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 
 /* ── Types ─────────────────────────────────────────────────── */
 interface Group {
@@ -1055,72 +1056,67 @@ export default function CompaniesPage() {
     document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h);
   }, []);
 
-  return (
-    <div className="flex flex-col h-full bg-white">
+  const newDropdownRef = newBtnRef;
 
-      {/* ── Top bar ── */}
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#EBEBEB] flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div ref={newBtnRef} className="relative">
-            <div className="flex items-center border border-[#4762D5] rounded-[3px] overflow-hidden">
-              <button onClick={() => { setEditCompany(null); setAddingToGroup(null); setEditForm(EMPTY_FORM); setShowEditModal(true); }}
-                className="px-4 py-1.5 text-sm font-bold text-white"
-                style={{ backgroundColor: '#4762D5' }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3A52C0')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#4762D5')}>
-                New company
+  return (
+    <>
+    <TwentyPageLayout
+      icon={<Building2 size={15} style={{ color: '#2563EB' }} />}
+      title="Companies"
+      actionLabel="+ New Company"
+      onAction={() => { setEditCompany(null); setAddingToGroup(null); setEditForm(EMPTY_FORM); setShowEditModal(true); }}
+      actionExtra={
+        <div ref={newDropdownRef} className="relative">
+          <button onClick={() => setShowNewDropdown(v => !v)}
+            className="p-1.5 rounded-sm hover:bg-[#F1F1F1] transition-colors"
+            style={{ border: '1px solid #EBEBEB' }}>
+            <ChevronDown className="w-3 h-3 text-[#999999]" />
+          </button>
+          {showNewDropdown && (
+            <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-[#EBEBEB] rounded-sm shadow-lg py-1 min-w-[200px]">
+              <button onClick={() => { setEditCompany(null); setAddingToGroup(null); setEditForm(EMPTY_FORM); setShowEditModal(true); setShowNewDropdown(false); }}
+                className="w-full px-4 py-2 text-xs text-left hover:bg-[#F1F1F1] flex items-center gap-2 text-[#333333]">
+                <Building2 className="w-3.5 h-3.5 text-[#999999]" /> New company
               </button>
-              <button onClick={() => setShowNewDropdown(v => !v)}
-                className="px-2 py-1.5 text-white border-l border-white/30"
-                style={{ backgroundColor: '#4762D5' }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3A52C0')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#4762D5')}>
-                <ChevronDown className="w-3.5 h-3.5" />
+              <button onClick={() => { handleGroupAction('add_group', 'all'); setShowNewDropdown(false); }}
+                className="w-full px-4 py-2 text-xs text-left hover:bg-[#F1F1F1] flex items-center gap-2 text-[#333333]">
+                <FolderPlus className="w-3.5 h-3.5 text-[#999999]" /> New group
+              </button>
+              <button onClick={() => { setShowImport(true); setShowNewDropdown(false); }}
+                className="w-full px-4 py-2 text-xs text-left hover:bg-[#F1F1F1] flex items-center gap-2 text-[#333333]">
+                <Download className="w-3.5 h-3.5 text-[#999999]" /> Import companies
               </button>
             </div>
-            {showNewDropdown && (
-              <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-[#EBEBEB] rounded-[3px] shadow-xl py-1 min-w-[200px]">
-                <button onClick={() => { setEditCompany(null); setAddingToGroup(null); setEditForm(EMPTY_FORM); setShowEditModal(true); setShowNewDropdown(false); }}
-                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
-                  <Building2 className="w-4 h-4 text-[#999999]" /> New company
-                </button>
-                <button onClick={() => { handleGroupAction('add_group', 'all'); setShowNewDropdown(false); }}
-                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
-                  <FolderPlus className="w-4 h-4 text-[#999999]" /> New group of companies
-                </button>
-                <button onClick={() => { setShowImport(true); setShowNewDropdown(false); }}
-                  className="w-full px-4 py-2.5 text-sm text-left hover:bg-[#FAFAFA] flex items-center gap-2.5 text-[#333333]">
-                  <Download className="w-4 h-4 text-[#999999]" /> Import companies
-                </button>
-              </div>
-            )}
-          </div>
-
+          )}
+        </div>
+      }
+      toolbar={
+        <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#B3B3B3]" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search"
-              className="h-8 pl-8 pr-3 text-sm border border-[#EBEBEB] rounded-[3px] outline-none text-[#333333] placeholder:text-[#D6D6D6] w-56"
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#B3B3B3]" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search companies…"
+              className="h-7 pl-7 pr-3 text-xs border border-[#EBEBEB] rounded-sm outline-none text-[#333333] placeholder:text-[#D6D6D6] w-48"
               onFocus={e => { e.currentTarget.style.borderColor = '#B3B3B3'; }}
               onBlur={e => { e.currentTarget.style.borderColor = '#EBEBEB'; }} />
-            {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-[#B3B3B3]" /></button>}
+            {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3 h-3 text-[#B3B3B3]" /></button>}
           </div>
-          <span className="text-xs text-[#999999]">{companies.length} companies</span>
+          <span className="text-xs text-[#B3B3B3]">{companies.length}</span>
+          {selectedIds.size > 0 && (
+            <>
+              <span className="text-xs text-[#666666]">{selectedIds.size} selected</span>
+              <button onClick={async () => { if (!confirm(`Delete ${selectedIds.size} companies?`)) return; for (const id of selectedIds) await deleteCompany(id); setSelectedIds(new Set()); }}
+                className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-red-200 text-red-500 rounded-sm hover:bg-red-50">
+                <Trash2 className="w-3 h-3" /> Delete
+              </button>
+              <button onClick={() => setSelectedIds(new Set())} className="p-1 rounded-sm hover:bg-[#F1F1F1] text-[#B3B3B3]"><X className="w-3.5 h-3.5" /></button>
+            </>
+          )}
         </div>
-
-        {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[#666666]">{selectedIds.size} selected</span>
-            <button onClick={async () => { if (!confirm(`Delete ${selectedIds.size} companies?`)) return; for (const id of selectedIds) await deleteCompany(id); setSelectedIds(new Set()); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-red-200 text-red-500 rounded-[3px] hover:bg-red-50">
-              <Trash2 className="w-3.5 h-3.5" /> Delete
-            </button>
-            <button onClick={() => setSelectedIds(new Set())} className="p-1.5 rounded hover:bg-[#F1F1F1] text-[#B3B3B3]"><X className="w-4 h-4" /></button>
-          </div>
-        )}
-      </div>
-
+      }
+      viewCount={companies.length}
+    >
       {/* ── Groups ── */}
-      <div className="flex-1 overflow-auto">
+      <div className="h-full overflow-auto">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-sm text-[#999999]">Loading companies…</div>
         ) : allGroups.map(group => (
@@ -1153,8 +1149,9 @@ export default function CompaniesPage() {
           />
         ))}
       </div>
+    </TwentyPageLayout>
 
-      {/* ── Modals ── */}
+      {/* ── Modals (outside layout, fixed-position) ── */}
       {showImport && (
         <CompanyImportWizard
           onClose={() => setShowImport(false)}
@@ -1341,6 +1338,6 @@ export default function CompaniesPage() {
       })()}
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-    </div>
+    </>
   );
 }

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 import { useActivities } from '@/hooks/useActivities';
 import LogCallModal, {
   parseCallDescription,
@@ -68,31 +69,23 @@ export default function CallsPage() {
   const avgDuration = totalConnected > 0 ? Math.round(totalDuration / totalConnected) : 0;
 
   return (
-    <div className="p-6 space-y-5" style={{ backgroundColor: '#FAFAFA', minHeight: '100%' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold" style={{ color: '#333333' }}>Calls</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#999999' }}>
-            {calls.length} call{calls.length !== 1 ? 's' : ''} logged
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-1.5 text-xs h-8" onClick={() => setShowDialer(true)}>
-            <PhoneCall className="w-3.5 h-3.5" />
-            Dialer
-          </Button>
-          <Button
-            className="gap-1.5 text-xs h-8"
-            style={{ backgroundColor: '#4762D5', borderColor: '#4762D5' }}
-            onClick={() => setShowLogCall(true)}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Log Call
-          </Button>
-        </div>
-      </div>
-
+    <TwentyPageLayout
+      icon={<Phone size={15} style={{ color: '#059669' }} />}
+      title="Calls"
+      actionLabel="+ Log Call"
+      onAction={() => setShowLogCall(true)}
+      actionExtra={
+        <button
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#333333] rounded-sm transition-colors hover:bg-[#F1F1F1]"
+          style={{ border: '1px solid #EBEBEB' }}
+          onClick={() => setShowDialer(true)}
+        >
+          Dialer
+        </button>
+      }
+      viewCount={calls.length}
+    >
+      <div className="p-6 space-y-5">
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3">
         {[
@@ -310,6 +303,7 @@ export default function CallsPage() {
           }}
         />
       )}
-    </div>
+      </div>
+    </TwentyPageLayout>
   );
 }

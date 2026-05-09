@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Inbox, Search, Star, StarOff, Archive, Trash2, Reply, Forward,
   MoreHorizontal, Circle, Loader2, Mail, Send as SendIcon,
-  RefreshCw, ChevronDown, ChevronUp, X, CheckCheck, Paperclip,
+  RefreshCw, ChevronDown, ChevronUp, X, CheckCheck, Paperclip, Zap,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { GmailSyncModal } from '@/components/emails/GmailSyncModal';
 import { useEmailSync } from '@/hooks/useEmailSync';
 import { isAnonymousUser } from '@/lib/demoUser';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 
 /* ═══════════════════════════════════════════════════════════
    TYPES
@@ -867,6 +868,10 @@ export default function InboxPage() {
   ];
 
   return (
+    <TwentyPageLayout
+      icon={<Zap size={15} style={{ color: '#D97706' }} />}
+      title="Workflows"
+    >
     <div className="flex h-full" style={{ backgroundColor: '#FAFAFA' }}>
 
       {/* ── LEFT NAV ──────────────────────────────────────── */}
@@ -1163,5 +1168,6 @@ export default function InboxPage() {
         />
       )}
     </div>
+    </TwentyPageLayout>
   );
 }

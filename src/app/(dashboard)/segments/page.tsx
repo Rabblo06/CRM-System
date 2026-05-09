@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Plus, Filter, Users, Zap, Edit2, Trash2, Play, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 
 type SegmentType = 'static' | 'dynamic';
 
@@ -62,19 +63,13 @@ export default function SegmentsPage() {
   const staticCount = segments.filter(s => s.type === 'static').length;
 
   return (
-    <div className="p-6 space-y-5" style={{ backgroundColor: '#FAFAFA', minHeight: '100%' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold" style={{ color: '#333333' }}>Segments (Lists)</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#999999' }}>Group contacts with smart filters or static lists</p>
-        </div>
-        <Button className="gap-1.5 text-xs">
-          <Plus className="w-3.5 h-3.5" />
-          New Segment
-        </Button>
-      </div>
-
+    <TwentyPageLayout
+      icon={<Filter size={15} style={{ color: '#7C3AED' }} />}
+      title="Segments"
+      actionLabel="+ New Segment"
+      viewCount={segments.length}
+    >
+      <div className="p-6 space-y-5">
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
@@ -204,6 +199,7 @@ export default function SegmentsPage() {
           </div>
         </button>
       </div>
-    </div>
+      </div>
+    </TwentyPageLayout>
   );
 }

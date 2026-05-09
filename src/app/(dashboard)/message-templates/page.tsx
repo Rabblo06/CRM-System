@@ -5,6 +5,7 @@ import { Plus, MessageSquare, Search, Edit2, Trash2, Copy, Check, Zap, Mail, Pho
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 
 type TemplateChannel = 'sms' | 'whatsapp' | 'email' | 'call_script';
 
@@ -111,19 +112,14 @@ export default function MessageTemplatesPage() {
   };
 
   return (
-    <div className="p-6 space-y-5" style={{ backgroundColor: '#FAFAFA', minHeight: '100%' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold" style={{ color: '#333333' }}>Message Templates</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#999999' }}>Reusable templates for SMS, WhatsApp, email, and calls</p>
-        </div>
-        <Button className="gap-1.5 text-xs" onClick={() => setShowEditor(true)}>
-          <Plus className="w-3.5 h-3.5" />
-          New Template
-        </Button>
-      </div>
-
+    <TwentyPageLayout
+      icon={<MessageSquare size={15} style={{ color: '#555555' }} />}
+      title="Msg Templates"
+      actionLabel="+ New Template"
+      onAction={() => setShowEditor(true)}
+      viewCount={templates.length}
+    >
+      <div className="p-6 space-y-5">
       {/* Channel filter */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-xs">
@@ -326,6 +322,7 @@ export default function MessageTemplatesPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </TwentyPageLayout>
   );
 }

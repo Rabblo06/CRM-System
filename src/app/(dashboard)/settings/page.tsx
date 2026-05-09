@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   User, Database, Bell, Shield, Check, Mail, Phone, Calendar, CheckSquare,
   Zap, Plus, X, Send, Trash2, Edit2, UserPlus, ChevronRight, PhoneCall,
-  RefreshCw, Loader2,
+  RefreshCw, Loader2, Settings,
 } from 'lucide-react';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 import { useEmailSync } from '@/hooks/useEmailSync';
 import { GmailSyncModal } from '@/components/emails/GmailSyncModal';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -490,6 +491,10 @@ function SettingsPageInner() {
   };
 
   return (
+    <TwentyPageLayout
+      icon={<Settings size={15} style={{ color: '#666666' }} />}
+      title="Settings"
+    >
     <div className="flex h-full" style={{ backgroundColor: '#FAFAFA' }}>
       {/* Toast notification */}
       {settingsToast && (
@@ -1589,6 +1594,7 @@ function SettingsPageInner() {
         </div>
       )}
     </div>
+    </TwentyPageLayout>
   );
 }
 

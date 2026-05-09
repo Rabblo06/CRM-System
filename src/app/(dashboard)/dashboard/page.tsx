@@ -1,6 +1,7 @@
 ﻿'use client';
 
-import { Users, Building2, TrendingUp, DollarSign, Target, Zap } from 'lucide-react';
+import { Users, Building2, TrendingUp, DollarSign, Target, Zap, LayoutDashboard } from 'lucide-react';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
 import { PipelineSummary } from '@/components/dashboard/PipelineSummary';
@@ -15,13 +16,11 @@ export default function DashboardPage() {
   const { activities } = useActivities();
 
   return (
+    <TwentyPageLayout
+      icon={<LayoutDashboard size={15} style={{ color: '#555555' }} />}
+      title="Dashboards"
+    >
     <div className="p-6 space-y-6">
-      {/* Page Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-[#333333]">Dashboard</h1>
-        <p className="text-[#666666] text-sm mt-1">Welcome back! Here&apos;s your sales overview.</p>
-      </div>
-
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <MetricCard
@@ -129,5 +128,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+    </TwentyPageLayout>
   );
 }

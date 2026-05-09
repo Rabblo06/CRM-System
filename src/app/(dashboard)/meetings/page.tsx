@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useActivities } from '@/hooks/useActivities';
 import { supabase } from '@/lib/supabase';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 import type { Activity } from '@/hooks/useActivities';
 
 /* ─── Helpers ────────────────────────────────────────────── */
@@ -565,66 +566,31 @@ export default function MeetingsPage() {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-white">
-
-      {/* ── Top nav bar ── */}
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#EBEBEB]" style={{ backgroundColor: '#fff' }}>
-        <div className="flex items-center gap-1">
-          {/* "Meetings" tab chip */}
-          <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold border border-[#EBEBEB] rounded-[3px] text-[#333333] hover:bg-[#FAFAFA] transition-colors">
-            Meetings <ChevronDown className="w-3.5 h-3.5 text-[#B3B3B3]" />
-          </button>
-
-          {/* "All records N ⋮" view tab */}
-          <div className="flex items-center gap-1 ml-1">
-            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-[#333333] border-b-2 border-[#333333] transition-colors">
-              All records
-              <span className="flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold text-white" style={{ backgroundColor: '#333333' }}>
-                {meetings.length}
-              </span>
-            </button>
-            <button className="p-1.5 rounded hover:bg-[#F1F1F1] text-[#B3B3B3]">
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Add view */}
-          <button className="flex items-center gap-1 px-2.5 py-1.5 text-sm text-[#666666] hover:text-[#333333] hover:bg-[#F1F1F1] rounded-[3px] transition-colors">
-            <Plus className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* View toggle */}
-          <div className="flex items-center border border-[#EBEBEB] rounded-[3px] overflow-hidden">
-            <button
-              onClick={() => setViewMode('list')}
-              title="List view"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold transition-colors"
-              style={{ backgroundColor: viewMode === 'list' ? '#333333' : '#fff', color: viewMode === 'list' ? '#fff' : '#555555' }}
-            >
-              <List className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode('calendar')}
-              title="Calendar view"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold transition-colors"
-              style={{ backgroundColor: viewMode === 'calendar' ? '#333333' : '#fff', color: viewMode === 'calendar' ? '#fff' : '#555555', borderLeft: '1px solid #EBEBEB' }}
-            >
-              <CalendarDays className="w-3.5 h-3.5" />
-            </button>
-          </div>
+    <TwentyPageLayout
+      icon={<CalendarDays size={15} style={{ color: '#2563EB' }} />}
+      title="Meetings"
+      actionLabel="+ Log Meeting"
+      onAction={() => setShowDrawer(true)}
+      actionExtra={
+        <div className="flex items-center border border-[#EBEBEB] rounded-sm overflow-hidden">
           <button
-            onClick={() => setShowDrawer(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white rounded-[3px] transition-colors"
-            style={{ backgroundColor: '#4762D5' }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3A52C0')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#4762D5')}
+            onClick={() => setViewMode('list')}
+            className="flex items-center px-2.5 py-1 text-xs font-medium transition-colors"
+            style={{ backgroundColor: viewMode === 'list' ? '#333333' : '#fff', color: viewMode === 'list' ? '#fff' : '#555555' }}
           >
-            Log meeting
+            <List className="w-3 h-3" />
+          </button>
+          <button
+            onClick={() => setViewMode('calendar')}
+            className="flex items-center px-2.5 py-1 text-xs font-medium transition-colors"
+            style={{ backgroundColor: viewMode === 'calendar' ? '#333333' : '#fff', color: viewMode === 'calendar' ? '#fff' : '#555555', borderLeft: '1px solid #EBEBEB' }}
+          >
+            <CalendarDays className="w-3 h-3" />
           </button>
         </div>
-      </div>
+      }
+      viewCount={meetings.length}
+    >
 
       {/* ── Calendar view ── */}
       {viewMode === 'calendar' && <CalendarView meetings={meetings} />}
@@ -963,6 +929,6 @@ export default function MeetingsPage() {
         onSave={handleSaveMeeting}
         currentUserName={currentUserName}
       />
-    </div>
+    </TwentyPageLayout>
   );
 }

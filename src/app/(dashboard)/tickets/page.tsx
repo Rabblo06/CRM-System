@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 import { useContacts, useCompanies } from '@/hooks/useData';
 
 /* ─── Types ─────────────────────────────────────────────── */
@@ -610,39 +611,31 @@ export default function TicketsPage() {
   }, {} as Record<Status, number>);
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: '#FAFAFA' }}>
-      {/* ── Top bar ─────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-white" style={{ borderColor: '#EBEBEB' }}>
-        <div>
-          <h1 className="text-lg font-semibold" style={{ color: '#333333' }}>Tickets</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#999999' }}>
-            {tickets.length} total · {tickets.filter(t => t.status !== 'closed').length} open
-          </p>
+    <TwentyPageLayout
+      icon={<Ticket size={15} style={{ color: '#DC2626' }} />}
+      title="Tickets"
+      actionLabel="+ New Ticket"
+      onAction={() => setShowCreate(true)}
+      actionExtra={
+        <div className="flex items-center border rounded-sm overflow-hidden" style={{ borderColor: '#EBEBEB' }}>
+          <button
+            onClick={() => setView('board')}
+            className="px-2.5 py-1 text-xs font-medium transition-colors flex items-center gap-1"
+            style={{ backgroundColor: view === 'board' ? '#333333' : '#fff', color: view === 'board' ? '#fff' : '#666666' }}
+          >
+            <LayoutGrid className="w-3 h-3" />
+          </button>
+          <button
+            onClick={() => setView('table')}
+            className="px-2.5 py-1 text-xs font-medium transition-colors flex items-center gap-1"
+            style={{ backgroundColor: view === 'table' ? '#333333' : '#fff', color: view === 'table' ? '#fff' : '#666666', borderLeft: '1px solid #EBEBEB' }}
+          >
+            <LayoutList className="w-3 h-3" />
+          </button>
         </div>
-        <div className="flex items-center gap-2">
-          {/* View toggle */}
-          <div className="flex items-center border rounded-lg overflow-hidden" style={{ borderColor: '#EBEBEB' }}>
-            <button
-              onClick={() => setView('board')}
-              className="px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5"
-              style={{ backgroundColor: view === 'board' ? '#333333' : '#fff', color: view === 'board' ? '#fff' : '#666666' }}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />Board
-            </button>
-            <button
-              onClick={() => setView('table')}
-              className="px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5"
-              style={{ backgroundColor: view === 'table' ? '#333333' : '#fff', color: view === 'table' ? '#fff' : '#666666' }}
-            >
-              <LayoutList className="w-3.5 h-3.5" />Table
-            </button>
-          </div>
-
-          <Button size="sm" className="gap-1.5 text-xs" onClick={() => setShowCreate(true)}>
-            <Plus className="w-3.5 h-3.5" />New Ticket
-          </Button>
-        </div>
-      </div>
+      }
+      viewCount={tickets.length}
+    >
 
       {/* ── Filter bar ──────────────────────────────────── */}
       <div className="flex items-center gap-2 px-6 py-2.5 bg-white border-b" style={{ borderColor: '#EBEBEB' }}>
@@ -894,6 +887,6 @@ export default function TicketsPage() {
           onDelete={handleDelete}
         />
       )}
-    </div>
+    </TwentyPageLayout>
   );
 }

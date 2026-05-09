@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Plus, Mail, Edit, Trash2, Copy, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 import {
   Dialog,
   DialogContent,
@@ -118,13 +118,14 @@ export default function EmailsPage() {
   };
 
   return (
-    <div className="p-6 space-y-4" style={{ backgroundColor: '#FAFAFA', minHeight: '100%' }}>
-      <PageHeader title="Email Templates" description={`${templates.length} templates`}>
-        <Button size="sm" onClick={() => setShowForm(true)} className="gap-1.5">
-          <Plus className="w-3.5 h-3.5" />
-          New Template
-        </Button>
-      </PageHeader>
+    <TwentyPageLayout
+      icon={<Mail size={15} style={{ color: '#0891B2' }} />}
+      title="Email Templates"
+      actionLabel="+ New Template"
+      onAction={() => setShowForm(true)}
+      viewCount={templates.length}
+    >
+    <div className="p-6 space-y-4">
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -237,5 +238,6 @@ export default function EmailsPage() {
         initialData={editingTemplate || undefined}
       />
     </div>
+    </TwentyPageLayout>
   );
 }

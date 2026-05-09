@@ -4,11 +4,12 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Plus, Search, X, ChevronDown, Bell, Phone, Mail, CalendarDays,
-  ClipboardList, Trash2, MoreHorizontal, Loader2, CheckCheck,
+  ClipboardList, Trash2, MoreHorizontal, Loader2, CheckCheck, CheckSquare,
 } from 'lucide-react';
 import { useTasks, useContacts, useCompanies } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
 import type { Task, Contact, Company } from '@/types';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 
 /* ─── Constants ──────────────────────────────────────────── */
 const TASK_TYPES = ['To-do', 'Call', 'Email', 'Meeting'];
@@ -981,30 +982,13 @@ export default function TasksPage() {
   ];
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: '#FAFAFA' }}>
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between px-6 pt-6 pb-4 bg-white border-b border-[#EBEBEB]">
-        <div>
-          <h1 className="text-xl font-bold text-[#333333]">Tasks</h1>
-          <p className="text-sm text-[#666666] mt-0.5">{filtered.length} record{filtered.length !== 1 ? 's' : ''}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            className="px-3 py-1.5 text-xs font-semibold border border-[#EBEBEB] rounded-[3px] bg-white hover:bg-[#FAFAFA] text-[#555555] transition-colors"
-          >
-            Import
-          </button>
-          <button
-            onClick={() => setShowDrawer(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white rounded-[3px] transition-colors"
-            style={{ backgroundColor: '#4762D5' }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3A52C0')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#4762D5')}
-          >
-            <Plus className="w-4 h-4" /> Create task
-          </button>
-        </div>
-      </div>
+    <TwentyPageLayout
+      icon={<CheckSquare size={15} style={{ color: '#059669' }} />}
+      title="Tasks"
+      actionLabel="+ Create Task"
+      onAction={() => setShowDrawer(true)}
+      viewCount={filtered.length}
+    >
 
       {/* ── Summary Cards ── */}
       <div className="grid grid-cols-4 gap-3 px-6 pt-4">
@@ -1407,6 +1391,6 @@ export default function TasksPage() {
         companies={companies}
         currentUserName={currentUserName}
       />
-    </div>
+    </TwentyPageLayout>
   );
 }

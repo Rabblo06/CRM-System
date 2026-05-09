@@ -1,8 +1,9 @@
 ﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, X, Trash2, Check, ChevronLeft } from 'lucide-react';
+import { ChevronDown, X, Trash2, Check, ChevronLeft, TrendingUp } from 'lucide-react';
 import { useDeals } from '@/hooks/useData';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 import { userKey } from '@/lib/demoUser';
 import { KanbanBoard } from '@/components/deals/KanbanBoard';
 import { DealForm } from '@/components/deals/DealForm';
@@ -360,15 +361,14 @@ export default function DealsPage() {
   /* ══ EMPTY STATE ══ */
   if (view === 'empty') {
     return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[#EBEBEB] bg-white flex-shrink-0">
-          <div>
-            <h1 className="text-xl font-bold text-[#333333]">Deals</h1>
-            <p className="text-sm text-[#999999] mt-0.5">0 deals</p>
-          </div>
-          <AddDealsBtn />
-        </div>
-        <div className="flex-1 flex items-center justify-center bg-[#FAFAFA]">
+      <TwentyPageLayout
+        icon={<TrendingUp size={15} style={{ color: '#DC2626' }} />}
+        title="Opportunities"
+        actionExtra={<AddDealsBtn />}
+        viewLabel="Sales Pipeline"
+        viewCount={0}
+      >
+        <div className="flex-1 flex items-center justify-center bg-[#FAFAFA] h-full">
           <div className="text-center" style={{ maxWidth: 380 }}>
             {/* Simple pipeline illustration */}
             <svg width="180" height="100" viewBox="0 0 180 100" fill="none" className="mx-auto mb-5">
@@ -407,19 +407,21 @@ export default function DealsPage() {
             </button>
           </div>
         </div>
-      </div>
+      </TwentyPageLayout>
     );
   }
 
   /* ══ SETUP MODAL ══ */
   if (view === 'setup_modal') {
     return (
-      <div className="flex flex-col h-full bg-[#FAFAFA]">
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[#EBEBEB] bg-white flex-shrink-0">
-          <h1 className="text-xl font-bold text-[#333333]">Deals</h1>
-          <AddDealsBtn />
-        </div>
-        <div className="flex-1 flex items-center justify-center">
+      <TwentyPageLayout
+        icon={<TrendingUp size={15} style={{ color: '#DC2626' }} />}
+        title="Opportunities"
+        actionExtra={<AddDealsBtn />}
+        viewLabel="Sales Pipeline"
+        viewCount={0}
+      >
+        <div className="flex-1 flex items-center justify-center h-full bg-[#FAFAFA]">
           <div className="bg-white border border-[#EBEBEB] rounded-lg shadow-xl" style={{ width: 580 }}>
             <div className="px-8 pt-8 pb-2 flex items-start justify-between">
               <div>
@@ -477,7 +479,7 @@ export default function DealsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </TwentyPageLayout>
     );
   }
 
@@ -491,6 +493,11 @@ export default function DealsPage() {
     };
 
     return (
+      <TwentyPageLayout
+        icon={<TrendingUp size={15} style={{ color: '#DC2626' }} />}
+        title="Opportunities"
+        viewLabel="Set up your pipeline"
+      >
       <div className="flex flex-col h-full bg-white">
         <WizardProgressBar subStep={subStep} />
 
@@ -767,30 +774,20 @@ export default function DealsPage() {
           </button>
         </div>
       </div>
+      </TwentyPageLayout>
     );
   }
 
   /* ══ BOARD VIEW ══ */
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[#EBEBEB] bg-white flex-shrink-0">
-        <div>
-          <h1 className="text-xl font-bold text-[#333333]">{pipelineName}</h1>
-          <p className="text-sm text-[#999999] mt-0.5">{deals.length} deal{deals.length !== 1 ? 's' : ''}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={async () => { localStorage.removeItem(userKey('crm_pipeline_v2')); await deleteAllDeals(); resetWizard(); setView('empty'); }}
-            className="text-xs text-[#B3B3B3] hover:text-[#555555] transition-colors"
-          >
-            Reset pipeline
-          </button>
-          <AddDealsBtn />
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-auto p-6">
+    <TwentyPageLayout
+      icon={<TrendingUp size={15} style={{ color: '#DC2626' }} />}
+      title="Opportunities"
+      actionExtra={<AddDealsBtn />}
+      viewLabel={pipelineName}
+      viewCount={deals.length}
+    >
+      <div className="p-6">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 rounded-full border-2 border-[#4762D5] border-t-transparent animate-spin" />
@@ -815,6 +812,6 @@ export default function DealsPage() {
         defaultStage={defaultStage}
         stages={stages}
       />
-    </div>
+    </TwentyPageLayout>
   );
 }

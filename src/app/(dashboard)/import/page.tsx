@@ -15,7 +15,9 @@ import {
   CheckCircle2,
   ArrowLeft,
   ArrowRight,
+  HelpCircle,
 } from 'lucide-react';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -410,22 +412,30 @@ export default function ImportPage() {
   };
 
   return (
+    <TwentyPageLayout
+      icon={<HelpCircle size={15} style={{ color: '#666666' }} />}
+      title="Documentation"
+      actionExtra={
+        <div className="flex gap-1">
+          <button
+            className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-[#333333] rounded-sm transition-colors hover:bg-[#F1F1F1]"
+            style={{ border: '1px solid #EBEBEB' }}
+            onClick={() => exportAll('contacts')}
+          >
+            <Download className="w-3 h-3" /> Export contacts
+          </button>
+          <button
+            className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-[#333333] rounded-sm transition-colors hover:bg-[#F1F1F1]"
+            style={{ border: '1px solid #EBEBEB' }}
+            onClick={() => exportAll('companies')}
+          >
+            <Download className="w-3 h-3" /> Export companies
+          </button>
+        </div>
+      }
+    >
     <div className="p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-bold text-[#333333]">Import records</h1>
-            <p className="text-sm text-[#666666] mt-0.5">Import contacts, companies, or deals from a spreadsheet</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportAll('contacts')}>
-              <Download className="w-3.5 h-3.5" /> Export contacts
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportAll('companies')}>
-              <Download className="w-3.5 h-3.5" /> Export companies
-            </Button>
-          </div>
-        </div>
 
         {step !== 'done' && (
           <>
@@ -812,5 +822,6 @@ export default function ImportPage() {
         })()}
       </div>
     </div>
+    </TwentyPageLayout>
   );
 }

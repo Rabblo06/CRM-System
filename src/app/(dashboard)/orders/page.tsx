@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Plus, Package, Search, TrendingUp, DollarSign, ShoppingCart, CheckCircle2, Clock, XCircle, MoreHorizontal, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 
 type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
@@ -56,19 +57,13 @@ export default function OrdersPage() {
   const deliveredCount = orders.filter(o => o.status === 'delivered').length;
 
   return (
-    <div className="p-6 space-y-5" style={{ backgroundColor: '#FAFAFA', minHeight: '100%' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold" style={{ color: '#333333' }}>Orders</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#999999' }}>Manage customer orders and subscriptions</p>
-        </div>
-        <Button className="gap-1.5 text-xs">
-          <Plus className="w-3.5 h-3.5" />
-          New Order
-        </Button>
-      </div>
-
+    <TwentyPageLayout
+      icon={<Package size={15} style={{ color: '#D97706' }} />}
+      title="Orders"
+      actionLabel="+ New Order"
+      viewCount={orders.length}
+    >
+      <div className="p-6 space-y-5">
       {/* Summary stats */}
       <div className="grid grid-cols-4 gap-3">
         {[
@@ -191,6 +186,7 @@ export default function OrdersPage() {
           </tbody>
         </table>
       </div>
-    </div>
+      </div>
+    </TwentyPageLayout>
   );
 }

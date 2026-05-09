@@ -1,8 +1,8 @@
 ﻿'use client';
 
 import { useState } from 'react';
-import { Phone, Mail, Calendar, FileText, CheckSquare, TrendingUp, Users, Filter } from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { Phone, Mail, Calendar, FileText, CheckSquare, TrendingUp, Users, Filter, StickyNote } from 'lucide-react';
+import { TwentyPageLayout } from '@/components/layout/TwentyPageLayout';
 import { useActivities } from '@/hooks/useData';
 import { formatRelativeTime, formatDateTime } from '@/lib/utils';
 import type { Activity } from '@/types';
@@ -58,12 +58,12 @@ export default function ActivitiesPage() {
   );
 
   return (
+    <TwentyPageLayout
+      icon={<StickyNote size={15} style={{ color: '#0891B2' }} />}
+      title="Notes"
+      viewCount={activities.length}
+    >
     <div className="p-6 space-y-4">
-      <PageHeader
-        title="Activities"
-        description={`${activities.length} total activities`}
-      />
-
       {/* Filters */}
       <div className="flex items-center gap-2">
         <Filter className="w-4 h-4 text-[#999999]" />
@@ -142,5 +142,6 @@ export default function ActivitiesPage() {
         </div>
       )}
     </div>
+    </TwentyPageLayout>
   );
 }
